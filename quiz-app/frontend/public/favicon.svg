@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Background: Deep Navy Blue Circle -->
+  <circle cx="32" cy="32" r="32" fill="#0A192F" />
+  
+  <!-- Text: Gold/Yellow "U89" -->
+  <text x="50%" y="54%" 
+        font-family="Arial, Helvetica, sans-serif" 
+        font-weight="900" 
+        font-size="28" 
+        fill="#FFD700" 
+        text-anchor="middle" 
+        dominant-baseline="middle">
+    U89
+  </text>
+</svg>

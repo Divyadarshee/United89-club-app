@@ -1,0 +1,5 @@
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '--build-arg', 'VITE_API_URL=https://united89-quiz-backend-432448119899.asia-south2.run.app', '-t', 'gcr.io/gen-lang-client-0899905004/united89-quiz-frontend', '.']
+images:
+- 'gcr.io/gen-lang-client-0899905004/united89-quiz-frontend'

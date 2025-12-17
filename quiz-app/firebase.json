@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "site": "united89-club", 
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "united89-quiz-frontend",
+          "region": "asia-south2"
+        }
+      }
+    ]
+  }
+}

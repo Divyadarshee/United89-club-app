@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json # Mount your key here
+    volumes:
+      - ./backend:/app
+      # Uncomment and update path to your local key
+      # - ./path/to/your/key.json:/app/credentials.json
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80" # Maps local 3000 to container 80 (nginx)
+    depends_on:
+      - backend
