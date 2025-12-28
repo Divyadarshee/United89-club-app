@@ -7,8 +7,9 @@ export const registerUser = async (name, phone) => {
     return response.data;
 };
 
-export const getQuestions = async () => {
-    const response = await axios.get(`${API_URL}/api/questions`);
+export const getQuestions = async (weekId = null) => {
+    const params = weekId ? { week_id: weekId } : {};
+    const response = await axios.get(`${API_URL}/api/questions`, { params });
     return response.data;
 };
 
@@ -17,20 +18,36 @@ export const getConfig = async () => {
     return response.data;
 };
 
-export const submitAnswers = async (userId, answers, timeTaken) => {
-    const response = await axios.post(`${API_URL}/api/submit`, { user_id: userId, answers, time_taken: timeTaken });
+export const submitAnswers = async (userId, answers, timeTaken, weekId) => {
+    const response = await axios.post(`${API_URL}/api/submit`, {
+        user_id: userId,
+        answers,
+        time_taken: timeTaken,
+        week_id: weekId
+    });
     return response.data;
 };
 
 // Public Leaderboard
-export const getLeaderboard = async () => {
-    const response = await axios.get(`${API_URL}/api/leaderboard`);
+export const getLeaderboard = async (type = 'weekly', weekId = null) => {
+    // Always ensure type has a value
+    const safeType = type || 'weekly';
+    const params = { type: safeType };
+    if (weekId) params.week_id = weekId;
+    console.log('[API] getLeaderboard called with params:', params);
+    const response = await axios.get(`${API_URL}/api/leaderboard`, { params });
+    console.log('[API] getLeaderboard response:', response.data?.length, 'items');
     return response.data;
 };
 
 // Admin Endpoints
 export const getUsers = async () => {
     const response = await axios.get(`${API_URL}/api/admin/users`);
+    return response.data;
+};
+
+export const getWeeks = async () => {
+    const response = await axios.get(`${API_URL}/api/admin/weeks`);
     return response.data;
 };
 
@@ -49,7 +66,8 @@ export const updateConfig = async (configData) => {
     return response.data;
 };
 
-export const getAdminQuestions = async () => {
-    const response = await axios.get(`${API_URL}/api/admin/questions-full`);
+export const getAdminQuestions = async (weekId = null) => {
+    const params = weekId ? { week_id: weekId } : {};
+    const response = await axios.get(`${API_URL}/api/admin/questions-full`, { params });
     return response.data;
 };

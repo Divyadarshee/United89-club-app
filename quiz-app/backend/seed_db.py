@@ -71,6 +71,13 @@ def seed_data():
 
     # Seed Questions
     print("Seeding questions...")
+    
+    # Get current week ID for seeding
+    from datetime import datetime
+    now = datetime.now()
+    current_week_id = f"{now.year}-W{now.isocalendar()[1]:02d}"
+    print(f"Assigning questions to week: {current_week_id}")
+
     batch = db.batch()
     for q in QUESTIONS:
         doc_ref = db.collection("questions").document(q["id"])
@@ -78,7 +85,8 @@ def seed_data():
             "text": q["text"],
             "options": q["options"],
             "correct_answer": q["answer"],
-            "order": q["order"]
+            "order": q["order"],
+            "week_id": current_week_id  # Add week_id
         })
     batch.commit()
     print("Seeding complete!")

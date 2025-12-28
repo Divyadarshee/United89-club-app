@@ -28,8 +28,11 @@ function Quiz() {
 
         const fetchData = async () => {
             try {
+                // Get stored week_id
+                const weekId = localStorage.getItem('week_id');
+
                 const [questionsData, configData] = await Promise.all([
-                    getQuestions(),
+                    getQuestions(weekId), // Pass weekId to fetch correct questions
                     getConfig()
                 ]);
                 setQuestions(questionsData);
@@ -140,10 +143,11 @@ function Quiz() {
         stopSound('bgm');
 
         const userId = localStorage.getItem('user_id');
+        const weekId = localStorage.getItem('week_id');
         const duration = Math.round((Date.now() - startTime) / 1000);
 
         try {
-            await submitAnswers(userId, answers, duration);
+            await submitAnswers(userId, answers, duration, weekId);
             localStorage.setItem('has_submitted', 'true');
             navigate('/thank-you');
         } catch (error) {

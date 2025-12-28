@@ -28,6 +28,9 @@ function Entry() {
             const data = await registerUser(name, phone);
             localStorage.setItem('user_id', data.user_id);
             localStorage.setItem('has_submitted', data.has_submitted);
+            if (data.week_id) {
+                localStorage.setItem('week_id', data.week_id);
+            }
 
             if (data.resuming && !data.has_submitted) {
                 // Optional: Toast or subtle notification
