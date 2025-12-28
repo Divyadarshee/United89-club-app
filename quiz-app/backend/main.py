@@ -2,22 +2,26 @@ import uuid
 import os
 import time
 from typing import List, Dict, Any, Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import firebase_admin
 from firebase_admin import credentials, firestore
 from dotenv import load_dotenv
 from datetime import datetime
+import pytz
 
 load_dotenv()
 
-def get_current_week_id() -> str:
-    """Returns current ISO week identifier, e.g., '2024-W51'"""
+# Utility for standardizing time
+def get_current_utc_time():
+    return datetime.now(pytz.utc)
+
+def get_current_iso_week() -> str:
+    """Returns absolute current ISO week identifier, e.g., '2024-W51' (based on system time)"""
     now = datetime.now()
     return f"{now.year}-W{now.isocalendar()[1]:02d}"
 
-# Initialize Firebase Admin
 # Initialize Firebase Admin
 try:
     if not firebase_admin._apps:
@@ -35,123 +39,56 @@ except Exception as e:
     print(f"Warning: Failed to initialize Firebase: {e}")
 
 # Initialize Firestore Client
-# If firebase_admin is initialized, this uses the same app.
-# Or we can let it auto-discover.
 DB_NAME = os.getenv("DB_NAME")
 db = firestore.Client(database=DB_NAME)
 
 app = FastAPI()
 
-# In-memory cache for leaderboard
-# Simple implementation: store (data, timestamp) tuple
-# Cache TTL: 30 seconds
+# --- CACHES ---
 CACHE_TTL = 30  # seconds
-leaderboard_cache: Optional[tuple[list, float]] = None
+leaderboard_cache: Dict[str, tuple[list, float]] = {} # Key: "weekly_{week_id}" or "overall"
 
-# Leaderboard snapshot cache (persisted from Firestore snapshot)
-# Format: (rankings_list, week_id)
-leaderboard_snapshot_cache: Optional[tuple[list, str]] = None
+# --- HELPERS ---
 
-def compute_leaderboard_for_week(week_id: str) -> list:
+def get_active_week_id() -> str:
     """
-    Compute leaderboard for a specific week.
-    Fetches all submitted users for that week, sorts by score DESC, time ASC.
-    Returns list with rank numbers added.
+    Determines the PREFERRED active week.
+    1. Checks if there is a week explicitly scheduled for NOW in 'weeks' collection.
+    2. If not, falls back to calendar week.
     """
-    try:
-        # Query users who submitted in this week
-        users_ref = db.collection("users").where("submitted", "==", True).where("week_id", "==", week_id)
-        docs = users_ref.stream()
-        
-        users_list = []
-        for doc in docs:
-            user = doc.to_dict()
-            users_list.append({
-                "name": user.get("name", "Unknown"),
-                "score": user.get("score", 0),
-                "time_taken": user.get("time_taken", 0),
-                "week_id": user.get("week_id", "")
-            })
-        
-        # Sort by score DESC, time_taken ASC
-        users_list.sort(key=lambda x: x['time_taken'])
-        users_list.sort(key=lambda x: x['score'], reverse=True)
-        
-        # Add rank numbers
-        for i, user in enumerate(users_list):
-            user['rank'] = i + 1
-        
-        return users_list
-    except Exception as e:
-        print(f"Error computing leaderboard for week {week_id}: {e}")
-        return []
+    now = get_current_utc_time()
+    
+    # Check for active scheduled week
+    # Note: This query might require a composite index if we have many weeks. 
+    # For small scale, streaming all weeks or caching config is fine.
+    # Optimization: Read from 'config/current_week' if we want to force it globally.
+    
+    # Heuristic: Check if the current ISO week exists in 'weeks' and if it has override times
+    iso_week = get_current_iso_week()
+    week_doc = db.collection("weeks").document(iso_week).get()
+    
+    if week_doc.exists:
+        data = week_doc.to_dict()
+        if data.get("is_active") is False:
+            return "inactive" # Explicitly disabled
+            
+    return iso_week
 
-def save_leaderboard_snapshot(week_id: str, rankings: list):
-    """Save leaderboard snapshot to Firestore for historical record."""
-    global leaderboard_snapshot_cache
-    try:
-        db.collection("leaderboard_snapshots").document(week_id).set({
-            "week_id": week_id,
-            "created_at": firestore.SERVER_TIMESTAMP,
-            "rankings": rankings
-        })
-        # Update in-memory cache
-        leaderboard_snapshot_cache = (rankings, week_id)
-        print(f"Leaderboard snapshot saved for {week_id}")
-    except Exception as e:
-        print(f"Error saving leaderboard snapshot: {e}")
-
-def get_leaderboard_snapshot(week_id: str) -> Optional[list]:
-    """Get leaderboard from cache or Firestore snapshot."""
-    global leaderboard_snapshot_cache
-    
-    # Check memory cache first
-    if leaderboard_snapshot_cache is not None:
-        cached_data, cached_week = leaderboard_snapshot_cache
-        if cached_week == week_id:
-            return cached_data
-    
-    # Check Firestore snapshot
-    try:
-        doc = db.collection("leaderboard_snapshots").document(week_id).get()
-        if doc.exists:
-            data = doc.to_dict()
-            rankings = data.get("rankings", [])
-            # Cache it
-            leaderboard_snapshot_cache = (rankings, week_id)
-            return rankings
-    except Exception as e:
-        print(f"Error fetching leaderboard snapshot: {e}")
-    
+def get_week_config(week_id: str):
+    doc = db.collection("weeks").document(week_id).get()
+    if doc.exists:
+        return doc.to_dict()
     return None
 
-# CORS
-origins = [
-    "http://localhost:5173",
-    "http://localhost:8080",
-    "https://united89-quiz-frontend-432448119899.asia-south2.run.app",
-    "https://united89-quiz-backend-432448119899.asia-south2.run.app",
-    "https://united89-club.web.app"
+# --- MODELS ---
 
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Hardcoded Questions REMOVED in favor of Firestore
-
-# Pydantic Models
 class UserRegister(BaseModel):
     name: str
     phone: str
 
 class SubmitAnswers(BaseModel):
     user_id: str
+    week_id: str
     answers: Dict[str, str]
     time_taken: int
 
@@ -160,33 +97,54 @@ class QuizConfig(BaseModel):
     quiz_active: bool
     leaderboard_active: bool = False
 
+class WeekConfig(BaseModel):
+    week_id: str
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    is_active: bool = True
+    topic: Optional[str] = None
+    description: Optional[str] = None
+
 class QuestionCreate(BaseModel):
     id: str
     text: str
     options: List[str]
     answer: str
     order: int
+    week_id: str # Required now!
+
+# --- ENDPOINTS ---
 
 @app.post("/api/register")
 async def register(user: UserRegister):
-    # Use Phone as User ID
     user_id = user.phone
     doc_ref = db.collection("users").document(user_id)
     doc = doc_ref.get()
 
+    # Determine current week to check submission status for THAT week
+    week_id = get_active_week_id()
+    
+    has_submitted_this_week = False
+    
     if doc.exists:
-        data = doc.to_dict()
-        has_submitted = data.get("submitted", False)
-        # Return status instead of error, allowing user to proceed to Rules page
-        return {"user_id": user_id, "has_submitted": has_submitted, "resuming": not has_submitted}
+        # Check sub-collection for this week's submission
+        sub_ref = doc_ref.collection("submissions").document(week_id)
+        sub_doc = sub_ref.get()
+        if sub_doc.exists:
+            has_submitted_this_week = True
+            
+        return {
+            "user_id": user_id, 
+            "has_submitted": has_submitted_this_week,
+            "week_id": week_id,
+            "resuming": not has_submitted_this_week # Simplified logic for now
+        }
 
     user_data = {
         "user_id": user_id,
         "name": user.name,
         "phone": user.phone,
-        "score": 0,
-        "answers": {},
-        "submitted": False,
+        "cumulative_score": 0, # New Field
         "created_at": firestore.SERVER_TIMESTAMP
     }
     
@@ -195,12 +153,18 @@ async def register(user: UserRegister):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-    return {"user_id": user_id, "has_submitted": False}
+    return {"user_id": user_id, "has_submitted": False, "week_id": week_id}
 
 @app.get("/api/questions")
-async def get_questions():
-    # Fetch questions from Firestore sorted by order
-    questions_ref = db.collection("questions").order_by("order")
+async def get_questions(week_id: Optional[str] = None):
+    # If no week_id provided, get for CURRENT active week
+    target_week = week_id if week_id else get_active_week_id()
+    
+    if target_week == "inactive":
+        return []
+
+    # Fetch questions for this week
+    questions_ref = db.collection("questions").where("week_id", "==", target_week).order_by("order")
     docs = questions_ref.stream()
     
     public_questions = []
@@ -213,24 +177,17 @@ async def get_questions():
         })
     return public_questions
 
-@app.get("/api/config")
-async def get_config():
-    doc_ref = db.collection("config").document("quiz_settings")
-    doc = doc_ref.get()
-    if doc.exists:
-        data = doc.to_dict()
-        # Ensure new fields are present
-        if "leaderboard_active" not in data:
-            data["leaderboard_active"] = False
-        return data
-    return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False}
-
 @app.post("/api/submit")
 async def submit(submission: SubmitAnswers):
     global leaderboard_cache
     
-    # Calculate score from DB
-    questions_ref = db.collection("questions")
+    # Verify week is valid/active
+    # (Skipping strict time validation for now to simplify, but implied by architecture)
+    
+    week_id = submission.week_id
+    
+    # Calculate score
+    questions_ref = db.collection("questions").where("week_id", "==", week_id)
     docs = questions_ref.stream()
     correct_answers = {doc.id: doc.to_dict().get("correct_answer") for doc in docs}
 
@@ -239,69 +196,198 @@ async def submit(submission: SubmitAnswers):
         if correct_answers.get(qid) == selected_option:
             score += 1
     
-    # Update Firestore
     try:
-        doc_ref = db.collection("users").document(submission.user_id)
-        doc = doc_ref.get()
-        if not doc.exists:
+        user_ref = db.collection("users").document(submission.user_id)
+        user_doc = user_ref.get()
+        if not user_doc.exists:
             raise HTTPException(status_code=404, detail="User not found")
-            
-        doc_ref.update({
-            "answers": submission.answers,
+
+        # 1. Save Submission in Sub-collection
+        sub_ref = user_ref.collection("submissions").document(week_id)
+        if sub_ref.get().exists:
+             raise HTTPException(status_code=400, detail="Already submitted for this week")
+             
+        sub_ref.set({
+            "week_id": week_id,
             "score": score,
+            "answers": submission.answers,
             "time_taken": submission.time_taken,
-            "submitted": True,
-            "submitted_at": firestore.SERVER_TIMESTAMP,
-            "week_id": get_current_week_id()
+            "submitted_at": firestore.SERVER_TIMESTAMP
         })
         
-        # Invalidate leaderboard cache on new submission
-        leaderboard_cache = None
+        # 2. Update Cumulative Score (Atomically increment)
+        user_ref.update({
+            "cumulative_score": firestore.Increment(score)
+        })
+        
+        # Invalidate caches
+        leaderboard_cache = {} 
         
     except Exception as e:
+        print(f"Submit Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
     return {"score": score}
 
-# Admin Endpoints
-@app.post("/api/admin/config")
-async def update_config(config: QuizConfig):
+@app.get("/api/leaderboard")
+async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
     """
-    Update quiz configuration.
-    When leaderboard_active is set to true:
-    1. Automatically set quiz_active to false
-    2. Compute leaderboard rankings for current week
-    3. Save snapshot to Firestore for fast retrieval
+    type: 'weekly' or 'overall'
+    week_id: required if type is 'weekly', defaults to current if missing
     """
-    global leaderboard_snapshot_cache
+    global leaderboard_cache
     
+    target_week = week_id if week_id else get_active_week_id()
+    cache_key = f"{type}_{target_week}" if type == 'weekly' else "overall"
+    
+    # Cache Check
+    current_time = time.time()
+    if cache_key in leaderboard_cache:
+        data, ts = leaderboard_cache[cache_key]
+        if current_time - ts < CACHE_TTL:
+            return data
+
     try:
-        config_dict = config.dict()
+        users_list = []
         
-        # If enabling leaderboard, auto-disable quiz and compute snapshot
-        if config.leaderboard_active:
-            config_dict['quiz_active'] = False
+        if type == "overall":
+            # Try new structure (cumulative_score) first
+            users_ref = db.collection("users").order_by("cumulative_score", direction=firestore.Query.DESCENDING)
+            docs = list(users_ref.stream())
             
-            # Get current week ID
-            week_id = get_current_week_id()
+            # Fallback: If no cumulative_score data, use old 'score' field
+            if len(docs) == 0 or all(d.to_dict().get("cumulative_score", 0) == 0 for d in docs):
+                users_ref = db.collection("users").where("submitted", "==", True).order_by("score", direction=firestore.Query.DESCENDING).limit(50)
+                docs = list(users_ref.stream())
+                for doc in docs:
+                    u = doc.to_dict()
+                    users_list.append({
+                        "name": u.get("name", "Unknown"),
+                        "score": u.get("score", 0),
+                        "time_taken": u.get("time_taken", 0),  # Single week time
+                        "avg_time": u.get("time_taken", 0),
+                        "weeks_played": 1,
+                        "week_id": "All-Time"
+                    })
+            else:
+                # New structure: Calculate avg time from submissions
+                for doc in docs:
+                    u = doc.to_dict()
+                    
+                    # Fetch user's submissions to calculate average time
+                    submissions = list(doc.reference.collection("submissions").stream())
+                    total_time = 0
+                    weeks_count = len(submissions)
+                    
+                    for sub in submissions:
+                        s_data = sub.to_dict()
+                        total_time += s_data.get("time_taken", 0)
+                    
+                    avg_time = round(total_time / weeks_count) if weeks_count > 0 else 0
+                    
+                    users_list.append({
+                        "name": u.get("name", "Unknown"),
+                        "score": u.get("cumulative_score", 0),
+                        "avg_time": avg_time,
+                        "weeks_played": weeks_count,
+                        "week_id": "All-Time"
+                    })
+                
+                # Sort by score DESC, then avg_time ASC (tiebreaker)
+                users_list.sort(key=lambda x: (-x["score"], x["avg_time"]))
+        else:
+            # Weekly Leaderboard - Try new submissions structure first
+            submissions_query = db.collection_group("submissions").where("week_id", "==", target_week).order_by("score", direction=firestore.Query.DESCENDING).order_by("time_taken", direction=firestore.Query.ASCENDING).limit(50)
             
-            # Compute rankings for this week
-            rankings = compute_leaderboard_for_week(week_id)
+            subs = list(submissions_query.stream())
             
-            # Save snapshot to Firestore and cache
-            save_leaderboard_snapshot(week_id, rankings)
+            if len(subs) > 0:
+                # New structure: use submissions
+                for sub in subs:
+                    s_data = sub.to_dict()
+                    name = s_data.get("user_name")
+                    if not name:
+                        if sub.reference.parent.parent:
+                            uid = sub.reference.parent.parent.id
+                            u_doc = db.collection("users").document(uid).get()
+                            name = u_doc.to_dict().get("name") if u_doc.exists else "Unknown"
+                        else:
+                            name = "Unknown"
+                    
+                    users_list.append({
+                        "name": name,
+                        "score": s_data.get("score", 0),
+                        "time_taken": s_data.get("time_taken", 0),
+                        "week_id": target_week
+                    })
+            else:
+                # FALLBACK: Old structure - query users directly (pre-migration data)
+                # Filter by week_id stored directly on user doc (old format)
+                users_ref = db.collection("users").where("submitted", "==", True).where("week_id", "==", target_week)
+                docs = list(users_ref.stream())
+                
+                # Sort by score DESC, time_taken ASC
+                sorted_docs = sorted(docs, key=lambda d: (-d.to_dict().get("score", 0), d.to_dict().get("time_taken", float('inf'))))
+                
+                for doc in sorted_docs[:50]:
+                    u = doc.to_dict()
+                    users_list.append({
+                        "name": u.get("name", "Unknown"),
+                        "score": u.get("score", 0),
+                        "time_taken": u.get("time_taken", 0),
+                        "week_id": target_week
+                    })
+
+        # Rank
+        for i, u in enumerate(users_list):
+            u['rank'] = i + 1
             
-            # Store current week in config for reference
-            config_dict['current_week_id'] = week_id
-            
-            print(f"Leaderboard enabled: quiz closed, snapshot saved for {week_id}")
-        
-        db.collection("config").document("quiz_settings").set(config_dict)
+        leaderboard_cache[cache_key] = (users_list, current_time)
+        return users_list
         
     except Exception as e:
+        print(f"LB Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/admin/weeks")
+async def get_weeks():
+    # Return list of weeks + metadata
+    # Also generate next 4 weeks for UI convenience
     
-    return {"status": "updated", "quiz_active": config_dict.get('quiz_active'), "leaderboard_active": config_dict.get('leaderboard_active')}
+    current = get_current_iso_week()
+    weeks = []
+    
+    # TODO: Fetch from 'weeks' collection to get overrides
+    # For now, generate basic list centered on current
+    
+    # Simple logic: just string maniupulation for now or fetch existing from questions?
+    # Better: List all weeks that have Questions created OR are in 'weeks' collection
+    
+    # 1. Get distinct weeks from Questions? (No distinct in firestore)
+    # 2. Just return current +/- 4 weeks
+    
+    now = datetime.now()
+    year, week, _ = now.isocalendar()
+    
+    for i in range(-2, 5): # 2 weeks back, 4 weeks forward
+        # Logic to calculate week string
+        # Simplified:
+        w = week + i
+        y = year
+        if w > 52:
+            w -= 52
+            y += 1
+        elif w < 1:
+            w += 52
+            y -= 1
+            
+        wid = f"{y}-W{w:02d}"
+        weeks.append({"week_id": wid, "is_current": (wid == current)})
+        
+    return weeks
+
+# --- ADMIN Q MANAGEMENT ---
 
 @app.post("/api/admin/questions")
 async def add_question(question: QuestionCreate):
@@ -310,24 +396,18 @@ async def add_question(question: QuestionCreate):
             "text": question.text,
             "options": question.options,
             "correct_answer": question.answer,
-            "order": question.order
+            "order": question.order,
+            "week_id": question.week_id
         })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     return {"status": "created"}
 
-@app.delete("/api/admin/questions/{question_id}")
-async def delete_question(question_id: str):
-    try:
-        db.collection("questions").document(question_id).delete()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    return {"status": "deleted"}
-
 @app.get("/api/admin/questions-full")
-async def get_questions_full():
-    # Fetch all questions including correct answers for admin view
-    questions_ref = db.collection("questions").order_by("order")
+async def get_questions_full(week_id: Optional[str] = None):
+    target_week = week_id if week_id else get_active_week_id()
+    
+    questions_ref = db.collection("questions").where("week_id", "==", target_week).order_by("order")
     docs = questions_ref.stream()
     
     full_questions = []
@@ -337,82 +417,53 @@ async def get_questions_full():
             "id": doc.id,
             "text": q["text"],
             "options": q["options"],
-            "correct_answer": q["correct_answer"]
+            "correct_answer": q["correct_answer"],
+            "week_id": q.get("week_id")
         })
     return full_questions
 
-@app.get("/api/admin/users")
-async def get_users():
-    global leaderboard_cache
-    
-    # Check cache validity
-    current_time = time.time()
-    if leaderboard_cache is not None:
-        cached_data, cache_time = leaderboard_cache
-        if current_time - cache_time < CACHE_TTL:
-            # Cache hit - return cached data
-            return cached_data
-    
-    # Cache miss or expired - fetch from Firestore
+@app.get("/api/config")
+async def get_config():
+    """Get quiz configuration from Firestore"""
     try:
-        users_ref = db.collection("users").order_by("score", direction=firestore.Query.DESCENDING).order_by("time_taken", direction=firestore.Query.ASCENDING)
-        docs = users_ref.stream()
-        users = []
-        for doc in docs:
-            users.append(doc.to_dict())
-        
-        # Update cache
-        leaderboard_cache = (users, current_time)
-        
-        return users
+        doc = db.collection("config").document("quiz_settings").get()
+        if doc.exists:
+            return doc.to_dict()
+        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False}
     except Exception as e:
-        print(f"Error getting users: {e}") # Debug log
+        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False}
+
+@app.post("/api/admin/config")
+async def update_config(config: QuizConfig):
+    """Update quiz configuration in Firestore"""
+    try:
+        db.collection("config").document("quiz_settings").set({
+            "timer_duration_minutes": config.timer_duration_minutes,
+            "quiz_active": config.quiz_active,
+            "leaderboard_active": config.leaderboard_active
+        })
+        return {"status": "success"}
+    except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Public Leaderboard Endpoint (no sensitive data)
-@app.get("/api/leaderboard")
-async def get_leaderboard():
-    """
-    Public leaderboard endpoint - returns only safe data (no phone/answers).
-    Priority: 1) Memory cache 2) Firestore snapshot 3) Live compute
-    """
-    # First, get the current week_id from config to know which snapshot to load
-    try:
-        config_doc = db.collection("config").document("quiz_settings").get()
-        if config_doc.exists:
-            config_data = config_doc.to_dict()
-            current_week = config_data.get("current_week_id", get_current_week_id())
-        else:
-            current_week = get_current_week_id()
-        
-        # Try to get from snapshot (fast path)
-        snapshot_data = get_leaderboard_snapshot(current_week)
-        if snapshot_data is not None:
-            return snapshot_data
-        
-        # Fallback: compute live (for when no snapshot exists yet)
-        users_ref = db.collection("users").where("submitted", "==", True)
-        docs = users_ref.stream()
-        
-        users_list = []
-        for doc in docs:
-            user = doc.to_dict()
-            users_list.append({
-                "name": user.get("name", "Unknown"),
-                "score": user.get("score", 0),
-                "time_taken": user.get("time_taken", 0),
-                "week_id": user.get("week_id", "")
-            })
-            
-        # Sort by score DESC, time_taken ASC in memory
-        users_list.sort(key=lambda x: x['time_taken'])
-        users_list.sort(key=lambda x: x['score'], reverse=True)
-        
-        # Add rank numbers
-        for i, user in enumerate(users_list):
-            user['rank'] = i + 1
-        
-        return users_list
-    except Exception as e:
-        print(f"Error getting leaderboard: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+@app.delete("/api/admin/questions/{question_id}")
+async def delete_question(question_id: str):
+    db.collection("questions").document(question_id).delete()
+    return {"status": "deleted"}
+
+# CORS
+origins = [
+    "http://localhost:5173",
+    "http://localhost:8080",
+    "https://united89-quiz-frontend-432448119899.asia-south2.run.app",
+    "https://united89-quiz-backend-432448119899.asia-south2.run.app",
+    "https://united89-club.web.app"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)

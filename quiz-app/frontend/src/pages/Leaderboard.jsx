@@ -1,41 +1,74 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getLeaderboard, getConfig } from '../services/api';
-import { Trophy, Clock, Medal, Home, Lock } from 'lucide-react';
+import { Trophy, Clock, Medal, Home, Lock, Calendar, Award, Crown, Star, Sparkles } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 function Leaderboard() {
-    const [users, setUsers] = useState([]);
+    const [weeklyUsers, setWeeklyUsers] = useState([]);
+    const [overallUsers, setOverallUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isActive, setIsActive] = useState(false);
+    const [activeTab, setActiveTab] = useState('weekly');
+    const confettiTriggered = useRef(false);
     const navigate = useNavigate();
 
     useEffect(() => {
+        let mounted = true;
+        let interval;
+
         const fetchData = async () => {
             try {
-                // First check if leaderboard is active
                 const config = await getConfig();
+
+                if (!mounted) return;
 
                 if (config.leaderboard_active) {
                     setIsActive(true);
-                    const data = await getLeaderboard();
-                    setUsers(data);
+                    // Fetch both leaderboards with explicit type params
+                    const [weeklyData, overallData] = await Promise.all([
+                        getLeaderboard('weekly'),
+                        getLeaderboard('overall')
+                    ]);
+
+                    if (!mounted) return;
+
+                    setWeeklyUsers(weeklyData || []);
+                    setOverallUsers(overallData || []);
+
+                    // Trigger confetti on first load
+                    if (!confettiTriggered.current && ((weeklyData && weeklyData.length > 0) || (overallData && overallData.length > 0))) {
+                        confettiTriggered.current = true;
+                        setTimeout(() => triggerConfetti(), 500);
+                    }
                 } else {
                     setIsActive(false);
                 }
             } catch (error) {
                 console.error("Failed to load data", error);
             } finally {
-                setLoading(false);
+                if (mounted) setLoading(false);
             }
         };
 
         fetchData();
+        interval = setInterval(fetchData, 30000);
 
-        // Auto-refresh every 30 seconds
-        const interval = setInterval(fetchData, 30000);
-        return () => clearInterval(interval);
+        return () => {
+            mounted = false;
+            clearInterval(interval);
+        };
     }, []);
+
+    const triggerConfetti = () => {
+        confetti({
+            particleCount: 100,
+            spread: 80,
+            origin: { x: 0.5, y: 0.4 },
+            colors: ['#FFD700', '#1e3a5f', '#FFA500', '#FFE066', '#C0C0C0', '#CD7F32']
+        });
+    };
 
     const formatTime = (seconds) => {
         if (!seconds && seconds !== 0) return '-';
@@ -44,124 +77,181 @@ function Leaderboard() {
         return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
     };
 
-    const getRankIcon = (index) => {
-        if (index === 0) return <Medal size={24} className="text-yellow-400 drop-shadow-md" />; // Gold
-        if (index === 1) return <Medal size={24} className="text-gray-300 drop-shadow-md" />;   // Silver
-        if (index === 2) return <Medal size={24} className="text-amber-600 drop-shadow-md" />;  // Bronze
-        return <span className="font-serif text-lg text-gray-400 font-bold">#{index + 1}</span>;
+    const getRankBadge = (index) => {
+        if (index === 0) return <Crown className="text-yellow-400" size={20} />;
+        if (index === 1) return <Medal className="text-gray-300" size={18} />;
+        if (index === 2) return <Medal className="text-amber-600" size={18} />;
+        return <span className="text-gray-400 font-bold text-sm">#{index + 1}</span>;
     };
 
-    return (
-        <div className="w-full max-w-4xl mx-auto p-4 md:p-8 min-h-screen flex flex-col items-center">
+    const LeaderboardCard = ({ users, type, title, icon: Icon, gradient }) => (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-white/95 backdrop-blur rounded-xl shadow-xl overflow-hidden flex-1 min-w-0"
+        >
+            {/* Header */}
+            <div className={`p-4 ${gradient} text-white`}>
+                <div className="flex items-center justify-center gap-2">
+                    <Icon size={22} />
+                    <h2 className="text-lg font-serif font-bold">{title}</h2>
+                </div>
+            </div>
 
+            {/* Table */}
+            <div className="max-h-[55vh] overflow-y-auto">
+                {users.length === 0 ? (
+                    <div className="p-8 text-center text-gray-400">
+                        <Star className="mx-auto mb-2 opacity-50" size={28} />
+                        <p className="text-sm">No rankings yet</p>
+                    </div>
+                ) : (
+                    <table className="w-full text-sm">
+                        <thead className={`sticky top-0 ${type === 'weekly' ? 'bg-blue-700' : 'bg-amber-600'} text-white text-xs`}>
+                            <tr>
+                                <th className="p-2 text-center w-12">#</th>
+                                <th className="p-2 text-left">Name</th>
+                                <th className="p-2 text-center w-16">Pts</th>
+                                <th className="p-2 text-center w-16">Avg<space> </space>
+                                    <Clock size={12} className="inline" />
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                            {users.map((u, i) => (
+                                <motion.tr
+                                    key={i}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: i * 0.03 }}
+                                    className={`${i === 0 ? 'bg-amber-50' : i % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50 transition-colors`}
+                                >
+                                    <td className="p-2 text-center">
+                                        {getRankBadge(i)}
+                                    </td>
+                                    <td className="p-2 truncate max-w-[120px]">
+                                        <span className={`font-medium ${i === 0 ? 'text-amber-700' : 'text-gray-800'}`}>
+                                            {u.name}
+                                        </span>
+                                    </td>
+                                    <td className="p-2 text-center">
+                                        <span className={`font-bold ${type === 'weekly' ? 'text-blue-600' : 'text-amber-600'}`}>
+                                            {u.score}
+                                        </span>
+                                    </td>
+                                    <td className="p-2 text-center text-gray-500 font-mono text-xs">
+                                        {formatTime(type === 'weekly' ? u.time_taken : u.avg_time)}
+                                    </td>
+                                </motion.tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+        </motion.div>
+    );
+
+    return (
+        <div className="w-full max-w-5xl mx-auto p-4 min-h-screen flex flex-col items-center">
+
+            {/* Header */}
             <motion.div
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                className="text-center mb-8"
+                className="text-center mb-6"
             >
-                <h1 className="text-4xl md:text-5xl font-serif text-white mb-2 drop-shadow-lg flex items-center justify-center gap-3">
-                    <Trophy className="text-antique-gold" size={40} />
-                    Hall of Fame
-                    <Trophy className="text-antique-gold" size={40} />
-                </h1>
-                <p className="text-antique-gold font-serif italic text-xl tracking-wider">Top Performers of the Week</p>
+                <div className="flex items-center justify-center gap-3 mb-2">
+                    <Trophy className="text-antique-gold" size={36} />
+                    <h1 className="text-3xl md:text-4xl font-serif text-white drop-shadow-lg">
+                        Hall of Fame
+                    </h1>
+                    <Trophy className="text-antique-gold" size={36} />
+                </div>
+                <p className="text-antique-gold/80 font-serif italic text-sm flex items-center justify-center gap-1">
+                    <Sparkles size={14} /> Top Performers <Sparkles size={14} />
+                </p>
             </motion.div>
 
-            <motion.div
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                className="w-full bg-white/95 backdrop-blur-sm rounded-lg shadow-2xl overflow-hidden border-2 border-antique-gold/50"
-            >
-                {/* CONTENT AREA */}
-                {loading ? (
-                    <div className="p-20 text-center text-gray-500 font-serif text-xl animate-pulse">
-                        Checking Records...
+            {/* Content */}
+            {loading ? (
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="bg-white/90 rounded-xl p-8 shadow-xl text-center">
+                        <div className="animate-spin rounded-full h-10 w-10 border-4 border-antique-gold border-t-transparent mx-auto mb-3"></div>
+                        <p className="text-gray-500 text-sm">Loading...</p>
                     </div>
-                ) : !isActive ? (
-                    // LOCKED / COMING SOON STATE
-                    <div className="p-16 text-center flex flex-col items-center">
-                        <div className="bg-gray-100 p-6 rounded-full mb-6">
-                            <Lock size={48} className="text-gray-400" />
-                        </div>
-                        <h2 className="text-3xl font-serif text-royal-blue mb-4">Results Coming Soon</h2>
-                        <p className="font-sans text-gray-600 text-lg max-w-md mx-auto leading-relaxed">
-                            The judges are tallying the scores! The leaderboard has not been revealed yet.
-                            Please check back later for the official results.
-                        </p>
+                </div>
+            ) : !isActive ? (
+                <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="bg-white/95 rounded-xl p-10 shadow-xl text-center max-w-md"
+                >
+                    <Lock size={48} className="text-gray-300 mx-auto mb-4" />
+                    <h2 className="text-2xl font-serif text-royal-blue mb-3">Results Coming Soon</h2>
+                    <p className="text-gray-500">The leaderboard has not been revealed yet.</p>
+                </motion.div>
+            ) : (
+                <>
+                    {/* Mobile Tabs */}
+                    <div className="md:hidden flex bg-white/20 backdrop-blur rounded-full p-1 mb-4 w-full max-w-xs border border-white/20">
+                        <button
+                            onClick={() => setActiveTab('weekly')}
+                            className={`flex-1 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'weekly' ? 'bg-blue-600 text-white' : 'text-white/70'}`}
+                        >
+                            This Week
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('overall')}
+                            className={`flex-1 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'overall' ? 'bg-amber-500 text-white' : 'text-white/70'}`}
+                        >
+                            All-Time
+                        </button>
                     </div>
-                ) : (
-                    // ACTIVE LEADERBOARD TABLE
-                    <div className="overflow-x-auto">
-                        <table className="w-full table-auto">
-                            <thead className="bg-royal-blue text-white font-serif uppercase tracking-widest text-sm">
-                                <tr>
-                                    <th className="p-5 text-center w-24">Rank</th>
-                                    <th className="p-5 text-left">Player</th>
-                                    <th className="p-5 text-center">Score</th>
-                                    <th className="p-5 text-center">Time</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {users.length === 0 ? (
-                                    <tr>
-                                        <td colSpan="4" className="p-10 text-center text-gray-500 font-serif text-xl">
-                                            No submissions yet. Be the first!
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    users.map((u, i) => (
-                                        <motion.tr
-                                            key={i}
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: i * 0.05 }}
-                                            className={`
-                                                group transition-colors
-                                                ${i === 0 ? 'bg-amber-50/50 hover:bg-amber-100/50' : 'hover:bg-blue-50'}
-                                            `}
-                                        >
-                                            <td className="p-4 text-center flex justify-center items-center">
-                                                {getRankIcon(i)}
-                                            </td>
-                                            <td className="p-4">
-                                                <div className="font-bold text-royal-blue text-lg font-serif">
-                                                    {u.name}
-                                                </div>
-                                                {u.week_id && (
-                                                    <div className="text-xs text-gray-400 font-mono mt-1">
-                                                        Week: {u.week_id}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="p-4 text-center">
-                                                <span className="inline-block px-3 py-1 bg-antique-gold/20 text-antique-gold-dark rounded-full font-bold">
-                                                    {u.score}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-center font-mono text-gray-600 flex items-center justify-center gap-2">
-                                                <Clock size={16} className="text-gray-400" />
-                                                {formatTime(u.time_taken)}
-                                            </td>
-                                        </motion.tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </motion.div>
 
+                    {/* Mobile Single View */}
+                    <div className="md:hidden w-full">
+                        <AnimatePresence mode="wait">
+                            {activeTab === 'weekly' ? (
+                                <motion.div key="w" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                                    <LeaderboardCard users={weeklyUsers} type="weekly" title="This Week" icon={Calendar} gradient="bg-gradient-to-r from-blue-600 to-indigo-600" />
+                                </motion.div>
+                            ) : (
+                                <motion.div key="o" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                                    <LeaderboardCard users={overallUsers} type="overall" title="All-Time Legends" icon={Award} gradient="bg-gradient-to-r from-amber-500 to-orange-500" />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Desktop Side-by-Side */}
+                    <div className="hidden md:flex gap-4 w-full">
+                        <LeaderboardCard users={weeklyUsers} type="weekly" title="This Week" icon={Calendar} gradient="bg-gradient-to-r from-blue-600 to-indigo-600" />
+                        <LeaderboardCard users={overallUsers} type="overall" title="All-Time Legends" icon={Award} gradient="bg-gradient-to-r from-amber-500 to-orange-500" />
+                    </div>
+
+                    {/* Celebrate Button */}
+                    <motion.button
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.8 }}
+                        onClick={triggerConfetti}
+                        className="mt-4 px-5 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full text-sm font-bold shadow-lg hover:scale-105 active:scale-95 transition-transform flex items-center gap-2"
+                    >
+                        <Sparkles size={16} /> Celebrate! 🎉
+                    </motion.button>
+                </>
+            )}
+
+            {/* Back Button */}
             <motion.button
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
                 onClick={() => navigate('/welcome')}
-                className="mt-8 btn-vintage flex items-center gap-2 px-8 py-3 shadow-xl hover:scale-105 active:scale-95 transition-transform"
+                className="mt-6 btn-vintage flex items-center gap-2 px-6 py-2.5 shadow-xl"
             >
-                <Home size={20} />
-                Back to Lobby
+                <Home size={18} /> Back to Lobby
             </motion.button>
-
         </div>
     );
 }
