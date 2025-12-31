@@ -71,3 +71,22 @@ export const getAdminQuestions = async (weekId = null) => {
     const response = await axios.get(`${API_URL}/api/admin/questions-full`, { params });
     return response.data;
 };
+
+export const generateQuestions = async (weekId) => {
+    const response = await axios.post(`${API_URL}/api/admin/generate-questions`, null, {
+        params: { week_id: weekId }
+    });
+    return response.data;
+};
+
+export const addBatchQuestions = async (questions) => {
+    const response = await axios.post(`${API_URL}/api/admin/questions/batch`, { questions });
+    return response.data;
+};
+
+export const getSubmissionDetails = async (userId, weekId) => {
+    const response = await axios.get(`${API_URL}/api/admin/submission/${userId}`, {
+        params: { week_id: weekId }
+    });
+    return response.data;
+};

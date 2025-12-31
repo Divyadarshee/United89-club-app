@@ -11,6 +11,8 @@ from dotenv import load_dotenv
 from datetime import datetime
 import pytz
 
+from ai.genai import generate_questions_by_ai
+
 load_dotenv()
 
 # Utility for standardizing time
@@ -20,7 +22,9 @@ def get_current_utc_time():
 def get_current_iso_week() -> str:
     """Returns absolute current ISO week identifier, e.g., '2024-W51' (based on system time)"""
     now = datetime.now()
-    return f"{now.year}-W{now.isocalendar()[1]:02d}"
+    iso_cal = now.isocalendar()
+    # Use iso_cal[0] (ISO year) not now.year, because Dec 31 may belong to Week 1 of next year
+    return f"{iso_cal[0]}-W{iso_cal[1]:02d}"
 
 # Initialize Firebase Admin
 try:
@@ -40,7 +44,7 @@ except Exception as e:
 
 # Initialize Firestore Client
 DB_NAME = os.getenv("DB_NAME")
-db = firestore.Client(database=DB_NAME)
+db = firestore.AsyncClient(database=DB_NAME)
 
 app = FastAPI()
 
@@ -50,7 +54,7 @@ leaderboard_cache: Dict[str, tuple[list, float]] = {} # Key: "weekly_{week_id}" 
 
 # --- HELPERS ---
 
-def get_active_week_id() -> str:
+async def get_active_week_id() -> str:
     """
     Determines the PREFERRED active week.
     1. Checks if there is a week explicitly scheduled for NOW in 'weeks' collection.
@@ -65,7 +69,7 @@ def get_active_week_id() -> str:
     
     # Heuristic: Check if the current ISO week exists in 'weeks' and if it has override times
     iso_week = get_current_iso_week()
-    week_doc = db.collection("weeks").document(iso_week).get()
+    week_doc = await db.collection("weeks").document(iso_week).get()
     
     if week_doc.exists:
         data = week_doc.to_dict()
@@ -74,11 +78,24 @@ def get_active_week_id() -> str:
             
     return iso_week
 
-def get_week_config(week_id: str):
-    doc = db.collection("weeks").document(week_id).get()
+async def get_week_config(week_id: str):
+    doc = await db.collection("weeks").document(week_id).get()
     if doc.exists:
         return doc.to_dict()
     return None
+
+async def is_tester_phone(phone: str) -> bool:
+    """Check if the given phone number is in the tester list"""
+    try:
+        doc = await db.collection("config").document("quiz_settings").get()
+        if doc.exists:
+            config = doc.to_dict()
+            tester_phones = config.get("tester_phones", [])
+            return phone in tester_phones
+        return False
+    except Exception as e:
+        print(f"Error checking tester status: {e}")
+        return False
 
 # --- MODELS ---
 
@@ -96,6 +113,7 @@ class QuizConfig(BaseModel):
     timer_duration_minutes: int
     quiz_active: bool
     leaderboard_active: bool = False
+    tester_phones: List[str] = []  # Phone numbers that can bypass submission limit
 
 class WeekConfig(BaseModel):
     week_id: str
@@ -113,23 +131,26 @@ class QuestionCreate(BaseModel):
     order: int
     week_id: str # Required now!
 
+class QuestionBatchCreate(BaseModel):
+    questions: List[QuestionCreate]
+
 # --- ENDPOINTS ---
 
 @app.post("/api/register")
 async def register(user: UserRegister):
     user_id = user.phone
     doc_ref = db.collection("users").document(user_id)
-    doc = doc_ref.get()
+    doc = await doc_ref.get()
 
     # Determine current week to check submission status for THAT week
-    week_id = get_active_week_id()
+    week_id = await get_active_week_id()
     
     has_submitted_this_week = False
     
     if doc.exists:
         # Check sub-collection for this week's submission
         sub_ref = doc_ref.collection("submissions").document(week_id)
-        sub_doc = sub_ref.get()
+        sub_doc = await sub_ref.get()
         if sub_doc.exists:
             has_submitted_this_week = True
             
@@ -149,7 +170,7 @@ async def register(user: UserRegister):
     }
     
     try:
-        doc_ref.set(user_data)
+        await doc_ref.set(user_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -158,14 +179,14 @@ async def register(user: UserRegister):
 @app.get("/api/questions")
 async def get_questions(week_id: Optional[str] = None):
     # If no week_id provided, get for CURRENT active week
-    target_week = week_id if week_id else get_active_week_id()
+    target_week = week_id if week_id else await get_active_week_id()
     
     if target_week == "inactive":
         return []
 
     # Fetch questions for this week
     questions_ref = db.collection("questions").where("week_id", "==", target_week).order_by("order")
-    docs = questions_ref.stream()
+    docs = [doc async for doc in questions_ref.stream()]
     
     public_questions = []
     for doc in docs:
@@ -188,7 +209,7 @@ async def submit(submission: SubmitAnswers):
     
     # Calculate score
     questions_ref = db.collection("questions").where("week_id", "==", week_id)
-    docs = questions_ref.stream()
+    docs = [doc async for doc in questions_ref.stream()]
     correct_answers = {doc.id: doc.to_dict().get("correct_answer") for doc in docs}
 
     score = 0
@@ -198,16 +219,30 @@ async def submit(submission: SubmitAnswers):
     
     try:
         user_ref = db.collection("users").document(submission.user_id)
-        user_doc = user_ref.get()
+        user_doc = await user_ref.get()
         if not user_doc.exists:
             raise HTTPException(status_code=404, detail="User not found")
 
+        # Check if user is a tester
+        is_tester = await is_tester_phone(submission.user_id)
+        
         # 1. Save Submission in Sub-collection
         sub_ref = user_ref.collection("submissions").document(week_id)
-        if sub_ref.get().exists:
-             raise HTTPException(status_code=400, detail="Already submitted for this week")
+        sub_doc = await sub_ref.get()
+        
+        if sub_doc.exists:
+            if is_tester:
+                # Tester: Allow re-submission by overwriting
+                print(f"[TESTER] {submission.user_id} is re-submitting for week {week_id}")
+                old_score = sub_doc.to_dict().get("score", 0)
+                # First, subtract old score from cumulative
+                await user_ref.update({
+                    "cumulative_score": firestore.Increment(-old_score)
+                })
+            else:
+                raise HTTPException(status_code=400, detail="Already submitted for this week")
              
-        sub_ref.set({
+        await sub_ref.set({
             "week_id": week_id,
             "score": score,
             "answers": submission.answers,
@@ -216,7 +251,7 @@ async def submit(submission: SubmitAnswers):
         })
         
         # 2. Update Cumulative Score (Atomically increment)
-        user_ref.update({
+        await user_ref.update({
             "cumulative_score": firestore.Increment(score)
         })
         
@@ -237,7 +272,7 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
     """
     global leaderboard_cache
     
-    target_week = week_id if week_id else get_active_week_id()
+    target_week = week_id if week_id else await get_active_week_id()
     cache_key = f"{type}_{target_week}" if type == 'weekly' else "overall"
     
     # Cache Check
@@ -253,12 +288,12 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
         if type == "overall":
             # Try new structure (cumulative_score) first
             users_ref = db.collection("users").order_by("cumulative_score", direction=firestore.Query.DESCENDING)
-            docs = list(users_ref.stream())
-            
+            docs = [doc async for doc in users_ref.stream()]
+
             # Fallback: If no cumulative_score data, use old 'score' field
             if len(docs) == 0 or all(d.to_dict().get("cumulative_score", 0) == 0 for d in docs):
                 users_ref = db.collection("users").where("submitted", "==", True).order_by("score", direction=firestore.Query.DESCENDING).limit(50)
-                docs = list(users_ref.stream())
+                docs = [doc async for doc in users_ref.stream()]
                 for doc in docs:
                     u = doc.to_dict()
                     users_list.append({
@@ -275,7 +310,7 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
                     u = doc.to_dict()
                     
                     # Fetch user's submissions to calculate average time
-                    submissions = list(doc.reference.collection("submissions").stream())
+                    submissions = [sub async for sub in doc.reference.collection("submissions").stream()]
                     total_time = 0
                     weeks_count = len(submissions)
                     
@@ -299,7 +334,7 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
             # Weekly Leaderboard - Try new submissions structure first
             submissions_query = db.collection_group("submissions").where("week_id", "==", target_week).order_by("score", direction=firestore.Query.DESCENDING).order_by("time_taken", direction=firestore.Query.ASCENDING).limit(50)
             
-            subs = list(submissions_query.stream())
+            subs = [sub async for sub in submissions_query.stream()]
             
             if len(subs) > 0:
                 # New structure: use submissions
@@ -309,12 +344,16 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
                     if not name:
                         if sub.reference.parent.parent:
                             uid = sub.reference.parent.parent.id
-                            u_doc = db.collection("users").document(uid).get()
+                            u_doc = await db.collection("users").document(uid).get()
                             name = u_doc.to_dict().get("name") if u_doc.exists else "Unknown"
                         else:
                             name = "Unknown"
                     
+                    # Get user_id from the parent path (users/{user_id}/submissions/{week_id})
+                    user_id = sub.reference.parent.parent.id if sub.reference.parent.parent else None
+                    
                     users_list.append({
+                        "user_id": user_id,
                         "name": name,
                         "score": s_data.get("score", 0),
                         "time_taken": s_data.get("time_taken", 0),
@@ -324,7 +363,7 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
                 # FALLBACK: Old structure - query users directly (pre-migration data)
                 # Filter by week_id stored directly on user doc (old format)
                 users_ref = db.collection("users").where("submitted", "==", True).where("week_id", "==", target_week)
-                docs = list(users_ref.stream())
+                docs = [doc async for doc in users_ref.stream()]
                 
                 # Sort by score DESC, time_taken ASC
                 sorted_docs = sorted(docs, key=lambda d: (-d.to_dict().get("score", 0), d.to_dict().get("time_taken", float('inf'))))
@@ -332,6 +371,7 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
                 for doc in sorted_docs[:50]:
                     u = doc.to_dict()
                     users_list.append({
+                        "user_id": doc.id,
                         "name": u.get("name", "Unknown"),
                         "score": u.get("score", 0),
                         "time_taken": u.get("time_taken", 0),
@@ -392,7 +432,7 @@ async def get_weeks():
 @app.post("/api/admin/questions")
 async def add_question(question: QuestionCreate):
     try:
-        db.collection("questions").document(question.id).set({
+        await db.collection("questions").document(question.id).set({
             "text": question.text,
             "options": question.options,
             "correct_answer": question.answer,
@@ -405,10 +445,10 @@ async def add_question(question: QuestionCreate):
 
 @app.get("/api/admin/questions-full")
 async def get_questions_full(week_id: Optional[str] = None):
-    target_week = week_id if week_id else get_active_week_id()
+    target_week = week_id if week_id else await get_active_week_id()
     
     questions_ref = db.collection("questions").where("week_id", "==", target_week).order_by("order")
-    docs = questions_ref.stream()
+    docs = [doc async for doc in questions_ref.stream()]
     
     full_questions = []
     for doc in docs:
@@ -426,21 +466,26 @@ async def get_questions_full(week_id: Optional[str] = None):
 async def get_config():
     """Get quiz configuration from Firestore"""
     try:
-        doc = db.collection("config").document("quiz_settings").get()
+        doc = await db.collection("config").document("quiz_settings").get()
         if doc.exists:
-            return doc.to_dict()
-        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False}
+            data = doc.to_dict()
+            # Ensure tester_phones is always present
+            if "tester_phones" not in data:
+                data["tester_phones"] = []
+            return data
+        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "tester_phones": []}
     except Exception as e:
-        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False}
+        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "tester_phones": []}
 
 @app.post("/api/admin/config")
 async def update_config(config: QuizConfig):
     """Update quiz configuration in Firestore"""
     try:
-        db.collection("config").document("quiz_settings").set({
+        await db.collection("config").document("quiz_settings").set({
             "timer_duration_minutes": config.timer_duration_minutes,
             "quiz_active": config.quiz_active,
-            "leaderboard_active": config.leaderboard_active
+            "leaderboard_active": config.leaderboard_active,
+            "tester_phones": config.tester_phones
         })
         return {"status": "success"}
     except Exception as e:
@@ -448,8 +493,69 @@ async def update_config(config: QuizConfig):
 
 @app.delete("/api/admin/questions/{question_id}")
 async def delete_question(question_id: str):
-    db.collection("questions").document(question_id).delete()
+    await db.collection("questions").document(question_id).delete()
     return {"status": "deleted"}
+
+@app.get("/api/admin/submission/{user_id}")
+async def get_user_submission(user_id: str, week_id: str):
+    """Fetch a specific user's submission details for a given week"""
+    try:
+        sub_ref = db.collection("users").document(user_id).collection("submissions").document(week_id)
+        sub_doc = await sub_ref.get()
+        
+        if not sub_doc.exists:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        
+        data = sub_doc.to_dict()
+        return {
+            "user_id": user_id,
+            "week_id": week_id,
+            "score": data.get("score", 0),
+            "time_taken": data.get("time_taken", 0),
+            "answers": data.get("answers", {})
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/admin/generate-questions")
+async def generate_question(week_id: str):
+    current_iso_week_id = get_current_iso_week()
+
+    if current_iso_week_id > week_id:
+        print(f"Trying to generate questions for past week ({week_id}). Current is {current_iso_week_id}")
+        raise HTTPException(status_code=403, detail="Cannot generate questions for past weeks")
+
+    return await generate_questions_by_ai()
+
+@app.post("/api/admin/questions/batch")
+async def add_questions_batch(question_batch: QuestionBatchCreate):
+    batch = db.batch()
+    try:
+        question_week_id = question_batch.questions[0].week_id
+        print(f"Checking and deleting existing questions of week {question_week_id}")
+        
+        # Firestore batch.delete() doesn't support queries. 
+        # We must fetch the document references first.
+        existing_qs = [doc async for doc in db.collection("questions").where("week_id", "==", question_week_id).stream()]
+        for doc in existing_qs:
+            batch.delete(doc.reference)
+
+        print(f"Adding new questions to week {question_week_id}")
+        for question in question_batch.questions:
+            batch.set(db.collection("questions").document(question.id), {
+                "text": question.text,
+                "options": question.options,
+                "correct_answer": question.answer,
+                "order": question.order,
+                "week_id": question.week_id
+            })
+        await batch.commit()
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # CORS
 origins = [
