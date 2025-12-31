@@ -4,3 +4,4 @@ firebase-admin
 pydantic
 python-dotenv
 pytz
+google-genai
