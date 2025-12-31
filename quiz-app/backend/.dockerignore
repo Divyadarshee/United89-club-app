@@ -16,3 +16,4 @@ credentials.json
 .DS_Store
 .git
 .gitignore
+gha-creds-*.json

@@ -1,0 +1,86 @@
+name: 'United89-app-cloud-run-deploy'
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: ${{ vars.GEMINI_API_GCLOUD_PROJECT_ID }}
+  REGION: ${{ vars.GCLOUD_REGION }}
+  BACKEND_SERVICE: ${{ vars.UNITED89_CLUB_APP_BACKEND_SERVICE }}
+  FRONTEND_SERVICE: ${{ vars.UNITED89_CLUB_APP_FRONTEND_SERVICE }}
+
+jobs:
+  deploy:
+    runs-on: 'ubuntu-latest'
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v4'
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GEMINI_API_PROJECT_CLIENT_JSON }}'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: 'Build and Deploy Backend'
+        run: |
+          # Build Backend Image
+          gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }} quiz-app/backend --project ${{ env.PROJECT_ID }}
+          
+          # Deploy Backend to Cloud Run
+          gcloud run deploy ${{ env.BACKEND_SERVICE }} \
+            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }} \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --port 8080 \
+            --set-env-vars DB_NAME=first-firestore-db \
+            --project ${{ env.PROJECT_ID }}
+
+      - name: 'Build and Deploy Frontend'
+        run: |
+          # Get Backend URL (needed for building the React app)
+          BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})
+          
+          # Create a temporary cloudbuild.yaml to pass VITE_API_URL build arg
+          cat > quiz-app/frontend/cloudbuild_gh_actions.yaml <<EOF
+          steps:
+          - name: 'gcr.io/cloud-builders/docker'
+            args: ['build', '--build-arg', "VITE_API_URL=${BACKEND_URL}", '-t', "gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }}", '.']
+          images:
+          - "gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }}"
+          EOF
+          
+          # Build and Push Frontend Image
+          gcloud builds submit quiz-app/frontend \
+            --config quiz-app/frontend/cloudbuild_gh_actions.yaml \
+            --project ${{ env.PROJECT_ID }}
+          
+          # Deploy Frontend to Cloud Run
+          gcloud run deploy ${{ env.FRONTEND_SERVICE }} \
+            --image gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }} \
+            --platform managed \
+            --region ${{ env.REGION }} \
+            --allow-unauthenticated \
+            --port 80 \
+            --project ${{ env.PROJECT_ID }}
+
+      - name: 'Cleanup'
+        if: always()
+        run: rm -f quiz-app/frontend/cloudbuild_gh_actions.yaml
+
+      - name: 'Show Deployment Summary'
+        run: |
+          echo "Deployment Complete!"
+          echo "Backend: $(gcloud run services describe ${{ env.BACKEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})"
+          echo "Frontend: $(gcloud run services describe ${{ env.FRONTEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})"

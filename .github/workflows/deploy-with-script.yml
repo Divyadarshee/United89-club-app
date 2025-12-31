@@ -1,0 +1,85 @@
+name: 'Deploy with deploy.sh Script (Learning Example)'
+
+# This workflow demonstrates using the existing deploy.sh script directly
+# Trigger: Manual only (for learning/testing)
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: 'GCP Region'
+        required: false
+        default: 'us-central1'
+        type: string
+
+env:
+  PROJECT_ID: ${{ vars.GEMINI_API_GCLOUD_PROJECT_ID }}
+
+jobs:
+  deploy:
+    runs-on: 'ubuntu-latest'
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v4'
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GEMINI_API_PROJECT_CLIENT_JSON }}'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: 'Verify gcloud Configuration'
+        run: |
+          echo "🔍 Verifying gcloud setup..."
+          gcloud config list
+          gcloud version
+          echo "✅ gcloud is ready"
+
+      - name: 'Make deploy.sh Executable'
+        run: |
+          chmod +x quiz-app/deploy.sh
+          echo "✅ Script permissions set"
+
+      - name: 'Run deploy.sh Script'
+        working-directory: quiz-app
+        run: |
+          echo "════════════════════════════════════════"
+          echo "🚀 Running deploy.sh"
+          echo "════════════════════════════════════════"
+          echo "Project ID: ${{ env.PROJECT_ID }}"
+          echo "Region: ${{ github.event.inputs.region }}"
+          echo "════════════════════════════════════════"
+          
+          # Run the script with parameters
+          ./deploy.sh ${{ env.PROJECT_ID }} ${{ github.event.inputs.region }}
+
+      - name: 'Deployment Summary'
+        run: |
+          echo ""
+          echo "════════════════════════════════════════"
+          echo "📦 DEPLOYMENT COMPLETE (via deploy.sh)"
+          echo "════════════════════════════════════════"
+          echo ""
+          echo "💡 Learning Notes:"
+          echo "  - Simple approach: just run the existing script"
+          echo "  - All deployment logic stays in deploy.sh (single source of truth)"
+          echo "  - Easy to test locally vs CI/CD (same commands)"
+          echo "  - Cons: Less GitHub Actions integration (no step outputs, annotations, etc.)"
+          echo ""
+          echo "🔍 To see deployment URLs, check the logs above"
+          echo "════════════════════════════════════════"
+
+      # Optional: Extract and display URLs
+      - name: 'Display Service URLs'
+        if: success()
+        run: |
+          echo "📍 Service URLs:"
+          echo "Backend:  $(gcloud run services describe ${{ vars.UNITED89_CLUB_APP_BACKEND_SERVICE }} --platform managed --region ${{ github.event.inputs.region }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})"
+          echo "Frontend: $(gcloud run services describe ${{ vars.UNITED89_CLUB_APP_FRONTEND_SERVICE }} --platform managed --region ${{ github.event.inputs.region }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})"
