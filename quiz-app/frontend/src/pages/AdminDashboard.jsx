@@ -328,24 +328,25 @@ function AdminDashboard() {
                             </motion.div>
                         )}
                         <div>
-                            <div className="flex justify-between items-center mb-4">
-                                <h2 className="text-2xl font-serif text-warm-cream flex items-center gap-2">
-                                    <FileQuestion size={24} /> Manage Questions for <span className="text-antique-gold">{selectedWeek}</span>
+                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                                <h2 className="text-xl sm:text-2xl font-serif text-warm-cream flex items-center gap-2 flex-wrap">
+                                    <FileQuestion size={24} className="shrink-0" /> Manage Questions for <span className="text-antique-gold">{selectedWeek}</span>
                                 </h2>
                                 <button
                                     onClick={handleGenerateQuestions}
                                     disabled={isGenerating || isPastWeek}
-                                    className={`py-2 px-4 text-sm flex items-center gap-2 transition-all shadow-lg rounded font-serif font-bold ${isPastWeek
+                                    className={`py-2 px-3 sm:px-4 text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg rounded font-serif font-bold whitespace-nowrap shrink-0 ${isPastWeek
                                         ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
                                         : 'btn-vintage bg-gradient-to-r from-antique-gold to-yellow-600 border-none hover:from-yellow-600 hover:to-antique-gold'
                                         }`}
                                 >
                                     {isGenerating ? (
-                                        <Sparkles className="animate-ai-sparkle" size={18} />
+                                        <Sparkles className="animate-ai-sparkle" size={16} />
                                     ) : (
-                                        <Sparkles size={18} />
+                                        <Sparkles size={16} />
                                     )}
-                                    {isGenerating ? 'Generating...' : 'AI Generate (Choose 10)'}
+                                    <span className="hidden sm:inline">{isGenerating ? 'Generating...' : 'AI Generate (Choose 10)'}</span>
+                                    <span className="sm:hidden">{isGenerating ? 'Generating...' : 'AI Generate'}</span>
                                 </button>
                             </div>
 
@@ -676,69 +677,77 @@ function AdminDashboard() {
                 {/* AI PREVIEW MODAL */}
                 <AnimatePresence>
                     {showPreviewModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+                        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-md">
                             <motion.div
                                 initial={{ opacity: 0, y: 50 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
-                                className="bg-warm-cream w-full max-w-5xl h-[75vh] overflow-hidden rounded-xl shadow-2xl flex flex-col border-2 border-antique-gold"
+                                className="bg-warm-cream w-full sm:max-w-5xl h-[90vh] sm:h-[80vh] overflow-hidden rounded-t-xl sm:rounded-xl shadow-2xl flex flex-col border-2 border-antique-gold"
                             >
-                                <div className="bg-royal-blue p-6 flex justify-between items-center text-white border-b-4 border-antique-gold">
-                                    <div className="flex items-center gap-3">
-                                        <Sparkles className="text-antique-gold" size={28} />
+                                <div className="bg-royal-blue p-3 sm:p-6 flex flex-col sm:flex-row justify-between sm:items-center text-white border-b-4 border-antique-gold gap-2 sm:gap-0">
+                                    <div className="flex items-start sm:items-center gap-2 sm:gap-3">
+                                        <Sparkles className="text-antique-gold shrink-0 mt-1 sm:mt-0" size={24} />
                                         <div>
-                                            <h3 className="text-2xl font-serif">AI Generated Questions Preview</h3>
-                                            <p className="text-sm text-gray-300 font-sans">Choose exactly <span className="text-antique-gold font-bold">10</span> questions to add to <span className="text-antique-gold font-bold">{selectedWeek}</span></p>
+                                            <h3 className="text-lg sm:text-2xl font-serif leading-tight">AI Generated Questions Preview</h3>
+                                            <p className="text-xs sm:text-sm text-gray-300 font-sans">Choose exactly <span className="text-antique-gold font-bold">10</span> questions to add to <span className="text-antique-gold font-bold">{selectedWeek}</span></p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className={`px-4 py-2 rounded-full font-bold font-sans border flex items-center gap-2 ${selectedIndices.length === 10 ? 'bg-green-600 border-green-400' : 'bg-red-900/50 border-red-500'}`}>
-                                            {selectedIndices.length === 10 ? <Check size={18} /> : <AlertCircle size={18} />}
+                                    <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
+                                        <div className={`px-2 sm:px-4 py-1 sm:py-2 rounded-full font-bold font-sans border flex items-center gap-1 sm:gap-2 text-xs sm:text-base ${selectedIndices.length === 10 ? 'bg-green-600 border-green-400' : 'bg-red-900/50 border-red-500'}`}>
+                                            {selectedIndices.length === 10 ? <Check size={14} /> : <AlertCircle size={14} />}
                                             {selectedIndices.length} / 10 Selected
                                         </div>
                                         <button onClick={() => setShowPreviewModal(false)} className="hover:text-red-300 transition-colors">
-                                            <X size={32} />
+                                            <X size={24} />
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="p-6 overflow-y-auto space-y-6 bg-paper-texture">
-                                    {/* Helper Text */}
-                                    <div className="sticky top-0 z-10 bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center gap-2 text-sm text-blue-800">
-                                        <AlertCircle size={16} className="shrink-0" />
-                                        <span className="font-sans"><strong>Tip:</strong> Click anywhere on a card to select/deselect. Click on question text or options to edit them inline before saving.</span>
+                                <div className="p-3 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 bg-paper-texture">
+                                    {/* Helper Text - Not sticky on mobile to avoid blocking content */}
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 sm:p-3 mb-2 sm:mb-4 flex items-start sm:items-center gap-2 text-xs sm:text-sm text-blue-800">
+                                        <AlertCircle size={14} className="shrink-0 mt-0.5 sm:mt-0" />
+                                        <span className="font-sans"><strong>Tip:</strong> <span className="hidden sm:inline">Click anywhere on a card to select/deselect. Click on question text or options to edit them inline before saving.</span><span className="sm:hidden">Tap card to select. Tap text to edit.</span></span>
                                     </div>
                                     {previewQuestions.map((q, index) => (
                                         <div
                                             key={index}
-                                            className={`p-6 rounded-lg border-2 transition-all cursor-pointer relative group ${selectedIndices.includes(index)
+                                            className={`p-3 sm:p-5 rounded-lg border-2 transition-all cursor-pointer relative group ${selectedIndices.includes(index)
                                                 ? 'bg-white border-royal-blue shadow-md'
                                                 : 'bg-white/50 border-gray-200 hover:border-antique-gold'
                                                 }`}
                                             onClick={() => toggleSelection(index)}
                                         >
-                                            <div className="flex gap-4">
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 font-bold ${selectedIndices.includes(index) ? 'bg-royal-blue text-white' : 'bg-gray-200 text-gray-500'}`}>
-                                                    {index + 1}
+                                            {/* Unified layout for all screen sizes */}
+                                            <div className="space-y-3">
+                                                {/* Header row: Number/Checkbox + Question count indicator */}
+                                                <div className="flex items-center gap-3">
+                                                    {/* Combined Number + Selection indicator */}
+                                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-bold text-sm transition-all ${selectedIndices.includes(index) ? 'bg-royal-blue text-white ring-2 ring-royal-blue ring-offset-2' : 'bg-gray-200 text-gray-600'}`}>
+                                                        {selectedIndices.includes(index) ? <Check size={18} /> : index + 1}
+                                                    </div>
+                                                    <span className="text-xs text-gray-400 uppercase tracking-wider">Question {index + 1}</span>
                                                 </div>
-                                                <div className="flex-1 space-y-4" onClick={(e) => e.stopPropagation()}>
-                                                    {/* Question Text Edit */}
+
+                                                {/* Question Content - Full width */}
+                                                <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                                                    {/* Question Text Edit - Increased rows for longer text */}
                                                     <textarea
-                                                        className="w-full bg-transparent border-none focus:ring-2 focus:ring-royal-blue rounded p-2 font-serif text-lg text-royal-blue resize-none hover:bg-blue-50/30 transition-colors"
+                                                        className="w-full bg-transparent border-none focus:ring-2 focus:ring-royal-blue rounded p-2 font-serif text-sm sm:text-base text-royal-blue resize-none hover:bg-blue-50/30 transition-colors"
                                                         value={q.text}
                                                         onChange={(e) => handleUpdatePreviewQuestion(index, 'text', e.target.value)}
-                                                        rows={3}
+                                                        rows={6}
                                                         title="Click to edit question text"
                                                         placeholder="Question text..."
                                                     />
 
-                                                    {/* Options Grid */}
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {/* Options - Vertical stack to prevent overflow */}
+                                                    <div className="grid grid-cols-1 gap-2">
                                                         {q.options.map((opt, optIdx) => (
-                                                            <div key={optIdx} className="flex items-center gap-2 bg-white p-2 rounded border border-gray-300 hover:border-royal-blue hover:bg-blue-50/20 transition-colors group/option">
-                                                                <span className="text-royal-blue font-bold w-6">{String.fromCharCode(65 + optIdx)}:</span>
+                                                            <div key={optIdx} className="flex items-center gap-2 bg-white p-2 rounded border border-gray-300 hover:border-royal-blue hover:bg-blue-50/20 transition-colors">
+                                                                <span className="text-royal-blue font-bold text-sm shrink-0">{String.fromCharCode(65 + optIdx)}:</span>
                                                                 <input
-                                                                    className="flex-1 bg-transparent border-none focus:ring-1 focus:ring-royal-blue text-sm text-gray-800 font-medium placeholder-gray-400"
+                                                                    className="flex-1 min-w-0 bg-transparent border-none focus:ring-1 focus:ring-royal-blue text-sm text-gray-800 font-medium placeholder-gray-400"
                                                                     value={opt}
                                                                     onChange={(e) => {
                                                                         const newOpts = [...q.options];
@@ -752,25 +761,18 @@ function AdminDashboard() {
                                                         ))}
                                                     </div>
 
-                                                    {/* Correct Answer Selection */}
-                                                    <div className="flex items-center gap-3 pt-2 text-sm">
-                                                        <span className="font-bold text-gray-500 uppercase tracking-widest text-xs">Correct Answer:</span>
+                                                    {/* Correct Answer Selection - Wrapped properly */}
+                                                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                                                        <span className="font-bold text-gray-500 uppercase tracking-widest text-xs shrink-0">Correct:</span>
                                                         <select
-                                                            className="bg-green-50 text-green-800 font-bold border-none rounded px-3 py-1 focus:ring-2 focus:ring-green-500"
+                                                            className="bg-green-50 text-green-800 font-bold border border-green-200 rounded px-2 py-1.5 focus:ring-2 focus:ring-green-500 text-xs w-full sm:w-auto sm:max-w-xs"
                                                             value={q.correct_answer}
                                                             onChange={(e) => handleUpdatePreviewQuestion(index, 'correct_answer', e.target.value)}
                                                         >
                                                             {q.options.map((opt, optIdx) => (
-                                                                <option key={optIdx} value={opt}>{String.fromCharCode(65 + optIdx)}: {opt}</option>
+                                                                <option key={optIdx} value={opt}>{String.fromCharCode(65 + optIdx)}: {opt.length > 40 ? opt.substring(0, 40) + '...' : opt}</option>
                                                             ))}
                                                         </select>
-                                                    </div>
-                                                </div>
-
-                                                {/* Selection Checkmark */}
-                                                <div className="shrink-0 flex items-start">
-                                                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all ${selectedIndices.includes(index) ? 'bg-royal-blue border-royal-blue text-white' : 'border-gray-200 text-transparent'}`}>
-                                                        <Check size={24} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -778,35 +780,36 @@ function AdminDashboard() {
                                     ))}
                                 </div>
 
-                                <div className="p-6 border-t-2 border-antique-gold/20 bg-white flex justify-between items-center">
-                                    <div className="text-gray-500 font-serif italic">
+                                <div className="p-3 sm:p-6 border-t-2 border-antique-gold/20 bg-white flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                                    <div className="text-gray-500 font-serif italic text-xs sm:text-base text-center sm:text-left">
                                         {selectedIndices.length} items ready to be added to <span className="text-royal-blue font-bold">{selectedWeek}</span>
                                     </div>
-                                    <div className="flex gap-4">
+                                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                                         <button
                                             onClick={async () => {
                                                 setShowPreviewModal(false);
                                                 await handleGenerateQuestions();
                                             }}
                                             disabled={isGenerating}
-                                            className="px-8 py-3 rounded-lg border-2 border-antique-gold font-serif font-bold text-royal-blue hover:bg-antique-gold hover:text-white transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="px-4 sm:px-8 py-2 sm:py-3 rounded-lg border-2 border-antique-gold font-serif font-bold text-royal-blue hover:bg-antique-gold hover:text-white transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
                                         >
                                             {isGenerating ? (
-                                                <Sparkles className="animate-ai-sparkle" size={18} />
+                                                <Sparkles className="animate-ai-sparkle" size={16} />
                                             ) : (
-                                                <Sparkles size={18} />
+                                                <Sparkles size={16} />
                                             )}
-                                            {isGenerating ? 'Generating...' : '🔄 Regenerate New Set'}
+                                            <span className="hidden sm:inline">{isGenerating ? 'Generating...' : 'Regenerate New Set'}</span>
+                                            <span className="sm:hidden">{isGenerating ? 'Generating...' : 'Regenerate'}</span>
                                         </button>
                                         <button
                                             onClick={handleBulkSave}
                                             disabled={selectedIndices.length !== 10}
-                                            className={`px-10 py-3 rounded-lg font-serif font-bold transition-all shadow-xl flex items-center gap-2 ${selectedIndices.length === 10
+                                            className={`px-6 sm:px-10 py-2 sm:py-3 rounded-lg font-serif font-bold transition-all shadow-xl flex items-center justify-center gap-2 text-sm sm:text-base ${selectedIndices.length === 10
                                                 ? 'bg-royal-blue text-white hover:scale-105 active:scale-95'
                                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                                 }`}
                                         >
-                                            <Save size={20} />
+                                            <Save size={18} />
                                             Save Selected 10
                                         </button>
                                     </div>
@@ -823,13 +826,13 @@ function AdminDashboard() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
                         >
                             <motion.div
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.9, opacity: 0 }}
-                                className="bg-midnight-blue/90 border border-cyan-500/30 rounded-2xl p-8 shadow-2xl"
+                                className="bg-midnight-blue/90 border border-cyan-500/30 rounded-2xl p-4 sm:p-8 shadow-2xl w-full max-w-xs sm:max-w-sm"
                             >
                                 <AiLoader />
                             </motion.div>
