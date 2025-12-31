@@ -1,0 +1,138 @@
+name: 'Deploy with GitHub Actions (Learning Example)'
+
+# This workflow demonstrates using google-github-actions/deploy-cloudrun
+# Trigger: Manual only (for learning/testing)
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  PROJECT_ID: ${{ vars.GEMINI_API_GCLOUD_PROJECT_ID }}
+  REGION: ${{ vars.GCLOUD_REGION }}
+  BACKEND_SERVICE: ${{ vars.UNITED89_CLUB_APP_BACKEND_SERVICE }}
+  FRONTEND_SERVICE: ${{ vars.UNITED89_CLUB_APP_FRONTEND_SERVICE }}
+
+jobs:
+  deploy:
+    runs-on: 'ubuntu-latest'
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v4'
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GEMINI_API_PROJECT_CLIENT_JSON }}'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      # ========================================
+      # BACKEND: Use Actions (works well since it uses default port 8080)
+      # ========================================
+      - name: 'Build Backend Image'
+        run: |
+          gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }} quiz-app/backend --project ${{ env.PROJECT_ID }}
+
+      - id: 'deploy_backend'
+        name: 'Deploy Backend with Action'
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: '${{ env.BACKEND_SERVICE }}'
+          region: '${{ env.REGION }}'
+          image: 'gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }}'
+          env_vars: 'DB_NAME=first-firestore-db'
+          # Note: port defaults to 8080, which is what our backend uses
+
+      - name: 'Show Backend Deployment Info'
+        run: |
+          echo "✅ Backend deployed successfully!"
+          echo "📍 Backend URL: ${{ steps.deploy_backend.outputs.url }}"
+          echo "🔍 Service: ${{ env.BACKEND_SERVICE }}"
+          echo "🌍 Region: ${{ env.REGION }}"
+
+      # ========================================
+      # FRONTEND: Workaround for port 80 requirement
+      # ========================================
+      # Approach: Use the action to deploy, then update the port separately
+      # This demonstrates the limitation and workaround
+      
+      - name: 'Build Frontend Image'
+        run: |
+          BACKEND_URL="${{ steps.deploy_backend.outputs.url }}"
+          
+          cat > quiz-app/frontend/cloudbuild_actions.yaml <<EOF
+          steps:
+          - name: 'gcr.io/cloud-builders/docker'
+            args: ['build', '--build-arg', "VITE_API_URL=${BACKEND_URL}", '-t', "gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }}", '.']
+          images:
+          - "gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }}"
+          EOF
+          
+          gcloud builds submit quiz-app/frontend \
+            --config quiz-app/frontend/cloudbuild_actions.yaml \
+            --project ${{ env.PROJECT_ID }}
+
+      - id: 'deploy_frontend'
+        name: 'Deploy Frontend with Action (Initial)'
+        uses: 'google-github-actions/deploy-cloudrun@v2'
+        with:
+          service: '${{ env.FRONTEND_SERVICE }}'
+          region: '${{ env.REGION }}'
+          image: 'gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }}'
+          # ⚠️ LIMITATION: Cannot set port to 80 here!
+
+      - name: 'Update Frontend Port (Workaround)'
+        run: |
+          # ⚠️ WORKAROUND: Update the service to use port 80 after deployment
+          # This is necessary because deploy-cloudrun action doesn't support custom ports
+          echo "⚠️ Updating frontend service to use port 80..."
+          gcloud run services update ${{ env.FRONTEND_SERVICE }} \
+            --port 80 \
+            --region ${{ env.REGION }} \
+            --project ${{ env.PROJECT_ID }}
+          
+          echo "✅ Frontend port updated to 80"
+
+      - name: 'Show Frontend Deployment Info'
+        run: |
+          FRONTEND_URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})
+          echo "✅ Frontend deployed successfully!"
+          echo "📍 Frontend URL: ${FRONTEND_URL}"
+          echo "🔍 Service: ${{ env.FRONTEND_SERVICE }}"
+          echo "⚠️ Note: Port was updated to 80 via separate gcloud command (Action limitation)"
+
+      - name: 'Cleanup'
+        if: always()
+        run: rm -f quiz-app/frontend/cloudbuild_actions.yaml
+
+      # ========================================
+      # SUMMARY
+      # ========================================
+      - name: 'Deployment Summary'
+        run: |
+          echo "════════════════════════════════════════"
+          echo "📦 DEPLOYMENT COMPLETE (${{ github.event.inputs.environment }})"
+          echo "════════════════════════════════════════"
+          echo "Backend:  ${{ steps.deploy_backend.outputs.url }}"
+          echo "Frontend: ${{ steps.deploy_frontend.outputs.url }}"
+          echo ""
+          echo "💡 Learning Notes:"
+          echo "  - Backend used deploy-cloudrun action (clean, works with default port)"
+          echo "  - Frontend required workaround for port 80 (action limitation)"
+          echo "  - Action provides clean outputs but less flexibility"
+          echo "════════════════════════════════════════"

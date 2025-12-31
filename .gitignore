@@ -153,3 +153,4 @@ pyrightconfig.json
 
 # Secrets
 gen-lang-client-*.json
+gha-creds-*.json

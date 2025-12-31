@@ -28,11 +28,11 @@ gcloud run deploy united89-quiz-backend \
     --platform managed \
     --region $REGION \
     --allow-unauthenticated \
-    --port 8080
-    # Add --set-env-vars if needed, e.g., --set-env-vars DB_NAME=first-firestore-db
+    --port 8080 \
+    --set-env-vars DB_NAME=first-firestore-db
 
 # Get Backend URL
-BACKEND_URL=$(gcloud run services describe united89-quiz-backend --platform managed --region $REGION --format 'value(status.url)')
+BACKEND_URL=$(gcloud run services describe united89-quiz-backend --platform managed --region $REGION --format 'value(status.url)' --project $PROJECT_ID)
 echo "Backend deployed at: $BACKEND_URL"
 
 # 3. Deploy Frontend
@@ -63,4 +63,4 @@ gcloud run deploy united89-quiz-frontend \
 
 echo "Deployment Complete!"
 echo "Backend: $BACKEND_URL"
-echo "Frontend: $(gcloud run services describe united89-quiz-frontend --platform managed --region $REGION --format 'value(status.url)')"
+echo "Frontend: $(gcloud run services describe united89-quiz-frontend --platform managed --region $REGION --format 'value(status.url)' --project $PROJECT_ID)"
