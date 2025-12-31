@@ -122,9 +122,9 @@ function AiLoader() {
     }, []);
 
     return (
-        <div className="flex flex-col items-center justify-center gap-6 p-8">
+        <div className="flex flex-col items-center justify-center gap-4 sm:gap-6 p-4 sm:p-8 w-full">
             {/* Neural Stream Bar */}
-            <div className="relative w-64 h-2">
+            <div className="relative w-full max-w-[200px] sm:max-w-[256px] h-2">
                 {/* Glow backdrop */}
                 <div className="absolute inset-0 rounded-full blur-md bg-gradient-to-r from-cyan-500 via-violet-500 to-fuchsia-500 opacity-60" />
 
@@ -151,10 +151,10 @@ function AiLoader() {
             </div>
 
             {/* Status Text with Scramble Effect */}
-            <div className="text-center">
+            <div className="text-center w-full">
                 <motion.p
-                    className="font-mono text-sm text-cyan-300 tracking-wider"
-                    style={{ minWidth: '160px' }}
+                    className="font-mono text-xs sm:text-sm text-cyan-300 tracking-wider"
+                    style={{ minWidth: '120px' }}
                     layout
                 >
                     {scrambledText}
