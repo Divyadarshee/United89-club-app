@@ -250,9 +250,10 @@ async def submit(submission: SubmitAnswers):
             "submitted_at": firestore.SERVER_TIMESTAMP
         })
         
-        # 2. Update Cumulative Score (Atomically increment)
+        # 2. Update Cumulative Score (Atomically increment) and mark as submitted
         await user_ref.update({
-            "cumulative_score": firestore.Increment(score)
+            "cumulative_score": firestore.Increment(score),
+            "submitted": True  # Mark user as having submitted at least once
         })
         
         # Invalidate caches
