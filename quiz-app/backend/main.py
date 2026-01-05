@@ -147,6 +147,9 @@ async def register(user: UserRegister):
     
     has_submitted_this_week = False
     
+    # Check if user is a tester
+    is_tester = await is_tester_phone(user_id)
+
     if doc.exists:
         # Check sub-collection for this week's submission
         sub_ref = doc_ref.collection("submissions").document(week_id)
@@ -154,6 +157,10 @@ async def register(user: UserRegister):
         if sub_doc.exists:
             has_submitted_this_week = True
             
+        # Tester Override: Testers are never blocked by UI
+        if is_tester:
+            has_submitted_this_week = False
+
         return {
             "user_id": user_id, 
             "has_submitted": has_submitted_this_week,
@@ -230,31 +237,52 @@ async def submit(submission: SubmitAnswers):
         sub_ref = user_ref.collection("submissions").document(week_id)
         sub_doc = await sub_ref.get()
         
+        # Handle existing submission (tester re-submission)
+        old_time = 0
+        old_score = 0
+        is_resubmission = False
+        
         if sub_doc.exists:
             if is_tester:
                 # Tester: Allow re-submission by overwriting
                 print(f"[TESTER] {submission.user_id} is re-submitting for week {week_id}")
-                old_score = sub_doc.to_dict().get("score", 0)
-                # First, subtract old score from cumulative
-                await user_ref.update({
-                    "cumulative_score": firestore.Increment(-old_score)
-                })
+                old_data = sub_doc.to_dict()
+                old_score = old_data.get("score", 0)
+                old_time = old_data.get("time_taken", 0)
+                is_resubmission = True
             else:
                 raise HTTPException(status_code=400, detail="Already submitted for this week")
+        
+        # Get user's name for denormalization
+        user_data = user_doc.to_dict()
+        user_name = user_data.get("name", "Unknown")
              
+        # 1. Save Submission in Sub-collection (only quiz-related data + cached name)
         await sub_ref.set({
             "week_id": week_id,
             "score": score,
             "answers": submission.answers,
             "time_taken": submission.time_taken,
+            "user_name": user_name,
             "submitted_at": firestore.SERVER_TIMESTAMP
         })
         
-        # 2. Update Cumulative Score (Atomically increment) and mark as submitted
-        await user_ref.update({
-            "cumulative_score": firestore.Increment(score),
-            "submitted": True  # Mark user as having submitted at least once
-        })
+        # 2. Update User document with aggregated stats
+        if is_resubmission:
+            # Tester re-submission: subtract old values, add new ones
+            await user_ref.update({
+                "cumulative_score": firestore.Increment(score - old_score),
+                "cumulative_time": firestore.Increment(submission.time_taken - old_time),
+                # weeks_played stays the same for re-submission
+            })
+        else:
+            # First submission for this week
+            await user_ref.update({
+                "cumulative_score": firestore.Increment(score),
+                "cumulative_time": firestore.Increment(submission.time_taken),
+                "weeks_played": firestore.Increment(1),
+                "submitted": True
+            })
         
         # Invalidate caches
         leaderboard_cache = {} 
@@ -287,97 +315,54 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
         users_list = []
         
         if type == "overall":
-            # Try new structure (cumulative_score) first
-            users_ref = db.collection("users").order_by("cumulative_score", direction=firestore.Query.DESCENDING)
+            # Fetch all users who have played, ordered by cumulative score
+            users_ref = db.collection("users").where("submitted", "==", True).order_by("cumulative_score", direction=firestore.Query.DESCENDING)
             docs = [doc async for doc in users_ref.stream()]
-
-            # Fallback: If no cumulative_score data, use old 'score' field
-            if len(docs) == 0 or all(d.to_dict().get("cumulative_score", 0) == 0 for d in docs):
-                users_ref = db.collection("users").where("submitted", "==", True).order_by("score", direction=firestore.Query.DESCENDING).limit(50)
-                docs = [doc async for doc in users_ref.stream()]
-                for doc in docs:
-                    u = doc.to_dict()
-                    users_list.append({
-                        "name": u.get("name", "Unknown"),
-                        "score": u.get("score", 0),
-                        "time_taken": u.get("time_taken", 0),  # Single week time
-                        "avg_time": u.get("time_taken", 0),
-                        "weeks_played": 1,
-                        "week_id": "All-Time"
-                    })
-            else:
-                # New structure: Calculate avg time from submissions
-                for doc in docs:
-                    u = doc.to_dict()
-                    
-                    # Fetch user's submissions to calculate average time
-                    submissions = [sub async for sub in doc.reference.collection("submissions").stream()]
-                    total_time = 0
-                    weeks_count = len(submissions)
-                    
-                    for sub in submissions:
-                        s_data = sub.to_dict()
-                        total_time += s_data.get("time_taken", 0)
-                    
-                    avg_time = round(total_time / weeks_count) if weeks_count > 0 else 0
-                    
-                    users_list.append({
-                        "name": u.get("name", "Unknown"),
-                        "score": u.get("cumulative_score", 0),
-                        "avg_time": avg_time,
-                        "weeks_played": weeks_count,
-                        "week_id": "All-Time"
-                    })
+            
+            for doc in docs:
+                u = doc.to_dict()
+                cumulative_score = u.get("cumulative_score", 0)
+                total_time = u.get("cumulative_time", 0)
+                weeks_count = u.get("weeks_played", 0)
                 
-                # Sort by score DESC, then avg_time ASC (tiebreaker)
-                users_list.sort(key=lambda x: (-x["score"], x["avg_time"]))
+                # Skip users with no weeks played (shouldn't happen if submitted=True, but safety check)
+                if weeks_count == 0:
+                    continue
+                
+                avg_time = round(total_time / weeks_count)
+                
+                users_list.append({
+                    "name": u.get("name", "Unknown"),
+                    "score": cumulative_score,
+                    "avg_time": avg_time,
+                    "weeks_played": weeks_count,
+                    "week_id": "All-Time"
+                })
+            
+            # Sort by score DESC, then avg_time ASC (tiebreaker)
+            users_list.sort(key=lambda x: (-x["score"], x["avg_time"]))
         else:
-            # Weekly Leaderboard - Try new submissions structure first
+            # Weekly Leaderboard - Query submissions for the specific week
             submissions_query = db.collection_group("submissions").where("week_id", "==", target_week).order_by("score", direction=firestore.Query.DESCENDING).order_by("time_taken", direction=firestore.Query.ASCENDING).limit(50)
             
             subs = [sub async for sub in submissions_query.stream()]
             
-            if len(subs) > 0:
-                # New structure: use submissions
-                for sub in subs:
-                    s_data = sub.to_dict()
-                    name = s_data.get("user_name")
-                    if not name:
-                        if sub.reference.parent.parent:
-                            uid = sub.reference.parent.parent.id
-                            u_doc = await db.collection("users").document(uid).get()
-                            name = u_doc.to_dict().get("name") if u_doc.exists else "Unknown"
-                        else:
-                            name = "Unknown"
-                    
-                    # Get user_id from the parent path (users/{user_id}/submissions/{week_id})
-                    user_id = sub.reference.parent.parent.id if sub.reference.parent.parent else None
-                    
-                    users_list.append({
-                        "user_id": user_id,
-                        "name": name,
-                        "score": s_data.get("score", 0),
-                        "time_taken": s_data.get("time_taken", 0),
-                        "week_id": target_week
-                    })
-            else:
-                # FALLBACK: Old structure - query users directly (pre-migration data)
-                # Filter by week_id stored directly on user doc (old format)
-                users_ref = db.collection("users").where("submitted", "==", True).where("week_id", "==", target_week)
-                docs = [doc async for doc in users_ref.stream()]
+            for sub in subs:
+                s_data = sub.to_dict()
                 
-                # Sort by score DESC, time_taken ASC
-                sorted_docs = sorted(docs, key=lambda d: (-d.to_dict().get("score", 0), d.to_dict().get("time_taken", float('inf'))))
+                # Use cached user_name from submission (no extra query needed)
+                name = s_data.get("user_name", "Unknown")
                 
-                for doc in sorted_docs[:50]:
-                    u = doc.to_dict()
-                    users_list.append({
-                        "user_id": doc.id,
-                        "name": u.get("name", "Unknown"),
-                        "score": u.get("score", 0),
-                        "time_taken": u.get("time_taken", 0),
-                        "week_id": target_week
-                    })
+                # Get user_id from the parent path (users/{user_id}/submissions/{week_id})
+                user_id = sub.reference.parent.parent.id if sub.reference.parent.parent else None
+                
+                users_list.append({
+                    "user_id": user_id,
+                    "name": name,
+                    "score": s_data.get("score", 0),
+                    "time_taken": s_data.get("time_taken", 0),
+                    "week_id": target_week
+                })
 
         # Rank
         for i, u in enumerate(users_list):
