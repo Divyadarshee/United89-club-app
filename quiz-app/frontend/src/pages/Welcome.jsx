@@ -107,12 +107,19 @@ function Welcome() {
                         </button>
 
                         <div className="mt-4">
-                            <button
-                                onClick={() => navigate('/leaderboard')}
-                                className="text-antique-gold hover:text-white underline font-serif text-lg tracking-wider transition-colors"
-                            >
-                                View Leaderboard
-                            </button>
+                            {localStorage.getItem('has_submitted') === 'true' ? (
+                                <button
+                                    onClick={() => navigate('/leaderboard')}
+                                    className="text-antique-gold hover:text-white underline font-serif text-lg tracking-wider transition-colors"
+                                >
+                                    View Leaderboard
+                                </button>
+                            ) : (
+                                <div className="flex items-center justify-center gap-2 text-gray-400 font-serif text-base tracking-wide">
+                                    <Lock size={16} />
+                                    <span>Submit quiz to unlock leaderboard</span>
+                                </div>
+                            )}
                         </div>
                     </>
                 )}
