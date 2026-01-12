@@ -526,15 +526,7 @@ function AdminDashboard() {
                                         {leaderboardType === 'weekly' && <th className="p-4 text-left">Actions</th>}
                                     </tr>
                                 </thead>
-                                <motion.tbody
-                                    initial="hidden"
-                                    animate="visible"
-                                    variants={{
-                                        hidden: { opacity: 0 },
-                                        visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-                                    }}
-                                    className="bg-white divide-y divide-gray-100"
-                                >
+                                <tbody className="bg-white divide-y divide-gray-100">
                                     {loadingLeaderboard ? (
                                         <tr>
                                             <td colSpan="5" className="p-8 text-center">
@@ -551,11 +543,10 @@ function AdminDashboard() {
                                     ) : (
                                         leaderboard.map((u, i) => (
                                             <motion.tr
-                                                key={i}
-                                                variants={{
-                                                    hidden: { opacity: 0, y: 10 },
-                                                    visible: { opacity: 1, y: 0 }
-                                                }}
+                                                key={u.user_id || i}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: i * 0.05 }}
                                                 className={`hover:bg-warm-cream transition-colors ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
                                             >
                                                 <td className="p-4 font-bold text-gray-400">#{u.rank}</td>
@@ -581,7 +572,7 @@ function AdminDashboard() {
                                             </motion.tr>
                                         ))
                                     )}
-                                </motion.tbody>
+                                </tbody>
                             </table>
                         </div>
                     </motion.div>

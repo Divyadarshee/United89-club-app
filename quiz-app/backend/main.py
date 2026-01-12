@@ -151,6 +151,12 @@ async def register(user: UserRegister):
     is_tester = await is_tester_phone(user_id)
 
     if doc.exists:
+        existing_data = doc.to_dict()
+        
+        # Update name if user provided a different one (allows fixing typos)
+        if existing_data.get("name") != user.name:
+            await doc_ref.update({"name": user.name})
+        
         # Check sub-collection for this week's submission
         sub_ref = doc_ref.collection("submissions").document(week_id)
         sub_doc = await sub_ref.get()
@@ -165,7 +171,7 @@ async def register(user: UserRegister):
             "user_id": user_id, 
             "has_submitted": has_submitted_this_week,
             "week_id": week_id,
-            "resuming": not has_submitted_this_week # Simplified logic for now
+            "resuming": not has_submitted_this_week
         }
 
     user_data = {
@@ -499,6 +505,61 @@ async def get_user_submission(user_id: str, week_id: str):
             "score": data.get("score", 0),
             "time_taken": data.get("time_taken", 0),
             "answers": data.get("answers", {})
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/my-submission/{user_id}")
+async def get_my_submission(user_id: str, week_id: Optional[str] = None):
+    """
+    Public endpoint for users to view their own submission with question details.
+    Returns submission data along with questions and correct answers for answer review.
+    """
+    try:
+        # Use provided week_id or get current active week
+        target_week = week_id if week_id else await get_active_week_id()
+        
+        if target_week == "inactive":
+            raise HTTPException(status_code=400, detail="No active quiz week")
+        
+        # Get user's submission
+        sub_ref = db.collection("users").document(user_id).collection("submissions").document(target_week)
+        sub_doc = await sub_ref.get()
+        
+        if not sub_doc.exists:
+            raise HTTPException(status_code=404, detail="Submission not found")
+        
+        submission_data = sub_doc.to_dict()
+        user_answers = submission_data.get("answers", {})
+        
+        # Get questions for this week with correct answers
+        questions_ref = db.collection("questions").where("week_id", "==", target_week).order_by("order")
+        questions_docs = [doc async for doc in questions_ref.stream()]
+        
+        questions_with_answers = []
+        for doc in questions_docs:
+            q = doc.to_dict()
+            question_id = doc.id
+            user_answer = user_answers.get(question_id, None)
+            correct_answer = q.get("correct_answer")
+            
+            questions_with_answers.append({
+                "id": question_id,
+                "text": q.get("text"),
+                "options": q.get("options", []),
+                "user_answer": user_answer,
+                "correct_answer": correct_answer,
+                "is_correct": user_answer == correct_answer
+            })
+        
+        return {
+            "user_id": user_id,
+            "week_id": target_week,
+            "score": submission_data.get("score", 0),
+            "time_taken": submission_data.get("time_taken", 0),
+            "questions": questions_with_answers
         }
     except HTTPException:
         raise

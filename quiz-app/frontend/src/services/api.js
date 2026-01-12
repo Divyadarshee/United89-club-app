@@ -90,3 +90,10 @@ export const getSubmissionDetails = async (userId, weekId) => {
     });
     return response.data;
 };
+
+// Public endpoint for users to view their own answers
+export const getMySubmission = async (userId, weekId = null) => {
+    const params = weekId ? { week_id: weekId } : {};
+    const response = await axios.get(`${API_URL}/api/my-submission/${userId}`, { params });
+    return response.data;
+};
