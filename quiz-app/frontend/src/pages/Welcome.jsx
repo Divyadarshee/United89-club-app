@@ -125,6 +125,9 @@ function Welcome() {
                 )}
             </motion.div>
 
+            {/* Version indicator for testing */}
+            <p className="absolute bottom-4 right-4 text-xs text-gray-500/50 font-mono">v1.0.1-uce</p>
+
             {/* Rules Modal */}
             <AnimatePresence>
                 {showRules && (
