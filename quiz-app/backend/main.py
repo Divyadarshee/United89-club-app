@@ -608,9 +608,14 @@ async def add_questions_batch(question_batch: QuestionBatchCreate):
 origins = [
     "http://localhost:5173",
     "http://localhost:8080",
+    # United89 URLs
     "https://united89-quiz-frontend-432448119899.asia-south2.run.app",
     "https://united89-quiz-backend-432448119899.asia-south2.run.app",
-    "https://united89-club.web.app"
+    "https://united89-club.web.app",
+    # UCE URLs
+    "https://uce-quiz-frontend-432448119899.asia-south2.run.app",
+    "https://uce-quiz-backend-432448119899.asia-south2.run.app",
+    "https://uce-quiz.web.app"
 ]
 
 app.add_middleware(

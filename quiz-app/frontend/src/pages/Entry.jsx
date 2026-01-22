@@ -57,10 +57,10 @@ function Entry() {
             onClick={handleInteraction}
             onFocus={handleInteraction}
         >
-            <h1 className="text-4xl font-serif text-amber-50 mb-2 drop-shadow-lg">United 89</h1>
-            <h2 className="text-xl text-antique-gold mb-8 font-serif italic">The Reunion Quiz</h2>
+            <h1 className="text-4xl font-serif text-amber-50 mb-2 drop-shadow-lg">UCE</h1>
+            <h2 className="text-xl text-antique-gold mb-8 font-serif italic">The Ultimate Challenge</h2>
 
-            <p className="mb-6 font-sans text-gray-200">Join the celebration to enter.</p>
+            <p className="mb-6 font-sans text-gray-200">Enter to start the challenge.</p>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <input

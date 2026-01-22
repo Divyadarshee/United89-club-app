@@ -53,15 +53,15 @@ function Welcome() {
                 className="z-10"
             >
                 <h1 className="text-5xl md:text-7xl font-serif text-white mb-4 tracking-wide" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)' }}>
-                    United 89
+                    UCE
                 </h1>
                 <p className="text-xl md:text-3xl font-serif italic text-antique-gold mb-12 tracking-widest uppercase" style={{ textShadow: '1px 1px 2px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.5)' }}>
-                    Quiz Show
+                    Ultimate Challenge Experience
                 </p>
                 <div className="bg-midnight-blue/40 backdrop-blur-sm p-8 rounded-xl border border-white/10 max-w-lg mx-auto mb-12">
                     <p className="font-sans text-lg text-gray-200 leading-relaxed">
-                        Celebrating 35+ years of memories.<br />
-                        A fun way to test your General Knowledge!
+                        Test your knowledge and compete!<br />
+                        A fun way to challenge your General Knowledge.
                     </p>
                 </div>
 
