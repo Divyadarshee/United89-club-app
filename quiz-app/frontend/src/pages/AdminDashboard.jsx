@@ -77,7 +77,7 @@ function AdminDashboard() {
                 console.log('Fetching leaderboard:', { type, selectedWeek });
 
                 const [lb, fq] = await Promise.all([
-                    getLeaderboard(type, selectedWeek),
+                    getLeaderboard(type, selectedWeek, true),
                     getAdminQuestions(selectedWeek)
                 ]);
 

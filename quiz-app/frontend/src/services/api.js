@@ -31,11 +31,13 @@ export const submitAnswers = async (userId, answers, timeTaken, weekId) => {
 };
 
 // Public Leaderboard
-export const getLeaderboard = async (type = 'weekly', weekId = null) => {
+export const getLeaderboard = async (type = 'weekly', weekId = null, admin = false) => {
     // Always ensure type has a value
     const safeType = type || 'weekly';
     const params = { type: safeType };
     if (weekId) params.week_id = weekId;
+    if (admin) params.admin = true;
+
     console.log('[API] getLeaderboard called with params:', params);
     const response = await axios.get(`${API_URL}/api/leaderboard`, { params });
     console.log('[API] getLeaderboard response:', response.data?.length, 'items');

@@ -378,12 +378,13 @@ async def submit(submission: SubmitAnswers):
     return {"score": score}
 
 @app.get("/api/leaderboard")
-async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
+async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, admin: bool = False):
     """
     type: 'weekly' or 'overall'
     week_id: required if type is 'weekly', defaults to current if missing
+    admin: if True, bypasses anti-cheating restrictions (shows all scores)
     
-    Anti-cheating logic:
+    Anti-cheating logic (when admin=False):
     - For current week: scores are hidden (returned as null)
     - For overall: only aggregates up to LAST week (excludes current week)
     """
@@ -391,9 +392,12 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
     
     current_week = await get_active_week_id()
     target_week = week_id if week_id else current_week
-    is_current_week = (target_week == current_week)
+    is_current_week = (target_week == current_week) and not admin
+    exclude_current_in_overall = not admin  # Admin sees all data
     
     cache_key = f"{type}_{target_week}" if type == 'weekly' else f"overall_excl_{current_week}"
+    if admin:
+        cache_key = f"admin_{cache_key}"  # Separate cache for admin
     
     # Cache Check
     current_time = time.time()
@@ -430,8 +434,8 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
                     s_data = sub.to_dict()
                     sub_week = s_data.get("week_id", "")
                     
-                    # Skip current week in overall calculation
-                    if sub_week == current_week:
+                    # Skip current week in overall calculation (unless admin)
+                    if exclude_current_in_overall and sub_week == current_week:
                         continue
                     
                     total_score += s_data.get("score", 0)
