@@ -436,32 +436,12 @@ function AdminDashboard() {
                                 </label>
                             </div>
 
-                            {/* Leaderboard Active Toggle */}
-                            <div className="flex items-center gap-4 mb-4 p-4 bg-midnight-blue/30 rounded border border-antique-gold/30">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={config.leaderboard_active}
-                                        onChange={e => setConfig({ ...config, leaderboard_active: e.target.checked })}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-antique-gold"></div>
-                                    <span className="ml-3 font-serif font-bold text-warm-cream">Show Leaderboard (Reveal Results)</span>
-                                </label>
-                            </div>
-
-                            {/* Show Answers Toggle */}
-                            <div className="flex items-center gap-4 mb-6 p-4 bg-emerald-900/30 rounded border border-emerald-500/30">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={config.answers_visible || false}
-                                        onChange={e => setConfig({ ...config, answers_visible: e.target.checked })}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
-                                    <span className="ml-3 font-serif font-bold text-warm-cream">Show Answers (Allow Answer Review)</span>
-                                </label>
+                            {/* Note about automatic score visibility */}
+                            <div className="mb-6 p-4 bg-blue-900/30 rounded border border-blue-500/30">
+                                <p className="text-sm text-blue-200">
+                                    <strong>📊 Score Visibility:</strong> Leaderboard is always visible.
+                                    Scores and answers are automatically hidden for the current week and revealed for past weeks.
+                                </p>
                             </div>
 
                             {/* Tester Phones Section */}

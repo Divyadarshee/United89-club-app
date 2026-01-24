@@ -92,7 +92,7 @@ function Entry() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 <input
                     type="text"
-                    placeholder="Your Name (Class of '89)"
+                    placeholder="Your Name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
@@ -133,7 +133,7 @@ function Entry() {
                             className="input-vintage flex-1 placeholder:text-gray-400"
                         />
                     </div>
-                    <small className="text-gray-600 font-sans text-xs ml-1 mt-1">Select country code & enter number</small>
+                    <small className="text-amber-200/80 font-sans text-xs ml-1 mt-1">Use your WhatsApp number from the UCE87 Alumni group</small>
                 </div>
 
                 <button type="submit" disabled={loading} className="btn-vintage w-full mt-2">

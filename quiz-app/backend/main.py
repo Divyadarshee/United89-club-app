@@ -382,11 +382,18 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
     """
     type: 'weekly' or 'overall'
     week_id: required if type is 'weekly', defaults to current if missing
+    
+    Anti-cheating logic:
+    - For current week: scores are hidden (returned as null)
+    - For overall: only aggregates up to LAST week (excludes current week)
     """
     global leaderboard_cache
     
-    target_week = week_id if week_id else await get_active_week_id()
-    cache_key = f"{type}_{target_week}" if type == 'weekly' else "overall"
+    current_week = await get_active_week_id()
+    target_week = week_id if week_id else current_week
+    is_current_week = (target_week == current_week)
+    
+    cache_key = f"{type}_{target_week}" if type == 'weekly' else f"overall_excl_{current_week}"
     
     # Cache Check
     current_time = time.time()
@@ -399,26 +406,48 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
         users_list = []
         
         if type == "overall":
-            # Fetch all users who have played, ordered by cumulative score
-            users_ref = db.collection("users").where("submitted", "==", True).order_by("cumulative_score", direction=firestore.Query.DESCENDING)
-            docs = [doc async for doc in users_ref.stream()]
+            # For overall leaderboard, we calculate aggregates EXCLUDING the current week
+            # This prevents users from deducing their current week score from all-time changes
             
-            for doc in docs:
-                u = doc.to_dict()
-                cumulative_score = u.get("cumulative_score", 0)
-                total_time = u.get("cumulative_time", 0)
-                weeks_count = u.get("weeks_played", 0)
+            # Get all users who have submitted at least once
+            users_ref = db.collection("users").where("submitted", "==", True)
+            user_docs = [doc async for doc in users_ref.stream()]
+            
+            for user_doc in user_docs:
+                u = user_doc.to_dict()
+                user_id = user_doc.id
                 
-                # Skip users with no weeks played (shouldn't happen if submitted=True, but safety check)
+                # Get all submissions for this user EXCEPT current week
+                submissions_ref = db.collection("users").document(user_id).collection("submissions")
+                subs = [sub async for sub in submissions_ref.stream()]
+                
+                # Calculate aggregate excluding current week
+                total_score = 0
+                total_time = 0
+                weeks_count = 0
+                
+                for sub in subs:
+                    s_data = sub.to_dict()
+                    sub_week = s_data.get("week_id", "")
+                    
+                    # Skip current week in overall calculation
+                    if sub_week == current_week:
+                        continue
+                    
+                    total_score += s_data.get("score", 0)
+                    total_time += s_data.get("time_taken", 0)
+                    weeks_count += 1
+                
+                # Skip users with no past week submissions
                 if weeks_count == 0:
                     continue
                 
                 avg_time = round(total_time / weeks_count)
                 
                 users_list.append({
-                    "user_id": doc.id,  # user_id is the phone number
+                    "user_id": user_id,
                     "name": u.get("name", "Unknown"),
-                    "score": cumulative_score,
+                    "score": total_score,
                     "avg_time": avg_time,
                     "weeks_played": weeks_count,
                     "week_id": "All-Time"
@@ -441,12 +470,14 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
                 # Get user_id from the parent path (users/{user_id}/submissions/{week_id})
                 user_id = sub.reference.parent.parent.id if sub.reference.parent.parent else None
                 
+                # For current week, hide scores (anti-cheating)
                 users_list.append({
                     "user_id": user_id,
                     "name": name,
-                    "score": s_data.get("score", 0),
+                    "score": None if is_current_week else s_data.get("score", 0),
                     "time_taken": s_data.get("time_taken", 0),
-                    "week_id": target_week
+                    "week_id": target_week,
+                    "is_current_week": is_current_week  # Flag for frontend
                 })
 
         # Rank

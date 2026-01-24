@@ -29,7 +29,6 @@ function Leaderboard() {
     const [mySubmission, setMySubmission] = useState(null);
     const [loadingAnswers, setLoadingAnswers] = useState(false);
     const [answersError, setAnswersError] = useState(null);
-    const [answersVisible, setAnswersVisible] = useState(false); // From config
 
     // Check if user has submitted (from localStorage)
     const userId = localStorage.getItem('user_id');
@@ -77,7 +76,6 @@ function Leaderboard() {
                 ]);
                 if (!mounted) return;
                 setWeeks(weeksData || []);
-                setAnswersVisible(configData?.answers_visible || false);
 
                 const current = weeksData?.find(w => w.is_current);
                 const currentId = current?.week_id || getWeekId(0);
@@ -178,18 +176,17 @@ function Leaderboard() {
     }, [activeTab, lastWeekId, currentWeekId, selectedPastWeek]);
 
     // Check if "View My Answers" should be shown
-    // Users can only access leaderboard after submitting (restricted at Welcome page)
-    // Button is hidden if: 1) overall tab (no specific week), or 2) answers_visible is false in config
+    // Hidden for: 1) overall tab, 2) current week (scores not yet revealed)
     const shouldShowViewAnswers = () => {
-        // If answers aren't visible globally, don't show the button
-        if (!answersVisible) {
-            return false;
-        }
         // For overall tab, don't show the button (no specific week)
         if (activeTab === 'overall') {
             return false;
         }
-        // For all weekly tabs (thisWeek, lastWeek, pastWeek), show the button
+        // For current week, don't show (scores hidden during active quiz)
+        if (activeTab === 'thisWeek') {
+            return false;
+        }
+        // For past weeks (lastWeek, pastWeek), show the button
         return true;
     };
 
@@ -230,7 +227,7 @@ function Leaderboard() {
         setAnswersError(null);
     };
 
-    const LeaderboardCard = ({ users, type, title, icon: Icon, gradient }) => (
+    const LeaderboardCard = ({ users, type, title, subtitle, icon: Icon, gradient }) => (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -242,6 +239,9 @@ function Leaderboard() {
                     <Icon size={22} />
                     <h2 className="text-lg font-serif font-bold">{title}</h2>
                 </div>
+                {subtitle && (
+                    <p className="text-center text-white/80 text-xs mt-1">{subtitle}</p>
+                )}
             </div>
 
             {/* Table */}
@@ -257,7 +257,9 @@ function Leaderboard() {
                             <tr>
                                 <th className="p-2 text-center w-12">#</th>
                                 <th className="p-2 text-left">Name</th>
-                                <th className="p-2 text-center w-16">Pts</th>
+                                {users.length > 0 && users[0].score !== null && (
+                                    <th className="p-2 text-center w-16">Pts</th>
+                                )}
                                 <th className="p-2 text-center w-16">Avg<space> </space>
                                     <Clock size={12} className="inline" />
                                 </th>
@@ -280,11 +282,13 @@ function Leaderboard() {
                                             {u.name}
                                         </span>
                                     </td>
-                                    <td className="p-2 text-center">
-                                        <span className={`font-bold ${type === 'weekly' ? 'text-blue-600' : 'text-amber-600'}`}>
-                                            {u.score}
-                                        </span>
-                                    </td>
+                                    {u.score !== null && (
+                                        <td className="p-2 text-center">
+                                            <span className={`font-bold ${type === 'weekly' ? 'text-blue-600' : 'text-amber-600'}`}>
+                                                {u.score}
+                                            </span>
+                                        </td>
+                                    )}
                                     <td className="p-2 text-center text-gray-500 font-mono text-xs">
                                         {formatTime(type === 'weekly' ? u.time_taken : u.avg_time)}
                                     </td>
@@ -408,12 +412,14 @@ function Leaderboard() {
                     </div>
 
                     {/* Week Date Range Label */}
-                    <p className="text-white/60 text-xs mb-4 font-mono">
-                        {activeTab === 'lastWeek' && `${lastWeekId} (${getWeekDateRange(lastWeekId)})`}
-                        {activeTab === 'thisWeek' && `${currentWeekId} (${getWeekDateRange(currentWeekId)})`}
-                        {activeTab === 'overall' && 'Cumulative Rankings'}
-                        {activeTab === 'pastWeek' && selectedPastWeek && `${selectedPastWeek} (${getWeekDateRange(selectedPastWeek)})`}
-                    </p>
+                    <div className="bg-black/40 backdrop-blur-sm rounded-lg px-4 py-2 mb-4 inline-block">
+                        <p className="text-amber-200 text-xs font-mono font-medium">
+                            {activeTab === 'lastWeek' && `${lastWeekId} (${getWeekDateRange(lastWeekId)})`}
+                            {activeTab === 'thisWeek' && `${currentWeekId} (${getWeekDateRange(currentWeekId)})`}
+                            {activeTab === 'overall' && 'Cumulative Rankings (till last week)'}
+                            {activeTab === 'pastWeek' && selectedPastWeek && `${selectedPastWeek} (${getWeekDateRange(selectedPastWeek)})`}
+                        </p>
+                    </div>
 
                     {/* Leaderboard Card - Single view based on tab */}
                     <div className="w-full max-w-lg">
@@ -430,7 +436,14 @@ function Leaderboard() {
                             )}
                             {activeTab === 'overall' && (
                                 <motion.div key="ov" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                                    <LeaderboardCard users={overallUsers} type="overall" title="All-Time Legends" icon={Award} gradient="bg-gradient-to-r from-amber-500 to-orange-500" />
+                                    <LeaderboardCard
+                                        users={overallUsers}
+                                        type="overall"
+                                        title="All-Time Legends"
+                                        subtitle="Scores till last week only"
+                                        icon={Award}
+                                        gradient="bg-gradient-to-r from-amber-500 to-orange-500"
+                                    />
                                 </motion.div>
                             )}
                             {activeTab === 'pastWeek' && (
