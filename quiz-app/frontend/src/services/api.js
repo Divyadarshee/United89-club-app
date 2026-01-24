@@ -7,8 +7,10 @@ export const registerUser = async (name, phone) => {
     return response.data;
 };
 
-export const getQuestions = async (weekId = null) => {
-    const params = weekId ? { week_id: weekId } : {};
+export const getQuestions = async (weekId = null, userId = null) => {
+    const params = {};
+    if (weekId) params.week_id = weekId;
+    if (userId) params.user_id = userId;
     const response = await axios.get(`${API_URL}/api/questions`, { params });
     return response.data;
 };
@@ -95,5 +97,12 @@ export const getSubmissionDetails = async (userId, weekId) => {
 export const getMySubmission = async (userId, weekId = null) => {
     const params = weekId ? { week_id: weekId } : {};
     const response = await axios.get(`${API_URL}/api/my-submission/${userId}`, { params });
+    return response.data;
+};
+
+// Admin: Delete tester submission
+export const deleteTesterSubmission = async (userId, weekId = null) => {
+    const params = weekId ? { week_id: weekId } : {};
+    const response = await axios.delete(`${API_URL}/api/admin/tester-submission/${userId}`, { params });
     return response.data;
 };

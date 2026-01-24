@@ -29,6 +29,7 @@ function Leaderboard() {
     const [mySubmission, setMySubmission] = useState(null);
     const [loadingAnswers, setLoadingAnswers] = useState(false);
     const [answersError, setAnswersError] = useState(null);
+    const [answersVisible, setAnswersVisible] = useState(false); // From config
 
     // Check if user has submitted (from localStorage)
     const userId = localStorage.getItem('user_id');
@@ -69,10 +70,14 @@ function Leaderboard() {
 
         const fetchData = async () => {
             try {
-                // Load weeks for past weeks dropdown
-                const weeksData = await getWeeks();
+                // Load weeks for past weeks dropdown and config for answers visibility
+                const [weeksData, configData] = await Promise.all([
+                    getWeeks(),
+                    getConfig()
+                ]);
                 if (!mounted) return;
                 setWeeks(weeksData || []);
+                setAnswersVisible(configData?.answers_visible || false);
 
                 const current = weeksData?.find(w => w.is_current);
                 const currentId = current?.week_id || getWeekId(0);
@@ -174,8 +179,12 @@ function Leaderboard() {
 
     // Check if "View My Answers" should be shown
     // Users can only access leaderboard after submitting (restricted at Welcome page)
-    // So we just hide for "overall" tab which has no specific week
+    // Button is hidden if: 1) overall tab (no specific week), or 2) answers_visible is false in config
     const shouldShowViewAnswers = () => {
+        // If answers aren't visible globally, don't show the button
+        if (!answersVisible) {
+            return false;
+        }
         // For overall tab, don't show the button (no specific week)
         if (activeTab === 'overall') {
             return false;

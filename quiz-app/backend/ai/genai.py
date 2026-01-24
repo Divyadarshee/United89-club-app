@@ -1,5 +1,5 @@
 from google import genai
-from system_prompt import SYSTEM_PROMPT
+from ai.system_prompt import SYSTEM_PROMPT
 from schema import QuizQuestions
 
 
