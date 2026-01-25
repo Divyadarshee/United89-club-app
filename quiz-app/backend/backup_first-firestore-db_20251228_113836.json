@@ -1,0 +1,428 @@
+{
+  "backup_timestamp": "2025-12-28T11:38:33.918838",
+  "database": "first-firestore-db",
+  "users": [
+    {
+      "phone": "8280608050",
+      "name": "Sachidananda Pati",
+      "score": 9,
+      "submitted": true,
+      "created_at": "2025-12-19 13:13:25.716000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 291,
+      "user_id": "8280608050",
+      "answers": {
+        "q1765716773466": "Kaveri",
+        "q1765716649373": "Kuchch in Gujrat",
+        "q1765716798108": "Africa",
+        "q1765716540150": "Bhubaneswar",
+        "q1765716425890": "Marina beach, Chennai",
+        "q1765716697977": "Sarala Devi",
+        "q1765716578958": "Rohit Sharma",
+        "q1765716453556": "Saturn",
+        "q1765716369158": "Tokyo, Japan",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-19 13:18:53.808000+00:00",
+      "_id": "8280608050",
+      "_submissions": []
+    },
+    {
+      "phone": "9437037200",
+      "name": "Sujay Mahapatra ",
+      "score": 4,
+      "submitted": true,
+      "created_at": "2025-12-20 04:36:59.032000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 152,
+      "user_id": "9437037200",
+      "answers": {
+        "q1765716773466": "Godavari",
+        "q1765716649373": "Jaisalmer in Rajasthan",
+        "q1765716798108": "Africa",
+        "q1765716540150": "Ahmedabad",
+        "q1765716425890": "Marina beach, Chennai",
+        "q1765716697977": "Malati Devi",
+        "q1765716578958": "Virat Kohli",
+        "q1765716453556": "Saturn",
+        "q1765716369158": "Shanghai, China",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-20 04:40:06.937000+00:00",
+      "_id": "9437037200",
+      "_submissions": []
+    },
+    {
+      "phone": "9437082288",
+      "name": "Anil Giri",
+      "score": 4,
+      "submitted": true,
+      "created_at": "2025-12-17 17:43:36.371000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 182,
+      "user_id": "9437082288",
+      "answers": {
+        "q1765716798108": "South America",
+        "q1765716649373": "Leh in J&K",
+        "q1765716773466": "Godavari",
+        "q1765716540150": "Ahmedabad",
+        "q1765716425890": "Marina beach, Chennai",
+        "q1765716697977": "Rama Devi",
+        "q1765716578958": "Rohit Sharma",
+        "q1765716453556": "Saturn",
+        "q1765716369158": "Tokyo, Japan",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-17 17:47:20.848000+00:00",
+      "_id": "9437082288",
+      "_submissions": []
+    },
+    {
+      "phone": "9437090500",
+      "name": "RANJAN",
+      "score": 3,
+      "submitted": true,
+      "created_at": "2025-12-17 16:18:28.768000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 354,
+      "user_id": "9437090500",
+      "answers": {
+        "q1765716798108": "Africa",
+        "q1765716649373": "Jaisalmer in Rajasthan",
+        "q1765716773466": "Kaveri",
+        "q1765716540150": "Chandigarh",
+        "q1765716425890": "Juhu beach, Mumbai",
+        "q1765716697977": "Sarojini Devi",
+        "q1765716578958": "Virat Kohli",
+        "q1765716453556": "Saturn",
+        "q1765716369158": "Shanghai, China",
+        "q1765716732321": "Satya"
+      },
+      "submitted_at": "2025-12-17 16:25:11.507000+00:00",
+      "_id": "9437090500",
+      "_submissions": []
+    },
+    {
+      "phone": "9437121100",
+      "name": "Tapaswi Prasad Behera ",
+      "score": 5,
+      "submitted": true,
+      "created_at": "2025-12-20 09:24:30.838000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 237,
+      "user_id": "9437121100",
+      "answers": {
+        "q1765716798108": "South America",
+        "q1765716649373": "Kuchch in Gujrat",
+        "q1765716773466": "Godavari",
+        "q1765716540150": "Bhubaneswar",
+        "q1765716425890": "Marina beach, Chennai",
+        "q1765716697977": "Rama Devi",
+        "q1765716578958": "Rohit Sharma",
+        "q1765716453556": "Jupiter",
+        "q1765716369158": "Tokyo, Japan",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-20 09:28:57.886000+00:00",
+      "_id": "9437121100",
+      "_submissions": []
+    },
+    {
+      "phone": "9437223922",
+      "name": "BANAMBAR MISHRA ",
+      "score": 9,
+      "submitted": true,
+      "created_at": "2025-12-20 12:15:23.519000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 276,
+      "user_id": "9437223922",
+      "answers": {
+        "q1765716773466": "Kaveri",
+        "q1765716649373": "Kuchch in Gujrat",
+        "q1765716798108": "Africa",
+        "q1765716540150": "Bhubaneswar",
+        "q1765716425890": "Marina beach, Chennai",
+        "q1765716697977": "Sarala Devi",
+        "q1765716578958": "Rohit Sharma",
+        "q1765716453556": "Saturn",
+        "q1765716369158": "Tokyo, Japan",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-20 12:20:23.341000+00:00",
+      "_id": "9437223922",
+      "_submissions": []
+    },
+    {
+      "phone": "9437576894",
+      "name": "P C Panigrahi",
+      "score": 2,
+      "submitted": true,
+      "created_at": "2025-12-17 16:10:55.748000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 193,
+      "user_id": "9437576894",
+      "answers": {
+        "q1765716798108": "Africa",
+        "q1765716649373": "Leh in J&K",
+        "q1765716773466": "Narmada",
+        "q1765716540150": "Ahmedabad",
+        "q1765716425890": "Colva beach, Goa",
+        "q1765716697977": "Rama Devi",
+        "q1765716578958": "Virat Kohli",
+        "q1765716453556": "Jupiter",
+        "q1765716369158": "Shanghai, China",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-17 16:14:44.840000+00:00",
+      "_id": "9437576894",
+      "_submissions": []
+    },
+    {
+      "phone": "9437960888",
+      "name": "Kiran Kumar Patra ",
+      "score": 3,
+      "submitted": true,
+      "created_at": "2025-12-19 03:04:46.450000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 113,
+      "user_id": "9437960888",
+      "answers": {
+        "q1765716773466": "Krishna",
+        "q1765716649373": "Jaisalmer in Rajasthan",
+        "q1765716798108": "Africa",
+        "q1765716540150": "Ranchi",
+        "q1765716425890": "Juhu beach, Mumbai",
+        "q1765716697977": "Malati Devi",
+        "q1765716578958": "Rohit Sharma",
+        "q1765716453556": "Jupiter",
+        "q1765716369158": "Shanghai, China",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-19 03:07:02.360000+00:00",
+      "_id": "9437960888",
+      "_submissions": []
+    },
+    {
+      "phone": "9437961880",
+      "name": "JYOTISH KUMAR DALEI ",
+      "score": 4,
+      "submitted": true,
+      "created_at": "2025-12-17 16:32:01.192000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 130,
+      "user_id": "9437961880",
+      "answers": {
+        "q1765716798108": "South America",
+        "q1765716649373": "Leh in J&K",
+        "q1765716773466": "Godavari",
+        "q1765716540150": "Ahmedabad",
+        "q1765716425890": "Marina beach, Chennai",
+        "q1765716697977": "Sarojini Devi",
+        "q1765716578958": "Rohit Sharma",
+        "q1765716453556": "Saturn",
+        "q1765716369158": "Tokyo, Japan",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-17 16:34:44.693000+00:00",
+      "_id": "9437961880",
+      "_submissions": []
+    },
+    {
+      "phone": "9437966076",
+      "name": "Akrura Chandra Bhuyan ",
+      "score": 3,
+      "submitted": true,
+      "created_at": "2025-12-19 09:25:00.109000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 228,
+      "user_id": "9437966076",
+      "answers": {
+        "q1765716798108": "Africa",
+        "q1765716649373": "Jaisalmer in Rajasthan",
+        "q1765716773466": "Godavari",
+        "q1765716540150": "Chandigarh",
+        "q1765716425890": "Marina beach, Chennai",
+        "q1765716697977": "Rama Devi",
+        "q1765716578958": "Virat Kohli",
+        "q1765716453556": "Saturn",
+        "q1765716369158": "Shanghai, China",
+        "q1765716732321": "Satya"
+      },
+      "submitted_at": "2025-12-19 09:29:16.558000+00:00",
+      "_id": "9437966076",
+      "_submissions": []
+    },
+    {
+      "phone": "9438633000",
+      "name": "BRUNDABAN ",
+      "score": 4,
+      "submitted": true,
+      "created_at": "2025-12-17 15:07:37.819000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 155,
+      "user_id": "9438633000",
+      "answers": {
+        "q1765716773466": "Godavari",
+        "q1765716649373": "Jaisalmer in Rajasthan",
+        "q1765716798108": "Africa",
+        "q1765716540150": "Chandigarh",
+        "q1765716425890": "Marina beach, Chennai",
+        "q1765716697977": "Rama Devi",
+        "q1765716578958": "Virat Kohli",
+        "q1765716453556": "Saturn",
+        "q1765716369158": "Shanghai, China",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-17 15:10:33.751000+00:00",
+      "_id": "9438633000",
+      "_submissions": []
+    },
+    {
+      "phone": "9937612600",
+      "name": "R",
+      "score": 8,
+      "submitted": true,
+      "created_at": "2025-12-17 14:39:19.492000+00:00",
+      "week_id": "2025-W51",
+      "time_taken": 307,
+      "user_id": "9937612600",
+      "answers": {
+        "q1765716773466": "Kaveri",
+        "q1765716649373": "Kuchch in Gujrat",
+        "q1765716798108": "Africa",
+        "q1765716540150": "Ahmedabad",
+        "q1765716425890": "Marina beach, Chennai",
+        "q1765716697977": "Sarala Devi",
+        "q1765716578958": "Rohit Sharma",
+        "q1765716453556": "Saturn",
+        "q1765716369158": "Tokyo, Japan",
+        "q1765716732321": "Treta"
+      },
+      "submitted_at": "2025-12-17 14:44:39.444000+00:00",
+      "_id": "9937612600",
+      "_submissions": []
+    }
+  ],
+  "questions": [
+    {
+      "options": [
+        "Tokyo, Japan",
+        "Jakarta, Indonesia",
+        "Delhi, India",
+        "Shanghai, China"
+      ],
+      "order": 1,
+      "text": "Which one is the World's most populous city ?",
+      "correct_answer": "Jakarta, Indonesia",
+      "_id": "q1765716369158"
+    },
+    {
+      "options": [
+        "Colva beach, Goa",
+        "Juhu beach, Mumbai",
+        "Marina beach, Chennai",
+        "Radhanagar beach, Andaman & Nicobar Island"
+      ],
+      "order": 2,
+      "text": "Which one is the longest beach in India?",
+      "correct_answer": "Marina beach, Chennai",
+      "_id": "q1765716425890"
+    },
+    {
+      "options": [
+        "Saturn",
+        "Mercury",
+        "Jupiter",
+        "Mars"
+      ],
+      "order": 3,
+      "text": "Which planet is known as ringed planet?",
+      "correct_answer": "Saturn",
+      "_id": "q1765716453556"
+    },
+    {
+      "options": [
+        "Chandigarh",
+        "Ahmedabad",
+        "Ranchi",
+        "Bhubaneswar"
+      ],
+      "order": 4,
+      "text": "Which city is known as the Sports capital of India ?",
+      "correct_answer": "Bhubaneswar",
+      "_id": "q1765716540150"
+    },
+    {
+      "options": [
+        "Martin Guptill",
+        "Rohit Sharma",
+        "Virat Kohli",
+        "Saeed Anwar"
+      ],
+      "order": 5,
+      "text": "Who holds the record of highest individual score in ODI history ?",
+      "correct_answer": "Rohit Sharma",
+      "_id": "q1765716578958"
+    },
+    {
+      "options": [
+        "Leh in J&K",
+        "Jaisalmer in Rajasthan",
+        "Kuchch in Gujrat",
+        "Anantapurin in AP"
+      ],
+      "order": 6,
+      "text": "Which one is the largest district in India by area ?",
+      "correct_answer": "Kuchch in Gujrat",
+      "_id": "q1765716649373"
+    },
+    {
+      "options": [
+        "Sarala Devi",
+        "Rama Devi",
+        "Sarojini Devi",
+        "Malati Devi"
+      ],
+      "order": 7,
+      "text": "Who was the first woman to be elected to the Odisha Legislative Assembly ?",
+      "correct_answer": "Sarala Devi",
+      "_id": "q1765716697977"
+    },
+    {
+      "options": [
+        "Kali",
+        "Treta",
+        "Satya",
+        "Dwapar"
+      ],
+      "order": 8,
+      "text": "Lord Shri Ram is associated with which one of the 4 \"Yugas\" ?",
+      "correct_answer": "Treta",
+      "_id": "q1765716732321"
+    },
+    {
+      "options": [
+        "Krishna",
+        "Kaveri",
+        "Godavari",
+        "Narmada"
+      ],
+      "order": 9,
+      "text": "Which river in India is known as Ardhaganga ?",
+      "correct_answer": "Kaveri",
+      "_id": "q1765716773466"
+    },
+    {
+      "options": [
+        "South America",
+        "Africa",
+        "Europe",
+        "Asia"
+      ],
+      "order": 10,
+      "text": "Which continent is know as Dark Continent ?",
+      "correct_answer": "Africa",
+      "_id": "q1765716798108"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getQuestions, getUsers, deleteQuestion, addQuestion, updateConfig, getConfig, getAdminQuestions, getLeaderboard, getWeeks, generateQuestions, addBatchQuestions, getSubmissionDetails } from '../services/api';
-import { Trash2, Plus, Settings, Users, FileQuestion, Save, Eye, X, Calendar, Globe, Award, Sparkles, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { getQuestions, getUsers, deleteQuestion, addQuestion, updateConfig, getConfig, getAdminQuestions, getLeaderboard, getWeeks, generateQuestions, addBatchQuestions, getSubmissionDetails, deleteTesterSubmission } from '../services/api';
+import { Trash2, Plus, Settings, Users, FileQuestion, Save, Eye, X, Calendar, Globe, Award, Sparkles, Check, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
 import AiLoader from '../components/AiLoader';
 
 function AdminDashboard() {
@@ -77,7 +77,7 @@ function AdminDashboard() {
                 console.log('Fetching leaderboard:', { type, selectedWeek });
 
                 const [lb, fq] = await Promise.all([
-                    getLeaderboard(type, selectedWeek),
+                    getLeaderboard(type, selectedWeek, true),
                     getAdminQuestions(selectedWeek)
                 ]);
 
@@ -436,18 +436,12 @@ function AdminDashboard() {
                                 </label>
                             </div>
 
-                            {/* Leaderboard Active Toggle */}
-                            <div className="flex items-center gap-4 mb-6 p-4 bg-midnight-blue/30 rounded border border-antique-gold/30">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={config.leaderboard_active}
-                                        onChange={e => setConfig({ ...config, leaderboard_active: e.target.checked })}
-                                        className="sr-only peer"
-                                    />
-                                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-antique-gold"></div>
-                                    <span className="ml-3 font-serif font-bold text-warm-cream">Show Leaderboard (Reveal Results)</span>
-                                </label>
+                            {/* Note about automatic score visibility */}
+                            <div className="mb-6 p-4 bg-blue-900/30 rounded border border-blue-500/30">
+                                <p className="text-sm text-blue-200">
+                                    <strong>📊 Score Visibility:</strong> Leaderboard is always visible.
+                                    Scores and answers are automatically hidden for the current week and revealed for past weeks.
+                                </p>
                             </div>
 
                             {/* Tester Phones Section */}
@@ -458,28 +452,90 @@ function AdminDashboard() {
                                 <p className="text-sm text-gray-400 mb-3">
                                     These phone numbers can submit the quiz multiple times (useful for testing).
                                 </p>
-                                <input
-                                    type="text"
-                                    value={config.tester_phones?.join(', ') || ''}
-                                    onChange={e => {
-                                        const phones = e.target.value
-                                            .split(',')
-                                            .map(p => p.trim())
-                                            .filter(p => p.length > 0);
-                                        setConfig({ ...config, tester_phones: phones });
-                                    }}
-                                    placeholder="Enter phone numbers separated by commas (e.g., 9876543210, 9123456789)"
-                                    className="input-vintage w-full"
-                                />
+
+                                {/* Tag Display */}
                                 {config.tester_phones?.length > 0 && (
-                                    <div className="mt-2 flex flex-wrap gap-2">
+                                    <div className="mb-3 flex flex-wrap gap-2">
                                         {config.tester_phones.map((phone, idx) => (
-                                            <span key={idx} className="bg-purple-700/50 text-purple-200 px-2 py-1 rounded text-sm font-mono">
+                                            <div
+                                                key={idx}
+                                                className="bg-purple-700/50 text-purple-200 px-3 py-1 rounded-full text-sm font-mono flex items-center gap-2"
+                                            >
                                                 {phone}
-                                            </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (window.confirm(`Reset submission for ${phone} in week ${selectedWeek}?`)) {
+                                                            try {
+                                                                await deleteTesterSubmission(phone, selectedWeek);
+                                                                alert(`Submission reset for ${phone}!`);
+                                                            } catch (err) {
+                                                                alert(err.response?.data?.detail || 'Failed to reset submission');
+                                                            }
+                                                        }
+                                                    }}
+                                                    title="Reset this tester's submission"
+                                                    className="text-purple-400 hover:text-green-400 transition-colors"
+                                                >
+                                                    <RefreshCw size={14} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const updated = config.tester_phones.filter((_, i) => i !== idx);
+                                                        setConfig({ ...config, tester_phones: updated });
+                                                    }}
+                                                    title="Remove tester"
+                                                    className="text-purple-400 hover:text-red-400 transition-colors"
+                                                >
+                                                    ✕
+                                                </button>
+                                            </div>
                                         ))}
                                     </div>
                                 )}
+
+                                {/* Add New Phone Input */}
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        id="new-tester-phone"
+                                        placeholder="Enter phone number (e.g., 9876543210)"
+                                        className="input-vintage flex-1"
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                const input = e.target;
+                                                const phone = input.value.trim().replace(/\D/g, '');
+                                                if (phone && phone.length >= 10) {
+                                                    const existing = config.tester_phones || [];
+                                                    if (!existing.includes(phone)) {
+                                                        setConfig({ ...config, tester_phones: [...existing, phone] });
+                                                    }
+                                                    input.value = '';
+                                                }
+                                            }
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const input = document.getElementById('new-tester-phone');
+                                            const phone = input.value.trim().replace(/\D/g, '');
+                                            if (phone && phone.length >= 10) {
+                                                const existing = config.tester_phones || [];
+                                                if (!existing.includes(phone)) {
+                                                    setConfig({ ...config, tester_phones: [...existing, phone] });
+                                                }
+                                                input.value = '';
+                                            }
+                                        }}
+                                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded font-bold transition-colors"
+                                    >
+                                        + Add
+                                    </button>
+                                </div>
+                                <small className="text-gray-500 text-xs mt-1 block">Press Enter or click Add to add a tester phone</small>
                             </div>
 
                             <button type="submit" className="btn-vintage flex items-center gap-2">
@@ -520,6 +576,7 @@ function AdminDashboard() {
                                     <tr>
                                         <th className="p-4 text-left">Rank</th>
                                         <th className="p-4 text-left">Name</th>
+                                        <th className="p-4 text-left">Phone</th>
                                         <th className="p-4 text-left">Score</th>
                                         {leaderboardType === 'weekly' && <th className="p-4 text-left">Time</th>}
                                         {leaderboardType === 'overall' && <th className="p-4 text-left">Avg Time</th>}
@@ -529,14 +586,14 @@ function AdminDashboard() {
                                 <tbody className="bg-white divide-y divide-gray-100">
                                     {loadingLeaderboard ? (
                                         <tr>
-                                            <td colSpan="5" className="p-8 text-center">
+                                            <td colSpan="6" className="p-8 text-center">
                                                 <Loader2 className="animate-spin text-royal-blue mx-auto" size={32} />
                                                 <p className="text-gray-500 mt-2">Loading leaderboard...</p>
                                             </td>
                                         </tr>
                                     ) : leaderboard.length === 0 ? (
                                         <tr>
-                                            <td colSpan="5" className="p-8 text-center text-gray-500">
+                                            <td colSpan="6" className="p-8 text-center text-gray-500">
                                                 No results found for this selection.
                                             </td>
                                         </tr>
@@ -551,6 +608,7 @@ function AdminDashboard() {
                                             >
                                                 <td className="p-4 font-bold text-gray-400">#{u.rank}</td>
                                                 <td className="p-4 font-bold text-royal-blue">{u.name}</td>
+                                                <td className="p-4 font-mono text-gray-600">{u.user_id || '-'}</td>
                                                 <td className="p-4 font-bold text-antique-gold text-lg">{u.score}</td>
                                                 {leaderboardType === 'weekly' && (
                                                     <td className="p-4 font-mono text-gray-700">{formatTime(u.time_taken)}</td>

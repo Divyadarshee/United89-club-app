@@ -25,34 +25,45 @@ Generate a random mix spanning:
     - **AVOID**: "Level 1" trivia like "Capital of India", "Planet known as Red Planet", or "Author of Harry Potter".
     - **PREFER**: Questions that require connecting facts. Instead of asking "Where is Hampi?", ask about the "dynasty that established its capital there" or "the river on whose banks it is located".
 
+# Anti-Cheating & Unique Phrasing Guidelines (IMPORTANT)
+To prevent users from easily Googling answers, follow these phrasing rules:
+1. **Contextual Framing**: Embed facts within a narrative or scenario. Instead of "Who won the 1983 Cricket World Cup?", ask "Which captain led his underdog team to a historic victory against the mighty West Indies in the 1983 Lord's final?"
+2. **Combine Multiple Facts**: Require connecting 2+ pieces of knowledge. Example: "Which freedom fighter, known for his extreme fasting protests, also founded a major institution in Gujarat?"
+3. **Use Synonyms & Paraphrasing**: Avoid using the exact Wikipedia/textbook phrases. Instead of "first Indian to win Nobel Prize in Physics", say "the scientist whose groundbreaking work on light scattering earned India its first recognition in Stockholm for Physics".
+4. **Include Specific Details**: Add contextual details that make generic searches fail. "The fort that overlooks the Arabian Sea and was briefly captured by Shivaji in 1670" instead of "Which fort did Shivaji capture?"
+5. **Focus on 'Why' and 'How'**: Questions about reasons and processes are harder to search than simple facts. "What unique feature of the Sundarbans makes it the world's largest mangrove forest?" instead of "Where is the largest mangrove forest?"
+6. **Avoid Direct Noun Questions**: Don't start with "What is the name of..." or "Who is the...". These are easily searchable.
+
 # Quality Guidelines
 - **No Childish Questions**: Do not generate questions that are taught in primary school.
 - **Thought-Provoking**: Questions should be about well-known entities but focus on less obvious (yet interesting) facts about them.
 - **Plausible Distractors**: All 4 choices should be plausible. Avoid "silly" wrong answers.
+- **Fun & Engaging**: Despite being hard to search, questions should still be enjoyable and make people think "Oh, I should have known that!"
 
 # Self-Correction & Verification
 Before concluding your response, perform a mental verification:
 - **Fact-Check**: Ensure the "correct_answer" is factually accurate and present in the "choices".
 - **Uniqueness**: Ensure there is ONLY one clearly correct answer among the four choices.
 - **Clarity**: Rewrite questions to be concise and unambiguous.
+- **Anti-Search Check**: Verify the question cannot be answered by copying it directly into Google.
 
 # Output Format (Strict)
 You must return a JSON object matching the `QuizQuestions` schema.
 - Top-level key: `"question_sets"` (a list of 20 objects).
 - Do not include markdown formatting or extra text.
 
-# Example Structure (Sophisticated Tone)
+# Example Structure (Sophisticated & Anti-Search Tone)
 {
   "question_sets": [
     {
-      "question": "Which Indian scientist was the first to receive the Nobel Prize in Physics for his work on the scattering of light?",
-      "choices": ["Homi J. Bhabha", "C.V. Raman", "Satyendra Nath Bose", "Subrahmanyan Chandrasekhar"],
+      "question": "The scientist whose groundbreaking work on the scattering of light earned India its first recognition in Stockholm for Physics was associated with which prestigious Kolkata-based research institution?",
+      "choices": ["Bose Institute", "Indian Association for the Cultivation of Science", "Saha Institute of Nuclear Physics", "Indian Statistical Institute"],
       "correct_answer": "b"
     },
     {
-      "question": "The 'Statue of Liberty', a gift from France to the United States, was designed by which sculptor to commemorate the centennial of the Declaration of Independence?",
-      "choices": ["Gustave Eiffel", "Auguste Rodin", "Frédéric Auguste Bartholdi", "Gutzon Borglum"],
-      "correct_answer": "c"
+      "question": "The iconic copper statue that greets ships entering New York Harbor was created by a French sculptor as a gift commemorating American independence. Which architect, famous for a Parisian iron tower, designed its internal iron framework?",
+      "choices": ["Gustave Eiffel", "Le Corbusier", "Frédéric Auguste Bartholdi", "Eugène Viollet-le-Duc"],
+      "correct_answer": "a"
     }
   ]
 }

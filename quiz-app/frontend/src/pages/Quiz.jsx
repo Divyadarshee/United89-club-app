@@ -28,11 +28,12 @@ function Quiz() {
 
         const fetchData = async () => {
             try {
-                // Get stored week_id
+                // Get stored week_id and user_id
                 const weekId = localStorage.getItem('week_id');
+                const userId = localStorage.getItem('user_id');
 
                 const [questionsData, configData] = await Promise.all([
-                    getQuestions(weekId), // Pass weekId to fetch correct questions
+                    getQuestions(weekId, userId), // Pass weekId and userId for randomized questions
                     getConfig()
                 ]);
                 setQuestions(questionsData);
@@ -51,6 +52,31 @@ function Quiz() {
         };
         fetchData();
         return () => stopSound('bgm');
+    }, []);
+
+    // Anti-cheat: Disable text selection, right-click, and copy shortcuts
+    useEffect(() => {
+        // Disable right-click context menu
+        const handleContextMenu = (e) => {
+            e.preventDefault();
+            return false;
+        };
+
+        // Disable copy keyboard shortcuts (Ctrl+C, Ctrl+A, Ctrl+X)
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && ['c', 'a', 'x', 'u'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+                return false;
+            }
+        };
+
+        document.addEventListener('contextmenu', handleContextMenu);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('contextmenu', handleContextMenu);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
     }, []);
 
     // Prevent back navigation during quiz
@@ -169,7 +195,24 @@ function Quiz() {
     const isLastQuestion = currentQuestionIndex === questions.length - 1;
 
     return (
-        <div style={{ width: '100%', maxWidth: '700px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+        <div
+            style={{
+                width: '100%',
+                maxWidth: '700px',
+                margin: '0 auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2rem',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
+                WebkitTouchCallout: 'none'
+            }}
+            onCopy={(e) => e.preventDefault()}
+            onCut={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+        >
 
             {/* Header Area */}
             <div className="flex justify-between items-center px-4 bg-black/30 p-2 rounded-lg backdrop-blur-sm border border-white/10">

@@ -1,6 +1,8 @@
 import uuid
 import os
 import time
+import random
+import hashlib
 from typing import List, Dict, Any, Optional
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -91,10 +93,64 @@ async def is_tester_phone(phone: str) -> bool:
         if doc.exists:
             config = doc.to_dict()
             tester_phones = config.get("tester_phones", [])
-            return phone in tester_phones
+            # Normalize the input phone for comparison
+            normalized_input = normalize_phone(phone)
+            # Check against normalized tester phones
+            for tester in tester_phones:
+                if normalize_phone(tester) == normalized_input:
+                    return True
         return False
     except Exception as e:
         print(f"Error checking tester status: {e}")
+        return False
+
+def normalize_phone(phone: str) -> str:
+    """Normalize phone number by removing +91, spaces, dashes, and keeping only digits"""
+    # Remove common prefixes and formatting
+    phone = phone.replace("+91", "").replace("-", "").replace(" ", "").replace("(", "").replace(")", "")
+    # Keep only digits
+    phone = ''.join(filter(str.isdigit, phone))
+    # If number is longer than 10 digits and starts with 91, remove the 91
+    if len(phone) > 10 and phone.startswith("91"):
+        phone = phone[2:]
+    return phone
+
+async def is_phone_whitelisted(phone: str) -> bool:
+    """Check if phone number is in the approved whitelist"""
+    try:
+        doc = await db.collection("config").document("phone_whitelist").get()
+        if not doc.exists:
+            # If no whitelist exists, allow all (backward compatible)
+            print("No phone whitelist found - allowing all registrations")
+            return True
+        
+        whitelist = doc.to_dict().get("phones", [])
+        if not whitelist:
+            # Empty whitelist means allow all
+            return True
+        
+        normalized_input = normalize_phone(phone)
+        
+        # Check if normalized phone is in whitelist
+        for whitelisted_phone in whitelist:
+            if normalize_phone(whitelisted_phone) == normalized_input:
+                return True
+        
+        return False
+    except Exception as e:
+        print(f"Error checking phone whitelist: {e}")
+        # On error, allow registration (fail open for reliability)
+        return True
+
+async def get_answers_visible() -> bool:
+    """Check if answers are visible to users"""
+    try:
+        doc = await db.collection("config").document("quiz_settings").get()
+        if doc.exists:
+            return doc.to_dict().get("answers_visible", False)
+        return False
+    except Exception as e:
+        print(f"Error checking answers visibility: {e}")
         return False
 
 # --- MODELS ---
@@ -113,6 +169,7 @@ class QuizConfig(BaseModel):
     timer_duration_minutes: int
     quiz_active: bool
     leaderboard_active: bool = False
+    answers_visible: bool = False  # Controls when users can see correct answers
     tester_phones: List[str] = []  # Phone numbers that can bypass submission limit
 
 class WeekConfig(BaseModel):
@@ -139,6 +196,19 @@ class QuestionBatchCreate(BaseModel):
 @app.post("/api/register")
 async def register(user: UserRegister):
     user_id = user.phone
+    
+    # Check if user is a tester (testers bypass whitelist)
+    is_tester = await is_tester_phone(user_id)
+    
+    # Validate phone against whitelist (unless tester)
+    if not is_tester:
+        is_whitelisted = await is_phone_whitelisted(user_id)
+        if not is_whitelisted:
+            raise HTTPException(
+                status_code=403, 
+                detail="This phone number is not on our guest list. Please use the WhatsApp number you registered with us."
+            )
+    
     doc_ref = db.collection("users").document(user_id)
     doc = await doc_ref.get()
 
@@ -146,9 +216,6 @@ async def register(user: UserRegister):
     week_id = await get_active_week_id()
     
     has_submitted_this_week = False
-    
-    # Check if user is a tester
-    is_tester = await is_tester_phone(user_id)
 
     if doc.exists:
         existing_data = doc.to_dict()
@@ -190,7 +257,7 @@ async def register(user: UserRegister):
     return {"user_id": user_id, "has_submitted": False, "week_id": week_id}
 
 @app.get("/api/questions")
-async def get_questions(week_id: Optional[str] = None):
+async def get_questions(week_id: Optional[str] = None, user_id: Optional[str] = None):
     # If no week_id provided, get for CURRENT active week
     target_week = week_id if week_id else await get_active_week_id()
     
@@ -209,6 +276,17 @@ async def get_questions(week_id: Optional[str] = None):
             "text": q["text"],
             "options": q["options"]
         })
+    
+    # Shuffle questions based on user_id for per-user randomization
+    # This makes question order unique per user but consistent for same user
+    if user_id:
+        # Create a deterministic seed from user_id + week_id
+        seed_str = f"{user_id}_{target_week}"
+        seed = int(hashlib.md5(seed_str.encode()).hexdigest(), 16) % (10**9)
+        random.seed(seed)
+        random.shuffle(public_questions)
+        random.seed()  # Reset to default randomness
+    
     return public_questions
 
 @app.post("/api/submit")
@@ -300,15 +378,26 @@ async def submit(submission: SubmitAnswers):
     return {"score": score}
 
 @app.get("/api/leaderboard")
-async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
+async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, admin: bool = False):
     """
     type: 'weekly' or 'overall'
     week_id: required if type is 'weekly', defaults to current if missing
+    admin: if True, bypasses anti-cheating restrictions (shows all scores)
+    
+    Anti-cheating logic (when admin=False):
+    - For current week: scores are hidden (returned as null)
+    - For overall: only aggregates up to LAST week (excludes current week)
     """
     global leaderboard_cache
     
-    target_week = week_id if week_id else await get_active_week_id()
-    cache_key = f"{type}_{target_week}" if type == 'weekly' else "overall"
+    current_week = await get_active_week_id()
+    target_week = week_id if week_id else current_week
+    is_current_week = (target_week == current_week) and not admin
+    exclude_current_in_overall = not admin  # Admin sees all data
+    
+    cache_key = f"{type}_{target_week}" if type == 'weekly' else f"overall_excl_{current_week}"
+    if admin:
+        cache_key = f"admin_{cache_key}"  # Separate cache for admin
     
     # Cache Check
     current_time = time.time()
@@ -321,25 +410,48 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
         users_list = []
         
         if type == "overall":
-            # Fetch all users who have played, ordered by cumulative score
-            users_ref = db.collection("users").where("submitted", "==", True).order_by("cumulative_score", direction=firestore.Query.DESCENDING)
-            docs = [doc async for doc in users_ref.stream()]
+            # For overall leaderboard, we calculate aggregates EXCLUDING the current week
+            # This prevents users from deducing their current week score from all-time changes
             
-            for doc in docs:
-                u = doc.to_dict()
-                cumulative_score = u.get("cumulative_score", 0)
-                total_time = u.get("cumulative_time", 0)
-                weeks_count = u.get("weeks_played", 0)
+            # Get all users who have submitted at least once
+            users_ref = db.collection("users").where("submitted", "==", True)
+            user_docs = [doc async for doc in users_ref.stream()]
+            
+            for user_doc in user_docs:
+                u = user_doc.to_dict()
+                user_id = user_doc.id
                 
-                # Skip users with no weeks played (shouldn't happen if submitted=True, but safety check)
+                # Get all submissions for this user EXCEPT current week
+                submissions_ref = db.collection("users").document(user_id).collection("submissions")
+                subs = [sub async for sub in submissions_ref.stream()]
+                
+                # Calculate aggregate excluding current week
+                total_score = 0
+                total_time = 0
+                weeks_count = 0
+                
+                for sub in subs:
+                    s_data = sub.to_dict()
+                    sub_week = s_data.get("week_id", "")
+                    
+                    # Skip current week in overall calculation (unless admin)
+                    if exclude_current_in_overall and sub_week == current_week:
+                        continue
+                    
+                    total_score += s_data.get("score", 0)
+                    total_time += s_data.get("time_taken", 0)
+                    weeks_count += 1
+                
+                # Skip users with no past week submissions
                 if weeks_count == 0:
                     continue
                 
                 avg_time = round(total_time / weeks_count)
                 
                 users_list.append({
+                    "user_id": user_id,
                     "name": u.get("name", "Unknown"),
-                    "score": cumulative_score,
+                    "score": total_score,
                     "avg_time": avg_time,
                     "weeks_played": weeks_count,
                     "week_id": "All-Time"
@@ -362,12 +474,14 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None):
                 # Get user_id from the parent path (users/{user_id}/submissions/{week_id})
                 user_id = sub.reference.parent.parent.id if sub.reference.parent.parent else None
                 
+                # For current week, hide scores (anti-cheating)
                 users_list.append({
                     "user_id": user_id,
                     "name": name,
-                    "score": s_data.get("score", 0),
+                    "score": None if is_current_week else s_data.get("score", 0),
                     "time_taken": s_data.get("time_taken", 0),
-                    "week_id": target_week
+                    "week_id": target_week,
+                    "is_current_week": is_current_week  # Flag for frontend
                 })
 
         # Rank
@@ -461,13 +575,15 @@ async def get_config():
         doc = await db.collection("config").document("quiz_settings").get()
         if doc.exists:
             data = doc.to_dict()
-            # Ensure tester_phones is always present
+            # Ensure required fields are always present
             if "tester_phones" not in data:
                 data["tester_phones"] = []
+            if "answers_visible" not in data:
+                data["answers_visible"] = False
             return data
-        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "tester_phones": []}
+        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "answers_visible": False, "tester_phones": []}
     except Exception as e:
-        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "tester_phones": []}
+        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "answers_visible": False, "tester_phones": []}
 
 @app.post("/api/admin/config")
 async def update_config(config: QuizConfig):
@@ -477,6 +593,7 @@ async def update_config(config: QuizConfig):
             "timer_duration_minutes": config.timer_duration_minutes,
             "quiz_active": config.quiz_active,
             "leaderboard_active": config.leaderboard_active,
+            "answers_visible": config.answers_visible,
             "tester_phones": config.tester_phones
         })
         return {"status": "success"}
@@ -516,6 +633,7 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
     """
     Public endpoint for users to view their own submission with question details.
     Returns submission data along with questions and correct answers for answer review.
+    Correct answers are only shown if answers_visible is True in config.
     """
     try:
         # Use provided week_id or get current active week
@@ -523,6 +641,9 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
         
         if target_week == "inactive":
             raise HTTPException(status_code=400, detail="No active quiz week")
+        
+        # Check if answers should be visible
+        answers_visible = await get_answers_visible()
         
         # Get user's submission
         sub_ref = db.collection("users").document(user_id).collection("submissions").document(target_week)
@@ -545,21 +666,27 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
             user_answer = user_answers.get(question_id, None)
             correct_answer = q.get("correct_answer")
             
-            questions_with_answers.append({
+            question_data = {
                 "id": question_id,
                 "text": q.get("text"),
                 "options": q.get("options", []),
                 "user_answer": user_answer,
-                "correct_answer": correct_answer,
-                "is_correct": user_answer == correct_answer
-            })
+            }
+            
+            # Only include correct answer info if answers are visible
+            if answers_visible:
+                question_data["correct_answer"] = correct_answer
+                question_data["is_correct"] = user_answer == correct_answer
+            
+            questions_with_answers.append(question_data)
         
         return {
             "user_id": user_id,
             "week_id": target_week,
             "score": submission_data.get("score", 0),
             "time_taken": submission_data.get("time_taken", 0),
-            "questions": questions_with_answers
+            "questions": questions_with_answers,
+            "answers_visible": answers_visible
         }
     except HTTPException:
         raise
@@ -600,6 +727,53 @@ async def add_questions_batch(question_batch: QuestionBatchCreate):
             })
         await batch.commit()
         return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/admin/tester-submission/{user_id}")
+async def delete_tester_submission(user_id: str, week_id: Optional[str] = None):
+    """
+    Delete a tester user's submission for a given week.
+    Only works for users whose phone number is in the tester list.
+    Resets their has_submitted status for that week.
+    """
+    # Check if user is a tester
+    is_tester = await is_tester_phone(user_id)
+    if not is_tester:
+        raise HTTPException(
+            status_code=403, 
+            detail="This action is only allowed for tester phone numbers."
+        )
+    
+    # Determine week
+    target_week = week_id or await get_active_week_id()
+    
+    try:
+        # Delete the submission document
+        submission_ref = db.collection("users").document(user_id).collection("submissions").document(target_week)
+        submission_doc = await submission_ref.get()
+        
+        if not submission_doc.exists:
+            return {"status": "no_submission", "message": "No submission found for this week."}
+        
+        await submission_ref.delete()
+        
+        # Clear the has_submitted flag in user doc
+        user_ref = db.collection("users").document(user_id)
+        await user_ref.update({"has_submitted": False})
+        
+        # Invalidate leaderboard cache
+        cache_key = f"weekly_{target_week}"
+        if cache_key in leaderboard_cache:
+            del leaderboard_cache[cache_key]
+        if "overall" in leaderboard_cache:
+            del leaderboard_cache["overall"]
+        
+        return {
+            "status": "success", 
+            "message": f"Deleted submission for {user_id} in week {target_week}."
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
