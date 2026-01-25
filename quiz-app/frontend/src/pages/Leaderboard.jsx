@@ -34,16 +34,22 @@ function Leaderboard() {
     const userId = localStorage.getItem('user_id');
     const hasSubmitted = localStorage.getItem('has_submitted') === 'true';
 
-    // Calculate week IDs
+    // Calculate week IDs using proper ISO 8601 week numbering
     const getWeekId = (weeksOffset = 0) => {
-        const now = new Date();
-        now.setDate(now.getDate() + weeksOffset * 7);
-        const year = now.getFullYear();
-        // Get ISO week number
-        const startOfYear = new Date(year, 0, 1);
-        const days = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
-        const weekNum = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-        return `${year}-W${weekNum.toString().padStart(2, '0')}`;
+        const date = new Date();
+        date.setDate(date.getDate() + weeksOffset * 7);
+
+        // ISO week calculation: week starts on Monday, week 1 contains first Thursday
+        const dayOfWeek = date.getDay() || 7; // Convert Sunday (0) to 7
+        const thursday = new Date(date);
+        thursday.setDate(date.getDate() - dayOfWeek + 4); // Get Thursday of current week
+
+        const yearStart = new Date(thursday.getFullYear(), 0, 1);
+        const weekNum = Math.ceil(((thursday - yearStart) / 86400000 + 1) / 7);
+
+        // ISO year is based on the Thursday's year (important for edge cases)
+        const isoYear = thursday.getFullYear();
+        return `${isoYear}-W${weekNum.toString().padStart(2, '0')}`;
     };
 
     // Get date range label for a week ID
@@ -376,7 +382,7 @@ function Leaderboard() {
                                         initial={{ opacity: 0, y: -10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         exit={{ opacity: 0, y: -10 }}
-                                        className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[180px] z-20"
+                                        className="absolute top-full mt-2 right-0 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[180px] max-h-[300px] overflow-y-auto z-20"
                                     >
                                         {weeks.filter(w => !w.is_current && w.week_id < currentWeekId).slice(0, 6).map(week => (
                                             <button
