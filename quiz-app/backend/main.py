@@ -435,7 +435,7 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, a
                     sub_week = s_data.get("week_id", "")
                     
                     # Skip current week in overall calculation (unless admin)
-                    if exclude_current_in_overall and sub_week == current_week:
+                    if (exclude_current_in_overall and sub_week == current_week) or (sub_week in ["2026-W04"]):
                         continue
                     
                     total_score += s_data.get("score", 0)
