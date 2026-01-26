@@ -49,7 +49,7 @@ const Layout = () => {
 
   return (
     <>
-      <div className="fixed top-5 right-5 z-50">
+      <div className="fixed bottom-4 left-4 md:top-5 md:right-5 z-50">
         <button
           onClick={toggleMute}
           className="bg-midnight-blue/50 border border-antique-gold p-3 rounded-full shadow-lg hover:bg-midnight-blue transition-colors"
