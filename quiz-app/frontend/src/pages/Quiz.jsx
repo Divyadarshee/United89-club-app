@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
@@ -18,6 +18,13 @@ function Quiz() {
 
     const navigate = useNavigate();
     const { playSound, stopSound } = useSoundManager();
+
+    // Fix: Use ref to access latest submitQuiz closure in event listeners
+    const submitQuizRef = useRef(null);
+
+    useEffect(() => {
+        submitQuizRef.current = submitQuiz;
+    });
 
     useEffect(() => {
         // Prevent re-entry if already submitted
@@ -111,7 +118,10 @@ function Quiz() {
                 window.history.pushState(null, '', window.location.href);
             } else {
                 // User confirmed they want to leave - submit their partial answers
-                submitQuiz();
+                // Use ref to get the latest closure with current answers/time
+                if (submitQuizRef.current) {
+                    submitQuizRef.current();
+                }
             }
         };
 
