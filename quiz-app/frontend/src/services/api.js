@@ -83,6 +83,46 @@ export const generateQuestions = async (weekId) => {
     return response.data;
 };
 
+// ============================================
+// NEW TWO-STEP QUESTION GENERATION APIs
+// ============================================
+
+/**
+ * Step 1: Generate trending topics using Google Search
+ * Returns a list of 10-15 trending topics from recent news
+ */
+export const generateTrendingTopics = async (weekId) => {
+    const response = await axios.post(`${API_URL}/api/admin/generate-topics`, null, {
+        params: { week_id: weekId }
+    });
+    return response.data;
+};
+
+/**
+ * Step 2: Generate tiered quiz questions with selected trending topics
+ * Returns questions organized by difficulty: easy (10), medium (6), hard (4)
+ */
+export const generateTieredQuestions = async (weekId, selectedTopics) => {
+    const response = await axios.post(`${API_URL}/api/admin/generate-tiered-questions`, {
+        week_id: weekId,
+        selected_topics: selectedTopics
+    });
+    return response.data;
+};
+
+/**
+ * Regenerate questions using agent memory with user feedback
+ * Uses the same session to maintain context about selected topics
+ */
+export const regenerateQuestionsWithFeedback = async (weekId, sessionId, feedback) => {
+    const response = await axios.post(`${API_URL}/api/admin/regenerate-questions`, {
+        week_id: weekId,
+        session_id: sessionId,
+        feedback: feedback
+    });
+    return response.data;
+};
+
 export const addBatchQuestions = async (questions) => {
     const response = await axios.post(`${API_URL}/api/admin/questions/batch`, { questions });
     return response.data;
