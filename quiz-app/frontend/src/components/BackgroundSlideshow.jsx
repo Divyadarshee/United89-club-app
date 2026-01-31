@@ -21,7 +21,7 @@ const BackgroundSlideshow = () => {
     }, []);
 
     return (
-        <div className="fixed inset-0 z-[-1] overflow-hidden bg-black">
+        <div className="fixed inset-0 z-[-1] overflow-hidden bg-black pointer-events-none">
             <AnimatePresence mode="popLayout">
                 <motion.img
                     key={index}
