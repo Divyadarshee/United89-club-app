@@ -1,16 +1,43 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Search, Brain, Zap } from 'lucide-react';
 
-const STATUS_MESSAGES = [
-    "Initializing...",
-    "Thinking...",
-    "Analyzing Topics...",
-    "Gathering Knowledge...",
-    "Crafting Questions...",
-    "Validating Answers...",
-    "Finalizing..."
-];
+// Different message sets for different operations
+const MESSAGE_SETS = {
+    topics: [
+        "🔍 Searching the web...",
+        "📰 Scanning news sources...",
+        "🌐 Finding trending topics...",
+        "📊 Analyzing popularity...",
+        "🎯 Curating top stories...",
+        "✨ Preparing topics..."
+    ],
+    questions: [
+        "🧠 Analyzing topics...",
+        "📚 Researching facts...",
+        "✍️ Crafting questions...",
+        "🎯 Setting difficulty levels...",
+        "✅ Validating answers...",
+        "🎲 Shuffling options...",
+        "✨ Finalizing quiz..."
+    ],
+    regenerate: [
+        "🔄 Processing feedback...",
+        "🧠 Rethinking approach...",
+        "📝 Creating new questions...",
+        "🎯 Adjusting difficulty...",
+        "✅ Verifying accuracy...",
+        "✨ Almost ready..."
+    ],
+    default: [
+        "Initializing...",
+        "Thinking...",
+        "Processing...",
+        "Generating...",
+        "Validating...",
+        "Finalizing..."
+    ]
+};
 
 const SCRAMBLE_CHARS = "!@#$%^&*()_+-=[]{}|;':\",./<>?0123456789";
 
@@ -90,7 +117,23 @@ const useTextScramble = (text, duration = 500) => {
     return displayText;
 };
 
-function AiLoader() {
+// Icon component based on mode
+const ModeIcon = ({ mode }) => {
+    const iconClass = "text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]";
+    switch (mode) {
+        case 'topics':
+            return <Search size={24} className={iconClass} />;
+        case 'questions':
+            return <Brain size={24} className={iconClass} />;
+        case 'regenerate':
+            return <Zap size={24} className={iconClass} />;
+        default:
+            return <Sparkles size={24} className={iconClass} />;
+    }
+};
+
+function AiLoader({ mode = 'default' }) {
+    const STATUS_MESSAGES = MESSAGE_SETS[mode] || MESSAGE_SETS.default;
     const [statusIndex, setStatusIndex] = useState(0);
     const [particles, setParticles] = useState([]);
 
@@ -123,6 +166,21 @@ function AiLoader() {
 
     return (
         <div className="flex flex-col items-center justify-center gap-4 sm:gap-6 p-4 sm:p-8 w-full">
+            {/* Mode Icon */}
+            <motion.div
+                animate={{ 
+                    scale: [1, 1.1, 1],
+                    rotate: mode === 'regenerate' ? [0, 10, -10, 0] : 0
+                }}
+                transition={{ 
+                    duration: 2, 
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                }}
+            >
+                <ModeIcon mode={mode} />
+            </motion.div>
+
             {/* Neural Stream Bar */}
             <div className="relative w-full max-w-[200px] sm:max-w-[256px] h-2">
                 {/* Glow backdrop */}

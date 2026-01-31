@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 import pytz
 
-from ai.genai import generate_questions_by_ai
+from ai.genai import generate_questions_by_ai, generate_trending_topics, generate_tiered_questions, regenerate_tiered_questions
 
 load_dotenv()
 
@@ -695,6 +695,7 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
 
 @app.post("/api/admin/generate-questions")
 async def generate_question(week_id: str):
+    """Legacy endpoint for generating questions (backward compatibility)"""
     current_iso_week_id = get_current_iso_week()
 
     if current_iso_week_id > week_id:
@@ -702,6 +703,98 @@ async def generate_question(week_id: str):
         raise HTTPException(status_code=403, detail="Cannot generate questions for past weeks")
 
     return await generate_questions_by_ai()
+
+
+# ============================================
+# NEW TWO-STEP QUESTION GENERATION ENDPOINTS
+# ============================================
+
+@app.post("/api/admin/generate-topics")
+async def generate_topics_endpoint(week_id: str):
+    """
+    Step 1: Generate trending topics using Google Search.
+    Returns a list of 10-15 trending topics from recent news.
+    Admin will select 3-5 topics for current affairs questions.
+    """
+    current_iso_week_id = get_current_iso_week()
+
+    if current_iso_week_id > week_id:
+        print(f"Trying to generate topics for past week ({week_id}). Current is {current_iso_week_id}")
+        raise HTTPException(status_code=403, detail="Cannot generate topics for past weeks")
+
+    try:
+        topics = await generate_trending_topics()
+        return {"topics": topics, "week_id": week_id}
+    except Exception as e:
+        print(f"Error generating topics: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate topics: {str(e)}")
+
+
+# Import request schemas from schema.py
+from schema import GenerateQuestionsRequest, RegenerateQuestionsRequest
+
+
+@app.post("/api/admin/generate-tiered-questions")
+async def generate_tiered_questions_endpoint(request: GenerateQuestionsRequest):
+    """
+    Step 2: Generate tiered quiz questions with selected trending topics.
+    Returns questions organized by difficulty:
+    - 10 Easy questions
+    - 6 Medium questions  
+    - 4 Hard questions
+    
+    Admin will select 5 Easy + 3 Medium + 2 Hard = 10 final questions.
+    """
+    current_iso_week_id = get_current_iso_week()
+
+    if current_iso_week_id > request.week_id:
+        print(f"Trying to generate questions for past week ({request.week_id}). Current is {current_iso_week_id}")
+        raise HTTPException(status_code=403, detail="Cannot generate questions for past weeks")
+
+    if not request.selected_topics or len(request.selected_topics) == 0:
+        raise HTTPException(status_code=400, detail="At least one topic must be selected")
+
+    try:
+        questions = await generate_tiered_questions(request.selected_topics, request.week_id)
+        return {
+            "questions": questions,
+            "week_id": request.week_id,
+            "selected_topics": request.selected_topics,
+            "session_id": questions.get("session_id")
+        }
+    except Exception as e:
+        print(f"Error generating tiered questions: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate questions: {str(e)}")
+
+
+@app.post("/api/admin/regenerate-questions")
+async def regenerate_questions_endpoint(request: RegenerateQuestionsRequest):
+    """
+    Regenerate quiz questions using agent memory.
+    Uses the same session to maintain context about selected topics.
+    Accepts user feedback to customize the regeneration.
+    """
+    current_iso_week_id = get_current_iso_week()
+
+    if current_iso_week_id > request.week_id:
+        raise HTTPException(status_code=403, detail="Cannot regenerate questions for past weeks")
+
+    if not request.session_id:
+        raise HTTPException(status_code=400, detail="Session ID is required for regeneration")
+
+    if not request.feedback:
+        raise HTTPException(status_code=400, detail="Feedback is required for regeneration")
+
+    try:
+        questions = await regenerate_tiered_questions(request.session_id, request.feedback)
+        return {
+            "questions": questions,
+            "week_id": request.week_id,
+            "session_id": questions.get("session_id")
+        }
+    except Exception as e:
+        print(f"Error regenerating questions: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to regenerate questions: {str(e)}")
 
 @app.post("/api/admin/questions/batch")
 async def add_questions_batch(question_batch: QuestionBatchCreate):

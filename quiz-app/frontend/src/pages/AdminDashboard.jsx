@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getQuestions, getUsers, deleteQuestion, addQuestion, updateConfig, getConfig, getAdminQuestions, getLeaderboard, getWeeks, generateQuestions, addBatchQuestions, getSubmissionDetails, deleteTesterSubmission } from '../services/api';
-import { Trash2, Plus, Settings, Users, FileQuestion, Save, Eye, X, Calendar, Globe, Award, Sparkles, Check, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { getQuestions, getUsers, deleteQuestion, addQuestion, updateConfig, getConfig, getAdminQuestions, getLeaderboard, getWeeks, generateQuestions, addBatchQuestions, getSubmissionDetails, deleteTesterSubmission, generateTrendingTopics, generateTieredQuestions, regenerateQuestionsWithFeedback } from '../services/api';
+import { Trash2, Plus, Settings, Users, FileQuestion, Save, Eye, X, Calendar, Globe, Award, Sparkles, Check, AlertCircle, Loader2, RefreshCw, ChevronRight, Search, MessageSquare } from 'lucide-react';
 import AiLoader from '../components/AiLoader';
 
 function AdminDashboard() {
@@ -32,6 +32,22 @@ function AdminDashboard() {
     const [showPreviewModal, setShowPreviewModal] = useState(false);
     const currentWeekId = weeks.find(w => w.is_current)?.week_id || '';
     const isPastWeek = selectedWeek && currentWeekId && selectedWeek < currentWeekId;
+
+    // NEW: Two-Step Generation States
+    const [generationStep, setGenerationStep] = useState(0); // 0=none, 1=topics, 2=questions
+    const [trendingTopics, setTrendingTopics] = useState([]);
+    const [selectedTopics, setSelectedTopics] = useState([]);
+    const [showTopicsModal, setShowTopicsModal] = useState(false);
+    const [tieredQuestions, setTieredQuestions] = useState({ easy_questions: [], medium_questions: [], hard_questions: [] });
+    const [selectedEasy, setSelectedEasy] = useState([]);
+    const [selectedMedium, setSelectedMedium] = useState([]);
+    const [selectedHard, setSelectedHard] = useState([]);
+    
+    // NEW: Session and Feedback States for Regeneration
+    const [quizSessionId, setQuizSessionId] = useState(null);
+    const [showFeedbackInput, setShowFeedbackInput] = useState(false);
+    const [feedbackText, setFeedbackText] = useState('');
+    const [loaderMode, setLoaderMode] = useState('default'); // 'topics', 'questions', 'regenerate', 'default'
 
     // Initial Load
     useEffect(() => {
@@ -140,6 +156,271 @@ function AdminDashboard() {
             return; // Exit early
         }
         setIsGenerating(false);
+    };
+
+    // ============================================
+    // NEW TWO-STEP GENERATION FUNCTIONS
+    // ============================================
+
+    const handleStartNewGeneration = async () => {
+        setIsGenerating(true);
+        setGenerationStep(1);
+        setLoaderMode('topics');
+        console.log('[Step 1] Fetching trending topics...');
+
+        try {
+            const result = await generateTrendingTopics(selectedWeek);
+            console.log('[Step 1] Trending topics received:', result);
+            
+            setTrendingTopics(result.topics || []);
+            setSelectedTopics([]);
+            setShowTopicsModal(true);
+        } catch (error) {
+            console.error('[Step 1] ERROR:', error);
+            setGenerationStep(0);
+            
+            if (error.response && error.response.status === 403) {
+                alert(`⚠️ Cannot generate for past weeks.\n\nPlease select the current week or a future week.`);
+            } else {
+                alert(`Failed to fetch trending topics. Please try again.`);
+            }
+        }
+        setIsGenerating(false);
+    };
+
+    const handleTopicToggle = (topic) => {
+        setSelectedTopics(prev => {
+            if (prev.includes(topic)) {
+                return prev.filter(t => t !== topic);
+            } else if (prev.length < 5) {
+                return [...prev, topic];
+            }
+            return prev;
+        });
+    };
+
+    const handleGenerateTieredQuestions = async () => {
+        if (selectedTopics.length === 0) {
+            alert('Please select at least 1 topic for current affairs questions.');
+            return;
+        }
+
+        setIsGenerating(true);
+        setGenerationStep(2);
+        setLoaderMode('questions');
+        setShowTopicsModal(false);
+        setShowFeedbackInput(false);
+        setFeedbackText('');
+        console.log('[Step 2] Generating tiered questions with topics:', selectedTopics);
+
+        try {
+            const result = await generateTieredQuestions(selectedWeek, selectedTopics);
+            console.log('[Step 2] Tiered questions received:', result);
+
+            // Store session ID for regeneration with memory
+            if (result.session_id) {
+                setQuizSessionId(result.session_id);
+                console.log('[Step 2] Session ID stored:', result.session_id);
+            }
+
+            // Transform the questions
+            const transformQuestion = (q) => {
+                const letterToIndex = { 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
+                const answerIndex = letterToIndex[q.correct_answer.toLowerCase()];
+                const actualAnswer = q.choices[answerIndex];
+                return {
+                    text: q.question,
+                    options: q.choices,
+                    correct_answer: actualAnswer,
+                    category: q.category || 'miscellaneous'
+                };
+            };
+
+            const questions = result.questions || result;
+            setTieredQuestions({
+                easy_questions: (questions.easy_questions || []).map(transformQuestion),
+                medium_questions: (questions.medium_questions || []).map(transformQuestion),
+                hard_questions: (questions.hard_questions || []).map(transformQuestion)
+            });
+            
+            // Reset selections
+            setSelectedEasy([]);
+            setSelectedMedium([]);
+            setSelectedHard([]);
+            setShowPreviewModal(true);
+        } catch (error) {
+            console.error('[Step 2] ERROR:', error);
+            setGenerationStep(0);
+            alert(`Failed to generate questions. Please try again.`);
+        }
+        setIsGenerating(false);
+    };
+
+    const handleRegenerateTieredQuestions = async () => {
+        // Regenerate tiered questions with the same selected topics
+        if (selectedTopics.length === 0) {
+            // If no topics selected (shouldn't happen), go back to topics selection
+            setShowPreviewModal(false);
+            setShowTopicsModal(true);
+            return;
+        }
+
+        // If no feedback provided, use a default message
+        const feedback = feedbackText.trim() || 'Generate different questions';
+        
+        setIsGenerating(true);
+        setLoaderMode('regenerate');
+        setShowFeedbackInput(false);
+        console.log('[Regenerate] Regenerating with feedback:', feedback);
+        console.log('[Regenerate] Session ID:', quizSessionId);
+
+        try {
+            let result;
+            
+            // Use session-based regeneration if we have a session ID
+            if (quizSessionId) {
+                result = await regenerateQuestionsWithFeedback(selectedWeek, quizSessionId, feedback);
+                console.log('[Regenerate] Used agent memory for regeneration');
+            } else {
+                // Fallback to fresh generation if no session
+                result = await generateTieredQuestions(selectedWeek, selectedTopics);
+                console.log('[Regenerate] Fallback: Fresh generation (no session)');
+            }
+            
+            console.log('[Regenerate] New tiered questions received:', result);
+
+            // Update session ID if returned
+            if (result.session_id) {
+                setQuizSessionId(result.session_id);
+            }
+
+            // Transform the questions (same as handleGenerateTieredQuestions)
+            const transformQuestion = (q) => {
+                const letterToIndex = { 'a': 0, 'b': 1, 'c': 2, 'd': 3 };
+                const answerIndex = letterToIndex[q.correct_answer.toLowerCase()];
+                const actualAnswer = q.choices[answerIndex];
+                return {
+                    text: q.question,
+                    options: q.choices,
+                    correct_answer: actualAnswer,
+                    category: q.category || 'miscellaneous'
+                };
+            };
+
+            const questions = result.questions || result;
+            setTieredQuestions({
+                easy_questions: (questions.easy_questions || []).map(transformQuestion),
+                medium_questions: (questions.medium_questions || []).map(transformQuestion),
+                hard_questions: (questions.hard_questions || []).map(transformQuestion)
+            });
+            
+            // Reset selections and feedback
+            setSelectedEasy([]);
+            setSelectedMedium([]);
+            setSelectedHard([]);
+            setFeedbackText('');
+        } catch (error) {
+            console.error('[Regenerate] ERROR:', error);
+            alert(`Failed to regenerate questions. Please try again.`);
+        }
+        setIsGenerating(false);
+    };
+
+    // Quick feedback options for regeneration
+    const quickFeedbackOptions = [
+        { label: '🔄 Different Questions', value: 'Generate completely different questions on the same topics' },
+        { label: '😰 Too Difficult', value: 'The questions are too difficult. Make them easier and more accessible' },
+        { label: '😴 Too Easy', value: 'The questions are too easy. Make them more challenging' },
+        { label: '🎯 More Current Affairs', value: 'Include more current affairs and recent news questions' },
+        { label: '🎬 More Pop Culture', value: 'Include more Bollywood, cricket, and entertainment questions' },
+        { label: '🇮🇳 More India-Focused', value: 'Focus more on Indian history, geography, and culture' },
+    ];
+
+    const handleQuickFeedback = (feedback) => {
+        setFeedbackText(feedback);
+    };
+
+    const toggleTieredSelection = (difficulty, index) => {
+        const limits = { easy: 5, medium: 3, hard: 2 };
+        const setters = { easy: setSelectedEasy, medium: setSelectedMedium, hard: setSelectedHard };
+        const current = { easy: selectedEasy, medium: selectedMedium, hard: selectedHard };
+
+        const setter = setters[difficulty];
+        const currentSelection = current[difficulty];
+        const limit = limits[difficulty];
+
+        setter(prev => {
+            if (prev.includes(index)) {
+                return prev.filter(i => i !== index);
+            } else if (prev.length < limit) {
+                return [...prev, index];
+            }
+            return prev;
+        });
+    };
+
+    const handleBulkSaveTiered = async () => {
+        const totalSelected = selectedEasy.length + selectedMedium.length + selectedHard.length;
+        
+        if (selectedEasy.length !== 5 || selectedMedium.length !== 3 || selectedHard.length !== 2) {
+            alert(`Please select exactly 5 Easy, 3 Medium, and 2 Hard questions.\n\nCurrently: ${selectedEasy.length} Easy, ${selectedMedium.length} Medium, ${selectedHard.length} Hard`);
+            return;
+        }
+
+        try {
+            const allSelected = [
+                ...selectedEasy.map((i, order) => ({ ...tieredQuestions.easy_questions[i], order: order + 1, difficulty: 'easy' })),
+                ...selectedMedium.map((i, order) => ({ ...tieredQuestions.medium_questions[i], order: order + 6, difficulty: 'medium' })),
+                ...selectedHard.map((i, order) => ({ ...tieredQuestions.hard_questions[i], order: order + 9, difficulty: 'hard' }))
+            ];
+
+            const questionsToSave = allSelected.map((q, idx) => ({
+                id: `ai_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                text: q.text,
+                options: q.options,
+                answer: q.correct_answer,
+                order: idx + 1,
+                week_id: selectedWeek
+            }));
+
+            console.log('[Bulk Save] Saving tiered questions:', questionsToSave);
+            await addBatchQuestions(questionsToSave);
+
+            setShowPreviewModal(false);
+            setGenerationStep(0);
+            setTieredQuestions({ easy_questions: [], medium_questions: [], hard_questions: [] });
+            setSelectedEasy([]);
+            setSelectedMedium([]);
+            setSelectedHard([]);
+            loadData();
+        } catch (error) {
+            console.error('[Bulk Save] ERROR:', error);
+            alert(`Failed to save questions: ${error.message}`);
+        }
+    };
+
+    const getCategoryBadgeColor = (category) => {
+        const colors = {
+            'current_affairs': 'bg-red-100 text-red-800 border-red-200',
+            'pop_culture': 'bg-purple-100 text-purple-800 border-purple-200',
+            'history_heritage': 'bg-amber-100 text-amber-800 border-amber-200',
+            'world_geography': 'bg-blue-100 text-blue-800 border-blue-200',
+            'science_technology': 'bg-green-100 text-green-800 border-green-200',
+            'miscellaneous': 'bg-gray-100 text-gray-800 border-gray-200'
+        };
+        return colors[category] || colors['miscellaneous'];
+    };
+
+    const getCategoryLabel = (category) => {
+        const labels = {
+            'current_affairs': '🇮🇳 Current Affairs',
+            'pop_culture': '📺 Pop Culture',
+            'history_heritage': '🏛️ History',
+            'world_geography': '🌍 Geography',
+            'science_technology': '🔬 Science',
+            'miscellaneous': '🎯 Misc'
+        };
+        return labels[category] || '🎯 Misc';
     };
 
     const toggleSelection = (index) => {
@@ -332,22 +613,36 @@ function AdminDashboard() {
                                 <h2 className="text-xl sm:text-2xl font-serif text-warm-cream flex items-center gap-2 flex-wrap">
                                     <FileQuestion size={24} className="shrink-0" /> Manage Questions for <span className="text-antique-gold">{selectedWeek}</span>
                                 </h2>
-                                <button
-                                    onClick={handleGenerateQuestions}
-                                    disabled={isGenerating || isPastWeek}
-                                    className={`py-2 px-3 sm:px-4 text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg rounded font-serif font-bold whitespace-nowrap shrink-0 ${isPastWeek
-                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
-                                        : 'btn-vintage bg-gradient-to-r from-antique-gold to-yellow-600 border-none hover:from-yellow-600 hover:to-antique-gold'
-                                        }`}
-                                >
-                                    {isGenerating ? (
-                                        <Sparkles className="animate-ai-sparkle" size={16} />
-                                    ) : (
-                                        <Sparkles size={16} />
-                                    )}
-                                    <span className="hidden sm:inline">{isGenerating ? 'Generating...' : 'AI Generate (Choose 10)'}</span>
-                                    <span className="sm:hidden">{isGenerating ? 'Generating...' : 'AI Generate'}</span>
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleStartNewGeneration}
+                                        disabled={isGenerating || isPastWeek}
+                                        className={`py-2 px-3 sm:px-4 text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg rounded font-serif font-bold whitespace-nowrap shrink-0 ${isPastWeek
+                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
+                                            : 'btn-vintage bg-gradient-to-r from-antique-gold to-yellow-600 border-none hover:from-yellow-600 hover:to-antique-gold'
+                                            }`}
+                                    >
+                                        {isGenerating ? (
+                                            <Sparkles className="animate-ai-sparkle" size={16} />
+                                        ) : (
+                                            <Sparkles size={16} />
+                                        )}
+                                        <span className="hidden sm:inline">{isGenerating ? 'Generating...' : '✨ AI Generate (New)'}</span>
+                                        <span className="sm:hidden">{isGenerating ? '...' : '✨ New'}</span>
+                                    </button>
+                                    <button
+                                        onClick={handleGenerateQuestions}
+                                        disabled={isGenerating || isPastWeek}
+                                        className={`py-2 px-3 text-xs flex items-center gap-2 transition-all rounded font-serif font-bold whitespace-nowrap shrink-0 opacity-60 ${isPastWeek
+                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                            : 'bg-gray-500 text-white hover:bg-gray-600'
+                                            }`}
+                                        title="Legacy: Generate without trending topics"
+                                    >
+                                        <span className="hidden sm:inline">Legacy</span>
+                                        <span className="sm:hidden">Old</span>
+                                    </button>
+                                </div>
                             </div>
 
                             {questions.length === 0 ? (
@@ -723,9 +1018,369 @@ function AdminDashboard() {
                     )}
                 </AnimatePresence>
 
-                {/* AI PREVIEW MODAL */}
+                {/* TRENDING TOPICS MODAL (Step 1) */}
                 <AnimatePresence>
-                    {showPreviewModal && (
+                    {showTopicsModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
+                            <motion.div
+                                initial={{ opacity: 0, y: 50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-warm-cream w-full max-w-3xl max-h-[85vh] overflow-hidden rounded-xl shadow-2xl flex flex-col border-2 border-antique-gold"
+                            >
+                                <div className="bg-royal-blue p-4 sm:p-6 text-white border-b-4 border-antique-gold">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Search className="text-antique-gold" size={28} />
+                                            <div>
+                                                <h3 className="text-xl sm:text-2xl font-serif">Step 1: Select Trending Topics</h3>
+                                                <p className="text-sm text-gray-300">Choose 1-5 topics for current affairs questions</p>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => { setShowTopicsModal(false); setGenerationStep(0); }} className="hover:text-red-300">
+                                            <X size={24} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 sm:p-6 overflow-y-auto space-y-3 bg-paper-texture flex-1">
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center gap-2 text-sm text-blue-800">
+                                        <AlertCircle size={16} />
+                                        <span><strong>Tip:</strong> These topics will be used to generate Current Affairs questions (~25% of the quiz).</span>
+                                    </div>
+
+                                    {trendingTopics.length === 0 ? (
+                                        <div className="text-center py-12 text-gray-500">
+                                            <Loader2 className="animate-spin mx-auto mb-4" size={32} />
+                                            <p>Loading trending topics...</p>
+                                        </div>
+                                    ) : (
+                                        trendingTopics.map((topic, index) => (
+                                            <div
+                                                key={index}
+                                                onClick={() => handleTopicToggle(topic.topic)}
+                                                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedTopics.includes(topic.topic)
+                                                    ? 'bg-white border-royal-blue shadow-md ring-2 ring-royal-blue/20'
+                                                    : 'bg-white/70 border-gray-200 hover:border-antique-gold hover:bg-white'
+                                                    }`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-1 ${selectedTopics.includes(topic.topic) ? 'bg-royal-blue text-white' : 'bg-gray-200 text-gray-400'}`}>
+                                                        {selectedTopics.includes(topic.topic) ? <Check size={14} /> : index + 1}
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h4 className="font-serif font-bold text-royal-blue text-lg">{topic.topic}</h4>
+                                                        <p className="text-gray-600 text-sm mt-1">{topic.description}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+
+                                <div className="p-4 sm:p-6 border-t-2 border-antique-gold/20 bg-white flex justify-between items-center">
+                                    <div className={`px-4 py-2 rounded-full font-bold text-sm flex items-center gap-2 ${selectedTopics.length > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
+                                        {selectedTopics.length > 0 ? <Check size={14} /> : <AlertCircle size={14} />}
+                                        {selectedTopics.length} / 5 Topics Selected
+                                    </div>
+                                    <button
+                                        onClick={handleGenerateTieredQuestions}
+                                        disabled={selectedTopics.length === 0 || isGenerating}
+                                        className={`px-6 py-3 rounded-lg font-serif font-bold transition-all flex items-center gap-2 ${selectedTopics.length > 0
+                                            ? 'bg-royal-blue text-white hover:bg-royal-blue/90 shadow-lg'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        Generate Questions <ChevronRight size={18} />
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                {/* TIERED QUESTIONS PREVIEW MODAL (Step 2) */}
+                <AnimatePresence>
+                    {showPreviewModal && generationStep === 2 && (
+                        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-md">
+                            <motion.div
+                                initial={{ opacity: 0, y: 50 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="bg-warm-cream w-full sm:max-w-6xl h-[95vh] sm:h-[90vh] overflow-hidden rounded-t-xl sm:rounded-xl shadow-2xl flex flex-col border-2 border-antique-gold"
+                            >
+                                <div className="bg-royal-blue p-3 sm:p-5 text-white border-b-4 border-antique-gold">
+                                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                                        <div className="flex items-center gap-3">
+                                            <Sparkles className="text-antique-gold" size={24} />
+                                            <div>
+                                                <h3 className="text-lg sm:text-xl font-serif">Step 2: Select Questions by Difficulty</h3>
+                                                <p className="text-xs sm:text-sm text-gray-300">Choose <span className="text-green-300 font-bold">5 Easy</span> + <span className="text-yellow-300 font-bold">3 Medium</span> + <span className="text-red-300 font-bold">2 Hard</span> = 10 questions</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 sm:gap-4">
+                                            <div className="flex gap-2 text-xs sm:text-sm">
+                                                <span className={`px-2 py-1 rounded ${selectedEasy.length === 5 ? 'bg-green-600' : 'bg-green-900/50'}`}>🟢 {selectedEasy.length}/5</span>
+                                                <span className={`px-2 py-1 rounded ${selectedMedium.length === 3 ? 'bg-yellow-600' : 'bg-yellow-900/50'}`}>🟡 {selectedMedium.length}/3</span>
+                                                <span className={`px-2 py-1 rounded ${selectedHard.length === 2 ? 'bg-red-600' : 'bg-red-900/50'}`}>🔴 {selectedHard.length}/2</span>
+                                            </div>
+                                            <button onClick={() => { setShowPreviewModal(false); setGenerationStep(0); }} className="hover:text-red-300">
+                                                <X size={24} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-6 bg-paper-texture">
+                                    {/* EASY QUESTIONS */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3 sticky top-0 bg-green-100 p-3 rounded-lg border-2 border-green-300 z-10">
+                                            <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">🟢</div>
+                                            <div className="flex-1">
+                                                <h4 className="font-serif font-bold text-green-800">Easy Questions</h4>
+                                                <p className="text-xs text-green-600">Select 5 of {tieredQuestions.easy_questions.length} questions</p>
+                                            </div>
+                                            <span className={`px-3 py-1 rounded-full text-sm font-bold ${selectedEasy.length === 5 ? 'bg-green-500 text-white' : 'bg-green-200 text-green-700'}`}>
+                                                {selectedEasy.length}/5
+                                            </span>
+                                        </div>
+                                        {tieredQuestions.easy_questions.map((q, index) => (
+                                            <div
+                                                key={`easy-${index}`}
+                                                onClick={() => toggleTieredSelection('easy', index)}
+                                                className={`p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedEasy.includes(index)
+                                                    ? 'bg-green-50 border-green-400 shadow-md'
+                                                    : 'bg-white border-gray-200 hover:border-green-300'
+                                                    }`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm font-bold ${selectedEasy.includes(index) ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                        {selectedEasy.includes(index) ? <Check size={14} /> : index + 1}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                            <span className={`px-2 py-0.5 rounded text-xs font-bold border ${getCategoryBadgeColor(q.category)}`}>
+                                                                {getCategoryLabel(q.category)}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm sm:text-base text-gray-800 font-medium mb-2">{q.text}</p>
+                                                        {/* OPTIONS */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+                                                            {q.options && q.options.map((opt, optIdx) => (
+                                                                <div key={optIdx} className={`px-2 py-1 rounded ${opt === q.correct_answer ? 'bg-green-100 text-green-800 font-bold' : 'bg-gray-100 text-gray-600'}`}>
+                                                                    <span className="font-bold mr-1">{String.fromCharCode(65 + optIdx)}:</span>{opt}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* MEDIUM QUESTIONS */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3 sticky top-0 bg-yellow-100 p-3 rounded-lg border-2 border-yellow-300 z-10">
+                                            <div className="w-8 h-8 bg-yellow-500 text-white rounded-full flex items-center justify-center font-bold">🟡</div>
+                                            <div className="flex-1">
+                                                <h4 className="font-serif font-bold text-yellow-800">Medium Questions</h4>
+                                                <p className="text-xs text-yellow-600">Select 3 of {tieredQuestions.medium_questions.length} questions</p>
+                                            </div>
+                                            <span className={`px-3 py-1 rounded-full text-sm font-bold ${selectedMedium.length === 3 ? 'bg-yellow-500 text-white' : 'bg-yellow-200 text-yellow-700'}`}>
+                                                {selectedMedium.length}/3
+                                            </span>
+                                        </div>
+                                        {tieredQuestions.medium_questions.map((q, index) => (
+                                            <div
+                                                key={`medium-${index}`}
+                                                onClick={() => toggleTieredSelection('medium', index)}
+                                                className={`p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedMedium.includes(index)
+                                                    ? 'bg-yellow-50 border-yellow-400 shadow-md'
+                                                    : 'bg-white border-gray-200 hover:border-yellow-300'
+                                                    }`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm font-bold ${selectedMedium.includes(index) ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                        {selectedMedium.includes(index) ? <Check size={14} /> : index + 1}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                            <span className={`px-2 py-0.5 rounded text-xs font-bold border ${getCategoryBadgeColor(q.category)}`}>
+                                                                {getCategoryLabel(q.category)}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm sm:text-base text-gray-800 font-medium mb-2">{q.text}</p>
+                                                        {/* OPTIONS */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+                                                            {q.options && q.options.map((opt, optIdx) => (
+                                                                <div key={optIdx} className={`px-2 py-1 rounded ${opt === q.correct_answer ? 'bg-green-100 text-green-800 font-bold' : 'bg-gray-100 text-gray-600'}`}>
+                                                                    <span className="font-bold mr-1">{String.fromCharCode(65 + optIdx)}:</span>{opt}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* HARD QUESTIONS */}
+                                    <div className="space-y-3">
+                                        <div className="flex items-center gap-3 sticky top-0 bg-red-100 p-3 rounded-lg border-2 border-red-300 z-10">
+                                            <div className="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center font-bold">🔴</div>
+                                            <div className="flex-1">
+                                                <h4 className="font-serif font-bold text-red-800">Hard Questions</h4>
+                                                <p className="text-xs text-red-600">Select 2 of {tieredQuestions.hard_questions.length} questions</p>
+                                            </div>
+                                            <span className={`px-3 py-1 rounded-full text-sm font-bold ${selectedHard.length === 2 ? 'bg-red-500 text-white' : 'bg-red-200 text-red-700'}`}>
+                                                {selectedHard.length}/2
+                                            </span>
+                                        </div>
+                                        {tieredQuestions.hard_questions.map((q, index) => (
+                                            <div
+                                                key={`hard-${index}`}
+                                                onClick={() => toggleTieredSelection('hard', index)}
+                                                className={`p-3 sm:p-4 rounded-lg border-2 cursor-pointer transition-all ${selectedHard.includes(index)
+                                                    ? 'bg-red-50 border-red-400 shadow-md'
+                                                    : 'bg-white border-gray-200 hover:border-red-300'
+                                                    }`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 text-sm font-bold ${selectedHard.includes(index) ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500'}`}>
+                                                        {selectedHard.includes(index) ? <Check size={14} /> : index + 1}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                            <span className={`px-2 py-0.5 rounded text-xs font-bold border ${getCategoryBadgeColor(q.category)}`}>
+                                                                {getCategoryLabel(q.category)}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm sm:text-base text-gray-800 font-medium mb-2">{q.text}</p>
+                                                        {/* OPTIONS */}
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+                                                            {q.options && q.options.map((opt, optIdx) => (
+                                                                <div key={optIdx} className={`px-2 py-1 rounded ${opt === q.correct_answer ? 'bg-green-100 text-green-800 font-bold' : 'bg-gray-100 text-gray-600'}`}>
+                                                                    <span className="font-bold mr-1">{String.fromCharCode(65 + optIdx)}:</span>{opt}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="p-3 sm:p-5 border-t-2 border-antique-gold/20 bg-white flex flex-col sm:flex-row justify-between items-center gap-3">
+                                    <div className="text-sm text-gray-600">
+                                        <span className="font-bold">{selectedEasy.length + selectedMedium.length + selectedHard.length}</span> / 10 questions selected
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 sm:gap-3 justify-center sm:justify-end">
+                                        <button
+                                            onClick={() => { setShowPreviewModal(false); setShowTopicsModal(true); setShowFeedbackInput(false); }}
+                                            className="px-3 sm:px-4 py-2 rounded-lg border-2 border-gray-300 font-serif text-sm font-bold text-gray-600 hover:border-antique-gold hover:text-royal-blue transition-all"
+                                        >
+                                            ← Topics
+                                        </button>
+                                        <button
+                                            onClick={() => setShowFeedbackInput(!showFeedbackInput)}
+                                            disabled={isGenerating}
+                                            className={`px-3 sm:px-4 py-2 rounded-lg border-2 font-serif text-sm font-bold transition-all flex items-center gap-2 disabled:opacity-50 ${showFeedbackInput ? 'border-royal-blue bg-royal-blue text-white' : 'border-antique-gold text-royal-blue hover:bg-antique-gold hover:text-white'}`}
+                                        >
+                                            {isGenerating ? (
+                                                <Sparkles className="animate-ai-sparkle" size={16} />
+                                            ) : (
+                                                <MessageSquare size={16} />
+                                            )}
+                                            <span className="hidden sm:inline">{isGenerating ? 'Regenerating...' : 'Regenerate'}</span>
+                                            <span className="sm:hidden">{isGenerating ? '...' : 'Regen'}</span>
+                                        </button>
+                                        <button
+                                            onClick={handleBulkSaveTiered}
+                                            disabled={selectedEasy.length !== 5 || selectedMedium.length !== 3 || selectedHard.length !== 2}
+                                            className={`px-4 sm:px-6 py-2 rounded-lg font-serif text-sm font-bold transition-all flex items-center gap-2 ${(selectedEasy.length === 5 && selectedMedium.length === 3 && selectedHard.length === 2)
+                                                ? 'bg-royal-blue text-white hover:bg-royal-blue/90 shadow-lg'
+                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                }`}
+                                        >
+                                            <Save size={16} /> Save 10
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* FEEDBACK INPUT PANEL */}
+                                <AnimatePresence>
+                                    {showFeedbackInput && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            className="border-t-2 border-antique-gold/20 bg-gradient-to-r from-blue-50 to-purple-50 overflow-hidden"
+                                        >
+                                            <div className="p-3 sm:p-5 space-y-3">
+                                                <div className="flex items-center gap-2 text-sm text-gray-700">
+                                                    <MessageSquare size={16} className="text-royal-blue" />
+                                                    <span className="font-serif font-bold">What would you like to change?</span>
+                                                </div>
+                                                
+                                                {/* Quick Action Buttons */}
+                                                <div className="flex flex-wrap gap-2">
+                                                    {quickFeedbackOptions.map((option, idx) => (
+                                                        <button
+                                                            key={idx}
+                                                            onClick={() => handleQuickFeedback(option.value)}
+                                                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${feedbackText === option.value 
+                                                                ? 'bg-royal-blue text-white' 
+                                                                : 'bg-white border border-gray-300 text-gray-700 hover:border-royal-blue hover:text-royal-blue'
+                                                            }`}
+                                                        >
+                                                            {option.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                                
+                                                {/* Custom Feedback Input */}
+                                                <div className="flex gap-2">
+                                                    <input
+                                                        type="text"
+                                                        value={feedbackText}
+                                                        onChange={(e) => setFeedbackText(e.target.value)}
+                                                        placeholder="Or type your own feedback..."
+                                                        className="flex-1 px-4 py-2 rounded-lg border-2 border-gray-200 bg-white text-gray-800 focus:border-royal-blue focus:ring-2 focus:ring-royal-blue/20 text-sm placeholder-gray-400"
+                                                    />
+                                                    <button
+                                                        onClick={handleRegenerateTieredQuestions}
+                                                        disabled={isGenerating || !feedbackText.trim()}
+                                                        className={`px-4 sm:px-6 py-2 rounded-lg font-serif text-sm font-bold transition-all flex items-center gap-2 ${feedbackText.trim() && !isGenerating
+                                                            ? 'bg-royal-blue text-white hover:bg-royal-blue/90 shadow-lg'
+                                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                        }`}
+                                                    >
+                                                        {isGenerating ? (
+                                                            <>
+                                                                <Sparkles className="animate-ai-sparkle" size={16} />
+                                                                <span className="hidden sm:inline">Regenerating...</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Sparkles size={16} />
+                                                                <span className="hidden sm:inline">Regenerate</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                {/* AI PREVIEW MODAL (Legacy - only shows when not in tiered mode) */}
+                <AnimatePresence>
+                    {showPreviewModal && generationStep !== 2 && (
                         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-md">
                             <motion.div
                                 initial={{ opacity: 0, y: 50 }}
@@ -883,7 +1538,7 @@ function AdminDashboard() {
                                 exit={{ scale: 0.9, opacity: 0 }}
                                 className="bg-midnight-blue/90 border border-cyan-500/30 rounded-2xl p-4 sm:p-8 shadow-2xl w-full max-w-xs sm:max-w-sm"
                             >
-                                <AiLoader />
+                                <AiLoader mode={loaderMode} />
                             </motion.div>
                         </motion.div>
                     )}

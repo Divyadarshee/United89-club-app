@@ -5,3 +5,4 @@ pydantic
 python-dotenv
 pytz
 google-genai
+google-adk
