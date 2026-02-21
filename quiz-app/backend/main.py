@@ -671,12 +671,13 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
                 "text": q.get("text"),
                 "options": q.get("options", []),
                 "user_answer": user_answer,
+                # Always include is_correct so users can see right/wrong regardless of answers_visible
+                "is_correct": user_answer == correct_answer if user_answer is not None else False,
             }
             
-            # Only include correct answer info if answers are visible
+            # Only reveal the actual correct answer text when answers_visible is True
             if answers_visible:
                 question_data["correct_answer"] = correct_answer
-                question_data["is_correct"] = user_answer == correct_answer
             
             questions_with_answers.append(question_data)
         

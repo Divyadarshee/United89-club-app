@@ -570,7 +570,11 @@ function Leaderboard() {
                                                 </div>
                                                 <div>
                                                     <span className="text-gray-500">Correct:</span>
-                                                    <span className="ml-2 font-bold text-green-700">{q.correct_answer}</span>
+                                                    {mySubmission.answers_visible ? (
+                                                        <span className="ml-2 font-bold text-green-700">{q.correct_answer}</span>
+                                                    ) : (
+                                                        <span className="ml-2 font-bold text-gray-400 italic">(to be announced)</span>
+                                                    )}
                                                 </div>
                                             </div>
                                             <div className="mt-2 text-right">
