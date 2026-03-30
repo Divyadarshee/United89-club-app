@@ -46,7 +46,7 @@ _active_quiz_sessions: dict[str, str] = {}
 # Create the topics agent (singleton)
 topics_agent = Agent(
     name="trending_topics_agent",
-    model="gemini-3-flash-preview",
+    model="gemini-3.1-pro-preview",
     description="Research assistant that finds trending topics in India for quiz questions",
     instruction=TOPICS_AGENT_SYSTEM_PROMPT,
     tools=[google_search],
@@ -117,7 +117,7 @@ async def generate_trending_topics() -> list[dict]:
 # to prevent truncation when session history grows large
 quiz_agent = Agent(
     name="quiz_generation_agent",
-    model="gemini-3-flash-preview",
+    model="gemini-3.1-pro-preview",
     description="Expert quiz master that generates tiered difficulty questions",
     instruction=QUIZ_AGENT_SYSTEM_PROMPT,
     tools=[google_search],
@@ -326,7 +326,7 @@ async def generate_questions_by_ai():
 
     print("Generating quiz questions")
     response = await async_client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model="gemini-3.1-pro-preview",
         contents="Generate 20 questions",
         config={
             "system_instruction": SYSTEM_PROMPT,
