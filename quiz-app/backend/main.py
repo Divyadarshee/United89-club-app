@@ -642,8 +642,14 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
         if target_week == "inactive":
             raise HTTPException(status_code=400, detail="No active quiz week")
         
-        # Check if answers should be visible
-        answers_visible = await get_answers_visible()
+        # Check if answers should be visible:
+        # 1. True if the week has passed (i.e., target_week < current_iso_week)
+        # 2. Otherwise, defer to global configuration
+        current_iso_week = get_current_iso_week()
+        if target_week < current_iso_week:
+            answers_visible = True
+        else:
+            answers_visible = await get_answers_visible()
         
         # Get user's submission
         sub_ref = db.collection("users").document(user_id).collection("submissions").document(target_week)
