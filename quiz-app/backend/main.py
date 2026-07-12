@@ -417,6 +417,8 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, a
             users_ref = db.collection("users").where("submitted", "==", True)
             user_docs = [doc async for doc in users_ref.stream()]
             
+            all_submitted_weeks = set()
+            
             for user_doc in user_docs:
                 u = user_doc.to_dict()
                 user_id = user_doc.id
@@ -438,6 +440,7 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, a
                     if (exclude_current_in_overall and sub_week == current_week) or (sub_week in ["2026-W04"]):
                         continue
                     
+                    all_submitted_weeks.add(sub_week)
                     total_score += s_data.get("score", 0)
                     total_time += s_data.get("time_taken", 0)
                     weeks_count += 1
@@ -456,6 +459,26 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, a
                     "weeks_played": weeks_count,
                     "week_id": "All-Time"
                 })
+            
+            # Get all unique week IDs from questions
+            questions_ref = db.collection("questions").select(["week_id"])
+            q_docs = [doc async for doc in questions_ref.stream()]
+            quiz_weeks = {doc.to_dict().get("week_id") for doc in q_docs if doc.to_dict().get("week_id")}
+            
+            # Union and filter to get total weeks
+            valid_weeks = set()
+            for w in quiz_weeks.union(all_submitted_weeks):
+                if w == "2026-W04":
+                    continue
+                if exclude_current_in_overall and w == current_week:
+                    continue
+                if w > current_week:
+                    continue
+                valid_weeks.add(w)
+                
+            total_weeks = len(valid_weeks)
+            for u in users_list:
+                u["total_weeks"] = total_weeks
             
             # Sort by score DESC, then avg_time ASC (tiebreaker)
             users_list.sort(key=lambda x: (-x["score"], x["avg_time"]))

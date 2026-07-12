@@ -874,6 +874,7 @@ function AdminDashboard() {
                                         <th className="p-4 text-left">Phone</th>
                                         <th className="p-4 text-left">Score</th>
                                         {leaderboardType === 'weekly' && <th className="p-4 text-left">Time</th>}
+                                        {leaderboardType === 'overall' && <th className="p-4 text-left">Quizzes</th>}
                                         {leaderboardType === 'overall' && <th className="p-4 text-left">Avg Time</th>}
                                         {leaderboardType === 'weekly' && <th className="p-4 text-left">Actions</th>}
                                     </tr>
@@ -907,6 +908,11 @@ function AdminDashboard() {
                                                 <td className="p-4 font-bold text-antique-gold text-lg">{u.score}</td>
                                                 {leaderboardType === 'weekly' && (
                                                     <td className="p-4 font-mono text-gray-700">{formatTime(u.time_taken)}</td>
+                                                )}
+                                                {leaderboardType === 'overall' && (
+                                                    <td className="p-4 font-mono text-gray-700 whitespace-nowrap">
+                                                        {u.weeks_played}{u.total_weeks ? ` / ${u.total_weeks}` : ''}
+                                                    </td>
                                                 )}
                                                 {leaderboardType === 'overall' && (
                                                     <td className="p-4 font-mono text-gray-700">{formatTime(u.avg_time)}</td>
