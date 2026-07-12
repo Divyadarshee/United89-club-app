@@ -76,9 +76,11 @@ export const getAdminQuestions = async (weekId = null) => {
     return response.data;
 };
 
-export const generateQuestions = async (weekId) => {
+export const generateQuestions = async (weekId, prompt = null) => {
+    const params = { week_id: weekId };
+    if (prompt) params.prompt = prompt;
     const response = await axios.post(`${API_URL}/api/admin/generate-questions`, null, {
-        params: { week_id: weekId }
+        params
     });
     return response.data;
 };
@@ -91,9 +93,11 @@ export const generateQuestions = async (weekId) => {
  * Step 1: Generate trending topics using Google Search
  * Returns a list of 10-15 trending topics from recent news
  */
-export const generateTrendingTopics = async (weekId) => {
+export const generateTrendingTopics = async (weekId, prompt = null) => {
+    const params = { week_id: weekId };
+    if (prompt) params.prompt = prompt;
     const response = await axios.post(`${API_URL}/api/admin/generate-topics`, null, {
-        params: { week_id: weekId }
+        params
     });
     return response.data;
 };

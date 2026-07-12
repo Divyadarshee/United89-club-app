@@ -54,12 +54,12 @@ topics_agent = Agent(
 )
 
 
-async def generate_trending_topics() -> list[dict]:
+async def generate_trending_topics(user_prompt: str = None) -> list[dict]:
     """
     Step 1: Generate trending topics using Google Search.
     Returns a list of trending topics with descriptions.
     """
-    print("[Topics Agent] Starting trending topics generation...")
+    print(f"[Topics Agent] Starting trending topics generation... Custom Prompt: {user_prompt}")
     
     # Create session and runner
     session_service = InMemorySessionService()
@@ -76,9 +76,13 @@ async def generate_trending_topics() -> list[dict]:
     )
     
     # Create the user message
+    prompt_text = TOPICS_USER_PROMPT
+    if user_prompt:
+        prompt_text += f"\n\nAdditional instructions from user: {user_prompt}"
+        
     content = types.Content(
         role='user',
-        parts=[types.Part(text=TOPICS_USER_PROMPT)]
+        parts=[types.Part(text=prompt_text)]
     )
     
     # Run the agent
@@ -313,21 +317,25 @@ def repair_truncated_json(json_str: str) -> str:
 # LEGACY FUNCTION (for backward compatibility)
 # ============================================
 
-async def generate_questions_by_ai():
+async def generate_questions_by_ai(user_prompt: str = None):
     """
     Legacy function for generating questions without the two-step process.
     Kept for backward compatibility.
     """
-    print("Creating gemini client")
+    print(f"Creating gemini client... Custom Prompt: {user_prompt}")
     client = get_gemini_client()
     print("Gemini client created")
 
     async_client = client.aio
 
+    contents = "Generate 20 questions"
+    if user_prompt:
+        contents += f"\n\nAdditional instructions from user: {user_prompt}"
+
     print("Generating quiz questions")
     response = await async_client.models.generate_content(
         model="gemini-3.5-flash",
-        contents="Generate 20 questions",
+        contents=contents,
         config={
             "system_instruction": SYSTEM_PROMPT,
             "response_mime_type": "application/json",

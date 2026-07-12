@@ -49,6 +49,21 @@ function AdminDashboard() {
     const [feedbackText, setFeedbackText] = useState('');
     const [loaderMode, setLoaderMode] = useState('default'); // 'topics', 'questions', 'regenerate', 'default'
 
+    // NEW: AI Prompter/Custom Theme States
+    const [showPromptModal, setShowPromptModal] = useState(false);
+    const [customPrompt, setCustomPrompt] = useState('');
+    const [activePrompt, setActivePrompt] = useState('');
+    const [promptTargetFlow, setPromptTargetFlow] = useState('new'); // 'new' or 'legacy'
+
+    const preGenSuggestions = [
+        "General News & Trivia",
+        "Sports & Athletics Focus",
+        "Science, Tech & Space",
+        "Politics & Business",
+        "Indian History & Culture",
+        "Entertainment & Pop Culture"
+    ];
+
     // Initial Load
     useEffect(() => {
         loadWeeks();
@@ -112,12 +127,13 @@ function AdminDashboard() {
         }
     };
 
-    const handleGenerateQuestions = async () => {
+    const handleGenerateQuestions = async (promptVal = null) => {
+        setActivePrompt(promptVal || '');
         setIsGenerating(true);
-        console.log('[AI Generate] Starting question generation...');
+        console.log('[AI Generate] Starting question generation with prompt:', promptVal);
 
         try {
-            const result = await generateQuestions(selectedWeek);
+            const result = await generateQuestions(selectedWeek, promptVal);
             console.log('[AI Generate] Raw backend response:', result);
 
             // Transform backend schema to frontend schema
@@ -162,14 +178,15 @@ function AdminDashboard() {
     // NEW TWO-STEP GENERATION FUNCTIONS
     // ============================================
 
-    const handleStartNewGeneration = async () => {
+    const handleStartNewGeneration = async (promptVal = null) => {
+        setActivePrompt(promptVal || '');
         setIsGenerating(true);
         setGenerationStep(1);
         setLoaderMode('topics');
-        console.log('[Step 1] Fetching trending topics...');
+        console.log('[Step 1] Fetching trending topics with prompt:', promptVal);
 
         try {
-            const result = await generateTrendingTopics(selectedWeek);
+            const result = await generateTrendingTopics(selectedWeek, promptVal);
             console.log('[Step 1] Trending topics received:', result);
             
             setTrendingTopics(result.topics || []);
@@ -186,6 +203,27 @@ function AdminDashboard() {
             }
         }
         setIsGenerating(false);
+    };
+
+    const handleStartNewGenerationClick = () => {
+        setPromptTargetFlow('new');
+        setCustomPrompt('');
+        setShowPromptModal(true);
+    };
+
+    const handleGenerateQuestionsClick = () => {
+        setPromptTargetFlow('legacy');
+        setCustomPrompt('');
+        setShowPromptModal(true);
+    };
+
+    const triggerPromptGeneration = (promptVal) => {
+        setShowPromptModal(false);
+        if (promptTargetFlow === 'new') {
+            handleStartNewGeneration(promptVal);
+        } else {
+            handleGenerateQuestions(promptVal);
+        }
     };
 
     const handleTopicToggle = (topic) => {
@@ -615,7 +653,7 @@ function AdminDashboard() {
                                 </h2>
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={handleStartNewGeneration}
+                                        onClick={handleStartNewGenerationClick}
                                         disabled={isGenerating || isPastWeek}
                                         className={`py-2 px-3 sm:px-4 text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg rounded font-serif font-bold whitespace-nowrap shrink-0 ${isPastWeek
                                             ? 'bg-gray-600 text-gray-400 cursor-not-allowed opacity-50'
@@ -631,7 +669,7 @@ function AdminDashboard() {
                                         <span className="sm:hidden">{isGenerating ? '...' : '✨ New'}</span>
                                     </button>
                                     <button
-                                        onClick={handleGenerateQuestions}
+                                        onClick={handleGenerateQuestionsClick}
                                         disabled={isGenerating || isPastWeek}
                                         className={`py-2 px-3 text-xs flex items-center gap-2 transition-all rounded font-serif font-bold whitespace-nowrap shrink-0 opacity-60 ${isPastWeek
                                             ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
@@ -1521,6 +1559,116 @@ function AdminDashboard() {
                                         >
                                             <Save size={18} />
                                             Save Selected 10
+                                        </button>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
+
+                {/* AI Prompter/Custom Theme Modal */}
+                <AnimatePresence>
+                    {showPromptModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                            <motion.div
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                                className="bg-midnight-blue/95 border border-cyan-500/40 rounded-2xl p-6 sm:p-8 shadow-2xl w-full max-w-md text-white font-sans relative overflow-hidden"
+                            >
+                                {/* Glow backdrop */}
+                                <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl bg-cyan-500/20" />
+                                <div className="absolute -bottom-10 -left-10 w-40 h-40 rounded-full blur-3xl bg-violet-500/20" />
+
+                                <div className="relative space-y-6">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-2">
+                                            <Sparkles className="text-cyan-400" size={24} />
+                                            <h3 className="text-xl font-serif text-cyan-300 font-bold">✨ AI Generation Setup</h3>
+                                        </div>
+                                        <button onClick={() => { setShowPromptModal(false); setCustomPrompt(''); }} className="text-gray-400 hover:text-white transition-colors">
+                                            <X size={20} />
+                                        </button>
+                                    </div>
+                                    
+                                    <p className="text-sm text-gray-300">
+                                        Generate standard trending news questions automatically, or specify a custom theme below.
+                                    </p>
+
+                                    {/* Fast path: Auto-Generate (Default) on top */}
+                                    <div className="space-y-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => triggerPromptGeneration(null)}
+                                            className="w-full py-3 bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500 text-midnight-blue hover:from-cyan-400 hover:via-blue-400 hover:to-indigo-400 font-serif font-extrabold rounded-xl transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transform hover:-translate-y-0.5 text-center flex items-center justify-center gap-2 cursor-pointer"
+                                        >
+                                            <Sparkles size={16} className="animate-pulse" />
+                                            <span>Auto-Generate (Default)</span>
+                                        </button>
+                                    </div>
+
+                                    {/* Divider */}
+                                    <div className="relative flex py-1 items-center">
+                                        <div className="flex-grow border-t border-cyan-500/20"></div>
+                                        <span className="flex-shrink mx-4 text-[10px] font-bold tracking-wider text-cyan-500/60 uppercase">Or customize theme</span>
+                                        <div className="flex-grow border-t border-cyan-500/20"></div>
+                                    </div>
+
+                                    {/* Textarea */}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold uppercase tracking-wider text-cyan-400/80">
+                                            Describe your theme or prompt
+                                        </label>
+                                        <textarea
+                                            value={customPrompt}
+                                            onChange={(e) => setCustomPrompt(e.target.value)}
+                                            placeholder="e.g., Focus on space discoveries, Indian start-up news, or Cricket World Cup events..."
+                                            className="w-full h-24 p-3 bg-black/40 border border-cyan-500/30 rounded-xl text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all resize-none"
+                                        />
+                                    </div>
+
+                                    {/* Suggestions */}
+                                    <div className="space-y-2">
+                                        <span className="text-xs font-bold uppercase tracking-wider text-cyan-400/80">Suggestions</span>
+                                        <div className="flex flex-wrap gap-2">
+                                            {preGenSuggestions.map((pill, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => setCustomPrompt(pill)}
+                                                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                                                        customPrompt === pill
+                                                            ? 'bg-cyan-500 text-midnight-blue font-bold shadow-[0_0_12px_rgba(6,182,212,0.4)]'
+                                                            : 'bg-black/30 border border-cyan-500/20 hover:border-cyan-400/60 text-gray-300 hover:text-cyan-200'
+                                                    }`}
+                                                >
+                                                    {pill}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-2 pt-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => triggerPromptGeneration(customPrompt)}
+                                            disabled={!customPrompt.trim()}
+                                            className={`flex-1 py-2.5 rounded-xl font-serif text-sm font-bold transition-all text-center ${
+                                                customPrompt.trim()
+                                                    ? 'bg-cyan-500 text-midnight-blue hover:bg-cyan-400 cursor-pointer shadow-[0_0_15px_rgba(6,182,212,0.3)]'
+                                                    : 'bg-gray-800 text-gray-500 border border-gray-700 cursor-not-allowed'
+                                            }`}
+                                        >
+                                            Generate with Prompt
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setShowPromptModal(false); setCustomPrompt(''); }}
+                                            className="px-4 py-2.5 rounded-xl border border-gray-600 hover:border-white text-gray-400 hover:text-white transition-all text-sm font-medium cursor-pointer"
+                                        >
+                                            Cancel
                                         </button>
                                     </div>
                                 </div>

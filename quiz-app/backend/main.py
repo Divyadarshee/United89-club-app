@@ -724,7 +724,7 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/admin/generate-questions")
-async def generate_question(week_id: str):
+async def generate_question(week_id: str, prompt: Optional[str] = None):
     """Legacy endpoint for generating questions (backward compatibility)"""
     current_iso_week_id = get_current_iso_week()
 
@@ -732,7 +732,7 @@ async def generate_question(week_id: str):
         print(f"Trying to generate questions for past week ({week_id}). Current is {current_iso_week_id}")
         raise HTTPException(status_code=403, detail="Cannot generate questions for past weeks")
 
-    return await generate_questions_by_ai()
+    return await generate_questions_by_ai(prompt)
 
 
 # ============================================
@@ -740,7 +740,7 @@ async def generate_question(week_id: str):
 # ============================================
 
 @app.post("/api/admin/generate-topics")
-async def generate_topics_endpoint(week_id: str):
+async def generate_topics_endpoint(week_id: str, prompt: Optional[str] = None):
     """
     Step 1: Generate trending topics using Google Search.
     Returns a list of 10-15 trending topics from recent news.
@@ -753,7 +753,7 @@ async def generate_topics_endpoint(week_id: str):
         raise HTTPException(status_code=403, detail="Cannot generate topics for past weeks")
 
     try:
-        topics = await generate_trending_topics()
+        topics = await generate_trending_topics(prompt)
         return {"topics": topics, "week_id": week_id}
     except Exception as e:
         print(f"Error generating topics: {e}")
