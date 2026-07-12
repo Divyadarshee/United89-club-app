@@ -171,6 +171,7 @@ class QuizConfig(BaseModel):
     leaderboard_active: bool = False
     answers_visible: bool = False  # Controls when users can see correct answers
     tester_phones: List[str] = []  # Phone numbers that can bypass submission limit
+    active_theme: str = "default"
 
 class WeekConfig(BaseModel):
     week_id: str
@@ -603,10 +604,12 @@ async def get_config():
                 data["tester_phones"] = []
             if "answers_visible" not in data:
                 data["answers_visible"] = False
+            if "active_theme" not in data:
+                data["active_theme"] = "default"
             return data
-        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "answers_visible": False, "tester_phones": []}
+        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "answers_visible": False, "tester_phones": [], "active_theme": "default"}
     except Exception as e:
-        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "answers_visible": False, "tester_phones": []}
+        return {"timer_duration_minutes": 10, "quiz_active": True, "leaderboard_active": False, "answers_visible": False, "tester_phones": [], "active_theme": "default"}
 
 @app.post("/api/admin/config")
 async def update_config(config: QuizConfig):
@@ -617,7 +620,8 @@ async def update_config(config: QuizConfig):
             "quiz_active": config.quiz_active,
             "leaderboard_active": config.leaderboard_active,
             "answers_visible": config.answers_visible,
-            "tester_phones": config.tester_phones
+            "tester_phones": config.tester_phones,
+            "active_theme": config.active_theme
         })
         return {"status": "success"}
     except Exception as e:

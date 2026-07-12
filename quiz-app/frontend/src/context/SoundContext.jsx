@@ -1,8 +1,10 @@
 import { createContext, useState, useEffect, useRef } from 'react';
 import bgmUrl from '../assets/sounds/bgm.mp3';
+import bgmRathYatraUrl from '../assets/sounds/bgm-rath-yatra.mp3';
 import clickUrl from '../assets/sounds/click.mp3';
 import tickingUrl from '../assets/sounds/ticking.mp3';
 import fanfareUrl from '../assets/sounds/fanfare.mp3';
+import { useConfig } from './ConfigContext';
 
 export const SoundContext = createContext(null);
 
@@ -11,13 +13,28 @@ export const SoundProvider = ({ children }) => {
         return localStorage.getItem('isMuted') === 'true';
     });
 
-    const bgmRef = useRef(new Audio(bgmUrl));
+    const { activeTheme } = useConfig();
+
+    const bgmRef = useRef(new Audio(activeTheme === 'rath_yatra' ? bgmRathYatraUrl : bgmUrl));
     const clickRef = useRef(new Audio(clickUrl));
     const tickingRef = useRef(new Audio(tickingUrl));
     const fanfareRef = useRef(new Audio(fanfareUrl));
 
     const isMutedRef = useRef(isMuted); // Ref to access current mute state inside callbacks if needed
     const shouldPlayBgm = useRef(false); // Track if BGM *should* be playing
+
+    // Swap BGM source dynamically when theme changes
+    useEffect(() => {
+        const isCurrentlyPlaying = !bgmRef.current.paused;
+        bgmRef.current.pause();
+        bgmRef.current.src = activeTheme === 'rath_yatra' ? bgmRathYatraUrl : bgmUrl;
+        bgmRef.current.loop = true;
+        bgmRef.current.volume = 0.4;
+        
+        if (shouldPlayBgm.current && !isMuted) {
+            bgmRef.current.play().catch(e => console.log("Audio play failed on theme switch:", e));
+        }
+    }, [activeTheme]);
 
     // Update ref when state changes
     useEffect(() => {

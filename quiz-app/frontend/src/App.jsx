@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX } from 'lucide-react';
@@ -12,6 +13,7 @@ import PageTransition from './components/PageTransition';
 import BackgroundSlideshow from './components/BackgroundSlideshow';
 import { useSoundManager } from './hooks/useSoundManager';
 import { SoundProvider } from './context/SoundContext';
+import { ConfigProvider, useConfig } from './context/ConfigContext';
 
 // Secure Route Component
 const AdminRoute = ({ children }) => {
@@ -46,9 +48,23 @@ const AnimatedRoutes = () => {
 
 const Layout = () => {
   const { isMuted, toggleMute } = useSoundManager();
+  const { activeTheme } = useConfig();
+
+  useEffect(() => {
+    if (activeTheme === 'rath_yatra') {
+      document.documentElement.classList.add('theme-rath-yatra');
+    } else {
+      document.documentElement.classList.remove('theme-rath-yatra');
+    }
+  }, [activeTheme]);
 
   return (
     <>
+      {activeTheme === 'rath_yatra' && (
+        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-antique-gold via-red-800 to-antique-gold text-white text-center py-2 text-[10px] sm:text-xs font-serif font-bold tracking-[0.15em] sm:tracking-[0.25em] uppercase shadow-lg z-50 border-b border-antique-gold/20 select-none">
+          ✨ Rath Yatra Special Week Challenge ✨
+        </div>
+      )}
       <div className="fixed bottom-4 left-4 md:bottom-auto md:left-auto md:top-5 md:right-5 z-50">
         <button
           onClick={toggleMute}
@@ -67,9 +83,11 @@ const Layout = () => {
 function App() {
   return (
     <Router>
-      <SoundProvider>
-        <Layout />
-      </SoundProvider>
+      <ConfigProvider>
+        <SoundProvider>
+          <Layout />
+        </SoundProvider>
+      </ConfigProvider>
     </Router>
   );
 }

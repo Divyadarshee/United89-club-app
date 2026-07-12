@@ -1,19 +1,42 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Yatra+One&display=swap');
 
 @import "tailwindcss";
 
-@theme {
-  --color-royal-blue: #1a237e;
-  --color-midnight-blue: #050a30;
-  --color-warm-cream: #fdfbf7;
-  --color-antique-gold: #c5a059;
-  --color-gold-hover: #b08d3e;
-  --color-text-charcoal: #333333;
+:root {
+  --theme-royal-blue: 26, 35, 126;
+  --theme-midnight-blue: 5, 10, 48;
+  --theme-warm-cream: 253, 251, 247;
+  --theme-antique-gold: 197, 160, 89;
+  --theme-gold-hover: 176, 141, 62;
+  --theme-text-charcoal: 51, 51, 51;
 
-  --font-serif: "Playfair Display", serif;
+  --theme-font-serif: "Playfair Display", serif;
+}
+
+.theme-rath-yatra {
+  /* Rath Yatra theme colors: Deep Crimson, Divine Black, Saffron Marigold */
+  --theme-royal-blue: 128, 0, 0;
+  --theme-midnight-blue: 21, 5, 5;
+  --theme-warm-cream: 255, 250, 240;
+  --theme-antique-gold: 230, 161, 0;
+  --theme-gold-hover: 198, 138, 0;
+  --theme-text-charcoal: 43, 31, 31;
+
+  --theme-font-serif: "Yatra One", serif;
+}
+
+@theme {
+  --color-royal-blue: rgb(var(--theme-royal-blue));
+  --color-midnight-blue: rgb(var(--theme-midnight-blue));
+  --color-warm-cream: rgb(var(--theme-warm-cream));
+  --color-antique-gold: rgb(var(--theme-antique-gold));
+  --color-gold-hover: rgb(var(--theme-gold-hover));
+  --color-text-charcoal: rgb(var(--theme-text-charcoal));
+
+  --font-serif: var(--theme-font-serif);
   --font-sans: "Lato", sans-serif;
 
-  --background-image-vintage-gradient: linear-gradient(to bottom, #1a237e, #050a30);
+  --background-image-vintage-gradient: linear-gradient(to bottom, rgb(var(--theme-royal-blue)), rgb(var(--theme-midnight-blue)));
 }
 
 /* Custom Film Grain */
@@ -40,15 +63,15 @@ body {
 
 @layer components {
   .btn-vintage {
-    @apply px-6 py-2 bg-gradient-to-r from-royal-blue to-blue-800 text-white font-serif font-bold rounded shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 border border-antique-gold/30 hover:border-antique-gold;
+    @apply px-6 py-2 bg-gradient-to-r from-royal-blue to-midnight-blue text-white font-serif font-bold rounded shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 border border-antique-gold/30 hover:border-antique-gold;
   }
 
   .input-vintage {
-    @apply w-full p-3 bg-black/20 border border-amber-500/30 rounded font-sans text-amber-50 focus:outline-none focus:ring-2 focus:ring-antique-gold/50 transition-all placeholder:text-white/40;
+    @apply w-full p-3 bg-black/20 border border-antique-gold/35 rounded font-sans text-amber-50 focus:outline-none focus:ring-2 focus:ring-antique-gold/50 transition-all placeholder:text-white/40;
   }
 
   .card-vintage {
-    @apply backdrop-blur-md bg-black/40 border border-amber-500/30 rounded-xl p-8 shadow-2xl relative text-amber-50;
+    @apply backdrop-blur-md bg-black/40 border border-antique-gold/30 rounded-xl p-8 shadow-2xl relative text-amber-50;
   }
 }
 

@@ -13,7 +13,7 @@ function AdminDashboard() {
     const [questions, setQuestions] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [fullQuestions, setFullQuestions] = useState([]); // For answer checking
-    const [config, setConfig] = useState({ timer_duration_minutes: 10, quiz_active: true, leaderboard_active: false });
+    const [config, setConfig] = useState({ timer_duration_minutes: 10, quiz_active: true, leaderboard_active: false, active_theme: 'default' });
 
     // UI States
     const [leaderboardType, setLeaderboardType] = useState('weekly'); // 'weekly' or 'overall'
@@ -57,6 +57,7 @@ function AdminDashboard() {
 
     const preGenSuggestions = [
         "General News & Trivia",
+        "Rath Yatra & Odisha Heritage",
         "Sports & Athletics Focus",
         "Science, Tech & Space",
         "Politics & Business",
@@ -754,6 +755,24 @@ function AdminDashboard() {
                                 onChange={e => setConfig({ ...config, timer_duration_minutes: parseInt(e.target.value) })}
                                 className="input-vintage text-lg mb-6"
                             />
+
+                            {/* App Theme Selector */}
+                            <div className="mb-6 p-4 bg-amber-900/30 rounded border border-amber-500/30">
+                                <label className="block font-sans text-warm-cream mb-2 font-bold">
+                                    🎨 App Theme
+                                </label>
+                                <select
+                                    value={config.active_theme || 'default'}
+                                    onChange={e => setConfig({ ...config, active_theme: e.target.value })}
+                                    className="w-full p-3 bg-black/20 border border-amber-500/30 rounded font-sans text-amber-50 focus:outline-none focus:ring-2 focus:ring-antique-gold/50 transition-all cursor-pointer text-white"
+                                >
+                                    <option value="default" className="bg-midnight-blue text-white">Default (Vintage Blue & Gold)</option>
+                                    <option value="rath_yatra" className="bg-midnight-blue text-white">Rath Yatra Theme (Crimson & Marigold)</option>
+                                </select>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Instantly switches background images, colors, and audio theme.
+                                </p>
+                            </div>
 
                             {/* Quiz Active Toggle */}
                             <div className="flex items-center gap-4 mb-4 p-4 bg-green-900/30 rounded border border-green-500/30">

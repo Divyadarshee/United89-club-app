@@ -1,31 +1,47 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useConfig } from '../context/ConfigContext';
 
-// Import images directly
+// Import default images
 import bgStudy from '../assets/images/bg-study.jpg';
 import bgCampus from '../assets/images/bg-campus.jpg';
 import bgTech from '../assets/images/bg-tech.jpg';
 import bgFriends from '../assets/images/bg-friends.jpg';
 
-const images = [bgStudy, bgCampus, bgTech, bgFriends];
+// Import Rath Yatra images
+import bgRath1 from '../assets/images/bg-rath-1.jpg';
+import bgRath2 from '../assets/images/bg-rath-2.jpg';
+import bgRath3 from '../assets/images/bg-rath-3.jpg';
+import bgRath4 from '../assets/images/bg-rath-4.jpg';
+
+const defaultImages = [bgStudy, bgCampus, bgTech, bgFriends];
+const rathImages = [bgRath1, bgRath2, bgRath3, bgRath4];
 
 const BackgroundSlideshow = () => {
+    const { activeTheme } = useConfig();
     const [index, setIndex] = useState(0);
+
+    const currentImages = activeTheme === 'rath_yatra' ? rathImages : defaultImages;
+
+    // Reset index on theme switch to avoid index out of bounds
+    useEffect(() => {
+        setIndex(0);
+    }, [activeTheme]);
 
     useEffect(() => {
         const timer = setInterval(() => {
-            setIndex((prev) => (prev + 1) % images.length);
+            setIndex((prev) => (prev + 1) % currentImages.length);
         }, 12000); // 12 seconds per slide
 
         return () => clearInterval(timer);
-    }, []);
+    }, [currentImages.length]);
 
     return (
         <div className="fixed inset-0 z-[-1] overflow-hidden bg-black pointer-events-none">
             <AnimatePresence mode="popLayout">
                 <motion.img
-                    key={index}
-                    src={images[index]}
+                    key={`${activeTheme}_${index}`}
+                    src={currentImages[index]}
                     alt="Background"
                     initial={{ opacity: 0, scale: 1.0 }}
                     animate={{ opacity: 1, scale: 1.15 }}
@@ -44,7 +60,7 @@ const BackgroundSlideshow = () => {
                 style={{
                     backgroundColor: '#4e342e',
                     mixBlendMode: 'overlay', // or 'soft-light'
-                    opacity: 0.6
+                    opacity: activeTheme === 'rath_yatra' ? 0.25 : 0.6 // Less sepia for Rath Yatra to keep colors vibrant
                 }}
             />
 
