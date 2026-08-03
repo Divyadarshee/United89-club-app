@@ -192,6 +192,12 @@ class QuestionCreate(BaseModel):
 class QuestionBatchCreate(BaseModel):
     questions: List[QuestionCreate]
 
+class WildcardEntry(BaseModel):
+    phone: str                  # The user's phone number (used as user_id)
+    bonus_points: int           # Extra points to award on overall leaderboard
+    bonus_weeks: int            # Extra weeks to show as played on overall leaderboard
+    reason: Optional[str] = "Wildcard Entry"  # Audit trail
+
 # --- ENDPOINTS ---
 
 @app.post("/api/register")
@@ -446,19 +452,27 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, a
                     total_time += s_data.get("time_taken", 0)
                     weeks_count += 1
                 
-                # Skip users with no past week submissions
-                if weeks_count == 0:
+                # Skip users with no past week submissions AND no bonus points
+                bonus_points = u.get("bonus_points", 0)
+                bonus_weeks = u.get("bonus_weeks", 0)
+                if weeks_count == 0 and bonus_points == 0:
                     continue
                 
-                avg_time = round(total_time / weeks_count)
+                # avg_time is based only on real quiz submissions (fair tiebreaker)
+                avg_time = round(total_time / weeks_count) if weeks_count > 0 else 0
                 
                 users_list.append({
                     "user_id": user_id,
                     "name": u.get("name", "Unknown"),
-                    "score": total_score,
+                    # Bonus points added on top of real quiz scores
+                    "score": total_score + bonus_points,
                     "avg_time": avg_time,
-                    "weeks_played": weeks_count,
-                    "week_id": "All-Time"
+                    # Bonus weeks added on top of real weeks played (display only)
+                    "weeks_played": weeks_count + bonus_weeks,
+                    "week_id": "All-Time",
+                    # Surface wildcard info for admin visibility
+                    "has_wildcard": bonus_points > 0,
+                    "bonus_reason": u.get("bonus_reason", None) if bonus_points > 0 else None
                 })
             
             # Get all unique week IDs from questions
@@ -902,6 +916,58 @@ async def delete_tester_submission(user_id: str, week_id: Optional[str] = None):
             "message": f"Deleted submission for {user_id} in week {target_week}."
         }
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/admin/wildcard")
+async def grant_wildcard(entry: WildcardEntry):
+    """
+    Grant a wildcard contestant bonus points and weeks on the overall leaderboard.
+    
+    - bonus_points: added to their overall score (does not create fake submissions)
+    - bonus_weeks: added to their displayed weeks_played count (display only)
+    - avg_time tiebreaker remains based on real quiz submissions only
+    
+    Idempotent: Calling this multiple times REPLACES the previous bonus, it does not stack.
+    To remove a bonus, set bonus_points=0 and bonus_weeks=0.
+    """
+    user_id = entry.phone
+    user_ref = db.collection("users").document(user_id)
+    
+    try:
+        user_doc = await user_ref.get()
+        if not user_doc.exists:
+            raise HTTPException(
+                status_code=404,
+                detail=f"User with phone '{user_id}' not found. Make sure they have registered."
+            )
+        
+        user_data = user_doc.to_dict()
+        
+        # Store bonus fields on the user document
+        await user_ref.update({
+            "bonus_points": entry.bonus_points,
+            "bonus_weeks": entry.bonus_weeks,
+            "bonus_reason": entry.reason,
+            "bonus_granted_at": firestore.SERVER_TIMESTAMP
+        })
+        
+        # Invalidate all leaderboard caches so changes reflect immediately
+        leaderboard_cache.clear()
+        
+        return {
+            "status": "success",
+            "user_id": user_id,
+            "name": user_data.get("name", "Unknown"),
+            "bonus_points": entry.bonus_points,
+            "bonus_weeks": entry.bonus_weeks,
+            "reason": entry.reason,
+            "message": f"Wildcard bonus granted to {user_data.get('name', user_id)}: +{entry.bonus_points} pts, +{entry.bonus_weeks} weeks displayed."
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Wildcard Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
