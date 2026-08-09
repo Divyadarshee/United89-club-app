@@ -50,19 +50,34 @@ const Layout = () => {
   const { isMuted, toggleMute } = useSoundManager();
   const { activeTheme } = useConfig();
 
+  const themeClassMap = {
+    rath_yatra: 'theme-rath-yatra',
+    independence_day: 'theme-independence-day',
+  };
+
+  const themeBannerMap = {
+    rath_yatra: '✨ Rath Yatra Special Week Challenge ✨',
+    independence_day: '🇮🇳 Independence Day Special Challenge 🇮🇳',
+  };
+
   useEffect(() => {
-    if (activeTheme === 'rath_yatra') {
-      document.documentElement.classList.add('theme-rath-yatra');
-    } else {
-      document.documentElement.classList.remove('theme-rath-yatra');
+    // Remove all theme classes first
+    Object.values(themeClassMap).forEach(cls => document.documentElement.classList.remove(cls));
+    // Add the active one
+    if (themeClassMap[activeTheme]) {
+      document.documentElement.classList.add(themeClassMap[activeTheme]);
     }
   }, [activeTheme]);
 
   return (
     <>
-      {activeTheme === 'rath_yatra' && (
-        <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-antique-gold via-red-800 to-antique-gold text-white text-center py-2 text-[10px] sm:text-xs font-serif font-bold tracking-[0.15em] sm:tracking-[0.25em] uppercase shadow-lg z-50 border-b border-antique-gold/20 select-none">
-          ✨ Rath Yatra Special Week Challenge ✨
+      {themeBannerMap[activeTheme] && (
+        <div className={`fixed top-0 left-0 right-0 text-center py-2 text-[10px] sm:text-xs font-serif font-black tracking-[0.15em] sm:tracking-[0.25em] uppercase shadow-lg z-50 select-none ${
+          activeTheme === 'independence_day'
+            ? 'bg-gradient-to-r from-orange-500 via-white to-emerald-600 text-[#000080] border-b-2 border-blue-900/30 shadow-md'
+            : 'bg-gradient-to-r from-antique-gold via-red-800 to-antique-gold text-white border-b border-antique-gold/20'
+        }`}>
+          {themeBannerMap[activeTheme]}
         </div>
       )}
       <div className="fixed bottom-4 left-4 md:bottom-auto md:left-auto md:top-5 md:right-5 z-50">

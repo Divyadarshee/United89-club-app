@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Yatra+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Yatra+One&family=Tiro+Devanagari+Hindi&display=swap');
 
 @import "tailwindcss";
 
@@ -23,6 +23,18 @@
   --theme-text-charcoal: 43, 31, 31;
 
   --theme-font-serif: "Yatra One", serif;
+}
+
+.theme-independence-day {
+  /* Independence Day theme: Saffron, White, India Green, Navy Blue */
+  --theme-royal-blue: 0, 51, 102;       /* Deep Navy Blue */
+  --theme-midnight-blue: 4, 12, 24;     /* Dark Midnight */
+  --theme-warm-cream: 255, 253, 250;    /* Clean White */
+  --theme-antique-gold: 255, 153, 51;   /* Indian Saffron */
+  --theme-gold-hover: 230, 126, 20;     /* Darker Saffron */
+  --theme-text-charcoal: 28, 40, 51;    /* Deep Navy Charcoal */
+
+  --theme-font-serif: "Tiro Devanagari Hindi", serif;
 }
 
 @theme {

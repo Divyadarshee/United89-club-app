@@ -162,3 +162,55 @@ export const TempleFlag = ({ className = '', size = 32 }) => {
     </svg>
   );
 };
+
+// ===== Independence Day Icons =====
+
+export const AshokChakra = ({ size = 60 }) => (
+    <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        {/* Outer ring */}
+        <circle cx="50" cy="50" r="45" fill="none" stroke="#000080" strokeWidth="3" />
+        {/* Inner hub */}
+        <circle cx="50" cy="50" r="8" fill="#000080" />
+        {/* 24 spokes */}
+        {Array.from({ length: 24 }).map((_, i) => {
+            const angle = (i * 15) * (Math.PI / 180);
+            const x2 = 50 + 42 * Math.cos(angle);
+            const y2 = 50 + 42 * Math.sin(angle);
+            return <line key={i} x1="50" y1="50" x2={x2} y2={y2} stroke="#000080" strokeWidth="1.5" />;
+        })}
+        {/* 24 dots on the rim */}
+        {Array.from({ length: 24 }).map((_, i) => {
+            const angle = (i * 15 + 7.5) * (Math.PI / 180);
+            const cx = 50 + 42 * Math.cos(angle);
+            const cy = 50 + 42 * Math.sin(angle);
+            return <circle key={`d${i}`} cx={cx} cy={cy} r="2" fill="#000080" />;
+        })}
+    </svg>
+);
+
+export const TricolorFlag = ({ size = 60 }) => {
+    const w = size;
+    const h = size * 0.67;
+    const stripe = h / 3;
+    return (
+        <svg width={w} height={h + 10} viewBox={`0 0 ${w} ${h + 10}`} xmlns="http://www.w3.org/2000/svg">
+            {/* Flag pole */}
+            <rect x="2" y="0" width="3" height={h + 10} fill="#8B4513" rx="1" />
+            {/* Saffron stripe */}
+            <rect x="6" y="2" width={w - 8} height={stripe} fill="#FF9933" rx="1" />
+            {/* White stripe */}
+            <rect x="6" y={2 + stripe} width={w - 8} height={stripe} fill="#FFFFFF" />
+            {/* Green stripe */}
+            <rect x="6" y={2 + stripe * 2} width={w - 8} height={stripe} fill="#138808" rx="1" />
+            {/* Mini Ashok Chakra in center */}
+            <circle cx={w / 2 + 1} cy={2 + stripe + stripe / 2} r={stripe / 3} fill="none" stroke="#000080" strokeWidth="1" />
+            {Array.from({ length: 12 }).map((_, i) => {
+                const angle = (i * 30) * (Math.PI / 180);
+                const ccx = w / 2 + 1;
+                const ccy = 2 + stripe + stripe / 2;
+                const r = stripe / 3 - 1;
+                return <line key={i} x1={ccx} y1={ccy} x2={ccx + r * Math.cos(angle)} y2={ccy + r * Math.sin(angle)} stroke="#000080" strokeWidth="0.5" />;
+            })}
+        </svg>
+    );
+};

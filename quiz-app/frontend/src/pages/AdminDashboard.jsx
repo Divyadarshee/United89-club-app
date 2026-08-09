@@ -783,6 +783,7 @@ function AdminDashboard() {
                                 >
                                     <option value="default" className="bg-midnight-blue text-white">Default (Vintage Blue & Gold)</option>
                                     <option value="rath_yatra" className="bg-midnight-blue text-white">Rath Yatra Theme (Crimson & Marigold)</option>
+                                    <option value="independence_day" className="bg-midnight-blue text-white">Independence Day Theme (Saffron, White & Green)</option>
                                 </select>
                                 <p className="text-xs text-gray-400 mt-1">
                                     Instantly switches background images, colors, and audio theme.

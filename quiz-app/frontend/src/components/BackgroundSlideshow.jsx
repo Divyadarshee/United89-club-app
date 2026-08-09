@@ -14,14 +14,28 @@ import bgRath2 from '../assets/images/bg-rath-2.jpg';
 import bgRath3 from '../assets/images/bg-rath-3.jpg';
 import bgRath4 from '../assets/images/bg-rath-4.jpg';
 
+// Import Independence Day images
+import bgIndia1 from '../assets/images/bg-india-1.jpg';
+import bgIndia2 from '../assets/images/bg-india-2.jpg';
+import bgIndia3 from '../assets/images/bg-india-3.jpg';
+import bgIndia4 from '../assets/images/bg-india-4.jpg';
+import bgIndia5 from '../assets/images/bg-india-5.jpg';
+
 const defaultImages = [bgStudy, bgCampus, bgTech, bgFriends];
 const rathImages = [bgRath1, bgRath2, bgRath3, bgRath4];
+const indiaImages = [bgIndia1, bgIndia2, bgIndia3, bgIndia4, bgIndia5];
+
+const themeImageMap = {
+    default: defaultImages,
+    rath_yatra: rathImages,
+    independence_day: indiaImages,
+};
 
 const BackgroundSlideshow = () => {
     const { activeTheme } = useConfig();
     const [index, setIndex] = useState(0);
 
-    const currentImages = activeTheme === 'rath_yatra' ? rathImages : defaultImages;
+    const currentImages = themeImageMap[activeTheme] || defaultImages;
 
     // Reset index on theme switch to avoid index out of bounds
     useEffect(() => {
@@ -60,7 +74,7 @@ const BackgroundSlideshow = () => {
                 style={{
                     backgroundColor: '#4e342e',
                     mixBlendMode: 'overlay', // or 'soft-light'
-                    opacity: activeTheme === 'rath_yatra' ? 0.25 : 0.6 // Less sepia for Rath Yatra to keep colors vibrant
+                    opacity: activeTheme === 'default' ? 0.6 : 0.25 // Less sepia for themed images to keep colors vibrant
                 }}
             />
 

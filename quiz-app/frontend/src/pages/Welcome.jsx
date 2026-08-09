@@ -5,7 +5,7 @@ import { useSoundManager } from '../hooks/useSoundManager';
 import { getConfig } from '../services/api';
 import { X, Lock, Trophy } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
-import { JagannathEyes } from '../components/ThemedIcons';
+import { JagannathEyes, AshokChakra } from '../components/ThemedIcons';
 
 function Welcome() {
     const [showRules, setShowRules] = useState(false);
@@ -56,7 +56,7 @@ function Welcome() {
                 transition={{ duration: 0.8 }}
                 className="z-10"
             >
-                {activeTheme === 'rath_yatra' && (
+                {activeTheme !== 'default' && (
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ 
@@ -69,18 +69,30 @@ function Welcome() {
                         }}
                         className="mb-4 flex flex-col items-center gap-2 justify-center"
                     >
-                        <JagannathEyes size={80} />
-                        <span className="px-3 py-1 bg-emerald-700 text-white font-serif font-extrabold text-[10px] sm:text-xs uppercase tracking-widest rounded-full shadow-md border border-antique-gold/30">
-                            Rath Yatra Special
+                        {activeTheme === 'rath_yatra' && <JagannathEyes size={80} />}
+                        {activeTheme === 'independence_day' && <AshokChakra size={80} />}
+                        <span className={`px-3 py-1 font-serif font-extrabold text-[10px] sm:text-xs uppercase tracking-widest rounded-full shadow-md border border-antique-gold/30 ${
+                            activeTheme === 'independence_day'
+                                ? 'bg-orange-600 text-white'
+                                : 'bg-emerald-700 text-white'
+                        }`}>
+                            {activeTheme === 'rath_yatra' && 'Rath Yatra Special'}
+                            {activeTheme === 'independence_day' && 'Independence Day Special'}
                         </span>
                     </motion.div>
                 )}
                 <h1 className="text-5xl md:text-7xl font-serif text-white mb-4 tracking-wide" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5)' }}>
                     UCE
                 </h1>
-                <p className="text-xl md:text-3xl font-serif italic text-antique-gold mb-8 tracking-widest uppercase" style={{ textShadow: '1px 1px 2px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.5)' }}>
-                    Ultimate Challenge Experience
-                </p>
+                {activeTheme === 'independence_day' ? (
+                    <p className="text-xl md:text-3xl font-serif italic font-extrabold mb-8 tracking-widest uppercase bg-gradient-to-r from-orange-400 via-white to-emerald-400 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
+                        Ultimate Challenge Experience
+                    </p>
+                ) : (
+                    <p className="text-xl md:text-3xl font-serif italic text-antique-gold mb-8 tracking-widest uppercase" style={{ textShadow: '1px 1px 2px rgba(0,0,0,1), 0 0 10px rgba(0,0,0,0.5)' }}>
+                        Ultimate Challenge Experience
+                    </p>
+                )}
                 {activeTheme === 'rath_yatra' && (
                     <motion.div 
                         initial={{ opacity: 0, scale: 0.9 }}
@@ -90,6 +102,19 @@ function Welcome() {
                         <div className="px-6 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-antique-gold/30 shadow-lg">
                             <p className="text-2xl md:text-3xl font-serif text-white tracking-widest font-bold">
                                 ଜୟ ଜଗନ୍ନାଥ
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+                {activeTheme === 'independence_day' && (
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="mb-10 flex justify-center"
+                    >
+                        <div className="px-6 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-antique-gold/30 shadow-lg">
+                            <p className="text-2xl md:text-3xl font-serif text-white tracking-widest font-bold">
+                                जय हिन्द 🇮🇳
                             </p>
                         </div>
                     </motion.div>
@@ -137,9 +162,12 @@ function Welcome() {
                     <>
                         <button
                             onClick={handleStartClick}
-                            className="btn-vintage text-xl py-4 px-10 shadow-2xl border-white/20 mb-6 w-full md:w-auto"
+                            className={activeTheme === 'independence_day'
+                                ? "text-xl py-4 px-10 mb-6 w-full md:w-auto bg-gradient-to-r from-orange-500 via-white to-emerald-600 hover:from-orange-400 hover:to-emerald-500 text-[#000080] font-serif font-black rounded-lg shadow-2xl border-2 border-blue-950/40 transform hover:-translate-y-0.5 transition-all duration-200"
+                                : "btn-vintage text-xl py-4 px-10 shadow-2xl border-white/20 mb-6 w-full md:w-auto"
+                            }
                         >
-                            Start the Challenge
+                            {activeTheme === 'independence_day' ? 'Unfurl the Freedom Challenge 🇮🇳' : 'Start the Challenge'}
                         </button>
 
                         <div className="mt-4">
@@ -176,30 +204,35 @@ function Welcome() {
                         >
                             <div className="bg-royal-blue p-4 flex justify-between items-center border-b border-antique-gold">
                                 <h3 className="text-xl font-serif text-antique-gold italic">
-                                    {activeTheme === 'rath_yatra' ? 'Rath Yatra Special Rules' : 'Game Rules'}
+                                    {activeTheme === 'rath_yatra' ? 'Rath Yatra Special Rules' : activeTheme === 'independence_day' ? 'Independence Day Challenge Rules' : 'Game Rules'}
                                 </h3>
                                 <button onClick={() => setShowRules(false)} className="text-white/70 hover:text-white">
                                     <X size={24} />
                                 </button>
                             </div>
                             <div className="p-8 text-text-charcoal font-serif">
-                                {activeTheme === 'rath_yatra' ? (
-                                    <ul className="list-disc pl-6 space-y-4 mb-8 text-lg leading-relaxed marker:text-royal-blue">
-                                        <li>You have <strong className="text-royal-blue">10 minutes</strong> to complete your chariot run!</li>
-                                        <li>Once the Yatra starts, the clock ticks continuously—no pausing.</li>
-                                        <li>Each question has one correct answer.</li>
-                                        <li>Solve with speed and accuracy to top the leaderboards!</li>
-                                    </ul>
-                                ) : (
-                                    <ul className="list-disc pl-6 space-y-4 mb-8 text-lg leading-relaxed marker:text-royal-blue">
-                                        <li>There are <strong className="text-royal-blue">10 minutes</strong> on the clock.</li>
-                                        <li>Once you start, the clock ticks—no pausing.</li>
-                                        <li>Each question has one correct answer.</li>
-                                        <li>Most correct answers in the least time is the winner!</li>
-                                    </ul>
-                                )}
+                                <ul className="list-disc pl-6 space-y-4 mb-8 text-lg leading-relaxed marker:text-royal-blue">
+                                    {activeTheme === 'rath_yatra' ? (
+                                        <>
+                                            <li>You have <strong className="text-royal-blue">10 minutes</strong> to complete your chariot run!</li>
+                                            <li>Once the Yatra starts, the clock ticks continuously—no pausing.</li>
+                                        </>
+                                    ) : activeTheme === 'independence_day' ? (
+                                        <>
+                                            <li>You have <strong className="text-royal-blue">10 minutes</strong> to prove your patriotic knowledge!</li>
+                                            <li>Once the tricolor is raised, the clock starts—no pausing.</li>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <li>There are <strong className="text-royal-blue">10 minutes</strong> on the clock.</li>
+                                            <li>Once you start, the clock ticks—no pausing.</li>
+                                        </>
+                                    )}
+                                    <li>Each question has one correct answer.</li>
+                                    <li>Most correct answers in the least time is the winner!</li>
+                                </ul>
                                 <button onClick={confirmStart} className="btn-vintage w-full">
-                                    {activeTheme === 'rath_yatra' ? 'Pull the Chariot (Start Quiz)' : "I'm Ready to Play"}
+                                    {activeTheme === 'rath_yatra' ? 'Pull the Chariot (Start Quiz)' : activeTheme === 'independence_day' ? 'Raise the Flag (Start Quiz)' : "I'm Ready to Play"}
                                 </button>
                             </div>
                         </motion.div>

@@ -1,6 +1,13 @@
 import { createContext, useState, useEffect, useRef } from 'react';
 import bgmUrl from '../assets/sounds/bgm.mp3';
 import bgmRathYatraUrl from '../assets/sounds/bgm-rath-yatra.mp3';
+import bgmIndiaUrl from '../assets/sounds/bgm-independence-day.mp3';
+
+const themeBgmMap = {
+    default: bgmUrl,
+    rath_yatra: bgmRathYatraUrl,
+    independence_day: bgmIndiaUrl,
+};
 import clickUrl from '../assets/sounds/click.mp3';
 import tickingUrl from '../assets/sounds/ticking.mp3';
 import fanfareUrl from '../assets/sounds/fanfare.mp3';
@@ -15,7 +22,7 @@ export const SoundProvider = ({ children }) => {
 
     const { activeTheme } = useConfig();
 
-    const bgmRef = useRef(new Audio(activeTheme === 'rath_yatra' ? bgmRathYatraUrl : bgmUrl));
+    const bgmRef = useRef(new Audio(themeBgmMap[activeTheme] || bgmUrl));
     const clickRef = useRef(new Audio(clickUrl));
     const tickingRef = useRef(new Audio(tickingUrl));
     const fanfareRef = useRef(new Audio(fanfareUrl));
@@ -27,7 +34,7 @@ export const SoundProvider = ({ children }) => {
     useEffect(() => {
         const isCurrentlyPlaying = !bgmRef.current.paused;
         bgmRef.current.pause();
-        bgmRef.current.src = activeTheme === 'rath_yatra' ? bgmRathYatraUrl : bgmUrl;
+        bgmRef.current.src = themeBgmMap[activeTheme] || bgmUrl;
         bgmRef.current.loop = true;
         bgmRef.current.volume = 0.4;
         
