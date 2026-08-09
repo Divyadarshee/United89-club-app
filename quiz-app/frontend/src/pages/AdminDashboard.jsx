@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getQuestions, getUsers, deleteQuestion, addQuestion, updateConfig, getConfig, getAdminQuestions, getLeaderboard, getWeeks, generateQuestions, addBatchQuestions, getSubmissionDetails, deleteTesterSubmission, generateTrendingTopics, generateTieredQuestions, regenerateQuestionsWithFeedback } from '../services/api';
-import { Trash2, Plus, Settings, Users, FileQuestion, Save, Eye, X, Calendar, Globe, Award, Sparkles, Check, AlertCircle, Loader2, RefreshCw, ChevronRight, Search, MessageSquare } from 'lucide-react';
+import { getQuestions, getUsers, deleteQuestion, addQuestion, updateConfig, getConfig, getAdminQuestions, getLeaderboard, getWeeks, generateQuestions, addBatchQuestions, getSubmissionDetails, deleteTesterSubmission, generateTrendingTopics, generateTieredQuestions, regenerateQuestionsWithFeedback, grantWildcard } from '../services/api';
+import { Trash2, Plus, Settings, Users, FileQuestion, Save, Eye, X, Calendar, Globe, Award, Sparkles, Check, AlertCircle, Loader2, RefreshCw, ChevronRight, Search, MessageSquare, Gift } from 'lucide-react';
 import AiLoader from '../components/AiLoader';
 
 function AdminDashboard() {
@@ -48,6 +48,17 @@ function AdminDashboard() {
     const [showFeedbackInput, setShowFeedbackInput] = useState(false);
     const [feedbackText, setFeedbackText] = useState('');
     const [loaderMode, setLoaderMode] = useState('default'); // 'topics', 'questions', 'regenerate', 'default'
+
+    // Wildcard Tab State
+    const [wcUsers, setWcUsers] = useState([]);           // full user list from API
+    const [wcSearch, setWcSearch] = useState('');         // search filter
+    const [wcSelected, setWcSelected] = useState(null);   // selected user object
+    const [wcPoints, setWcPoints] = useState(100);
+    const [wcWeeks, setWcWeeks] = useState(10);
+    const [wcReason, setWcReason] = useState('Wildcard Entry');
+    const [wcLoading, setWcLoading] = useState(false);
+    const [wcStatus, setWcStatus] = useState(null);       // null | 'success' | 'error'
+    const [wcMessage, setWcMessage] = useState('');
 
     // NEW: AI Prompter/Custom Theme States
     const [showPromptModal, setShowPromptModal] = useState(false);
@@ -117,6 +128,9 @@ function AdminDashboard() {
                 setLeaderboard(lb || []); // Ensure it's always an array
                 setFullQuestions(fq || []);
                 setLoadingLeaderboard(false);
+            } else if (activeTab === 'wildcard') {
+                const users = await getUsers();
+                setWcUsers(users || []);
             }
         } catch (error) {
             console.error('Error loading data:', error);
@@ -626,6 +640,7 @@ function AdminDashboard() {
                 <TabButton id="questions" label="Questions" icon={FileQuestion} />
                 <TabButton id="settings" label="Global Settings" icon={Settings} />
                 <TabButton id="users" label="Leaderboard" icon={Users} />
+                <TabButton id="wildcard" label="Wildcard" icon={Gift} />
             </div>
 
             {/* Main Content Card */}
@@ -960,7 +975,14 @@ function AdminDashboard() {
                                                 className={`hover:bg-warm-cream transition-colors ${i % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
                                             >
                                                 <td className="p-4 font-bold text-gray-400">#{u.rank}</td>
-                                                <td className="p-4 font-bold text-royal-blue">{u.name}</td>
+                                                <td className="p-4 font-bold text-royal-blue">
+                                                    <span className="flex items-center gap-2">
+                                                        {u.name}
+                                                        {leaderboardType === 'overall' && u.has_wildcard && (
+                                                            <span title={u.bonus_reason || 'Wildcard bonus'} className="text-amber-500 text-sm cursor-help" aria-label="Wildcard bonus">🎟</span>
+                                                        )}
+                                                    </span>
+                                                </td>
                                                 <td className="p-4 font-mono text-gray-600">{u.user_id || '-'}</td>
                                                 <td className="p-4 font-bold text-antique-gold text-lg">{u.score}</td>
                                                 {leaderboardType === 'weekly' && (
@@ -993,6 +1015,272 @@ function AdminDashboard() {
                         </div>
                     </motion.div>
                 )}
+
+                {/* WILDCARD TAB */}
+                {activeTab === 'wildcard' && (() => {
+                    const filteredUsers = wcUsers.filter(u =>
+                        u.name.toLowerCase().includes(wcSearch.toLowerCase()) ||
+                        String(u.phone || u.user_id).includes(wcSearch)
+                    );
+
+                    // Derived live-preview numbers
+                    const realScore = wcSelected?.cumulative_score ?? 0;
+                    const realWeeks = wcSelected?.weeks_played ?? 0;
+                    const existingPoints = wcSelected?.bonus_points ?? 0;
+                    const existingWeeks = wcSelected?.bonus_weeks ?? 0;
+                    const hasExistingBonus = existingPoints > 0 || existingWeeks > 0;
+
+                    const previewScore = realScore + Number(wcPoints);
+                    const previewWeeks = realWeeks + Number(wcWeeks);
+
+                    const handleSelectUser = (user) => {
+                        setWcSelected(user);
+                        setWcPoints(user.bonus_points > 0 ? user.bonus_points : 100);
+                        setWcWeeks(user.bonus_weeks > 0 ? user.bonus_weeks : 10);
+                        setWcReason(user.bonus_reason || 'Wildcard Entry');
+                        setWcStatus(null);
+                        setWcMessage('');
+                    };
+
+                    const handleApply = async (remove = false) => {
+                        if (!wcSelected) return;
+                        setWcLoading(true);
+                        setWcStatus(null);
+                        try {
+                            const pts = remove ? 0 : Number(wcPoints);
+                            const wks = remove ? 0 : Number(wcWeeks);
+                            const rsn = remove ? 'Removed' : wcReason;
+                            const result = await grantWildcard(wcSelected.phone || wcSelected.user_id, pts, wks, rsn);
+                            setWcStatus('success');
+                            setWcMessage(result.message);
+                            // Refresh user list so badge/pre-fill reflects new state
+                            const users = await getUsers();
+                            setWcUsers(users || []);
+                            // Update selected user state inline
+                            const updated = (users || []).find(u => (u.phone || u.user_id) === (wcSelected.phone || wcSelected.user_id));
+                            if (updated) setWcSelected(updated);
+                        } catch (err) {
+                            setWcStatus('error');
+                            setWcMessage(err.response?.data?.detail || 'Something went wrong.');
+                        } finally {
+                            setWcLoading(false);
+                        }
+                    };
+
+                    return (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+                            <div className="flex justify-between items-center mb-2">
+                                <h2 className="text-2xl font-serif text-warm-cream flex items-center gap-2">
+                                    <Gift size={24} /> Wildcard Bonus Manager
+                                </h2>
+                                <span className="text-sm text-gray-400 font-sans">
+                                    {wcUsers.filter(u => (u.bonus_points ?? 0) > 0).length} active wildcard{wcUsers.filter(u => (u.bonus_points ?? 0) > 0).length !== 1 ? 's' : ''}
+                                </span>
+                            </div>
+
+                            <div className="flex flex-col lg:flex-row gap-6">
+
+                                {/* LEFT — User list */}
+                                <div className="lg:w-2/5 flex flex-col gap-3">
+                                    <div className="relative">
+                                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search by name or phone…"
+                                            value={wcSearch}
+                                            onChange={e => setWcSearch(e.target.value)}
+                                            className="input-vintage w-full pl-9 text-sm"
+                                        />
+                                    </div>
+
+                                    <div className="border border-antique-gold/30 rounded-lg overflow-hidden max-h-[420px] overflow-y-auto">
+                                        {wcUsers.length === 0 ? (
+                                            <div className="p-6 text-center text-gray-500">
+                                                <Loader2 className="animate-spin mx-auto mb-2" size={24} />
+                                                Loading users…
+                                            </div>
+                                        ) : filteredUsers.length === 0 ? (
+                                            <div className="p-6 text-center text-gray-500 text-sm">No users match your search.</div>
+                                        ) : (
+                                            filteredUsers.map(user => {
+                                                const isSelected = wcSelected?.user_id === user.user_id;
+                                                const hasBonus = (user.bonus_points ?? 0) > 0;
+                                                return (
+                                                    <button
+                                                        key={user.user_id}
+                                                        onClick={() => handleSelectUser(user)}
+                                                        className={`w-full text-left px-4 py-3 flex items-center justify-between transition-colors border-b border-gray-100 last:border-0
+                                                            ${isSelected ? 'bg-royal-blue text-white' : 'bg-white hover:bg-warm-cream text-royal-blue'}`}
+                                                    >
+                                                        <div>
+                                                            <p className="font-bold font-serif text-sm flex items-center gap-2">
+                                                                {user.name}
+                                                                {hasBonus && <span className="text-amber-500">🎟</span>}
+                                                            </p>
+                                                            <p className={`text-xs font-mono mt-0.5 ${isSelected ? 'text-blue-200' : 'text-gray-400'}`}>
+                                                                {user.phone || user.user_id}
+                                                            </p>
+                                                        </div>
+                                                        {hasBonus && (
+                                                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                                                                isSelected ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
+                                                            }`}>
+                                                                +{user.bonus_points}pts
+                                                            </span>
+                                                        )}
+                                                    </button>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* RIGHT — Form + live preview */}
+                                <div className="lg:w-3/5">
+                                    {!wcSelected ? (
+                                        <div className="h-full flex flex-col items-center justify-center text-gray-500 border-2 border-dashed border-gray-600 rounded-lg p-10">
+                                            <Gift size={40} className="mb-3 opacity-40" />
+                                            <p className="font-serif text-lg">Select a user to manage their wildcard bonus</p>
+                                            <p className="text-sm mt-1 text-gray-600">Users with 🎟 already have an active bonus</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {/* Selected user header */}
+                                            <div className="bg-royal-blue/10 border border-royal-blue/30 rounded-lg px-4 py-3 flex items-center justify-between">
+                                                <div>
+                                                    <p className="font-serif font-bold text-warm-cream text-lg">{wcSelected.name}</p>
+                                                    <p className="text-xs font-mono text-gray-400">{wcSelected.phone || wcSelected.user_id}</p>
+                                                </div>
+                                                {hasExistingBonus && (
+                                                    <span className="text-xs bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2 py-1 rounded-full font-bold">
+                                                        Active Bonus
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Inputs */}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-xs font-sans text-gray-400 uppercase tracking-wider mb-1">Bonus Points</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={wcPoints}
+                                                        onChange={e => { setWcPoints(e.target.value); setWcStatus(null); }}
+                                                        className="input-vintage w-full text-center text-xl font-bold"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-sans text-gray-400 uppercase tracking-wider mb-1">Bonus Weeks</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        value={wcWeeks}
+                                                        onChange={e => { setWcWeeks(e.target.value); setWcStatus(null); }}
+                                                        className="input-vintage w-full text-center text-xl font-bold"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-sans text-gray-400 uppercase tracking-wider mb-1">Reason (for audit)</label>
+                                                <input
+                                                    type="text"
+                                                    value={wcReason}
+                                                    onChange={e => { setWcReason(e.target.value); setWcStatus(null); }}
+                                                    className="input-vintage w-full"
+                                                    placeholder="e.g. Wildcard Entry — Offline Quiz Aug 2026"
+                                                />
+                                            </div>
+
+                                            {/* Live preview card */}
+                                            <div className="bg-midnight-blue/40 border border-antique-gold/30 rounded-lg overflow-hidden">
+                                                <div className="px-4 py-2 border-b border-antique-gold/20 flex items-center gap-2">
+                                                    <Eye size={14} className="text-antique-gold" />
+                                                    <span className="text-xs font-sans text-gray-400 uppercase tracking-wider">Live Preview</span>
+                                                </div>
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="text-gray-500 text-xs">
+                                                            <th className="px-4 py-2 text-left font-sans">Field</th>
+                                                            <th className="px-4 py-2 text-left font-sans">Before</th>
+                                                            <th className="px-4 py-2 text-left font-sans">After</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-700/30">
+                                                        <tr>
+                                                            <td className="px-4 py-2 text-gray-400">Score</td>
+                                                            <td className="px-4 py-2 font-mono text-warm-cream">
+                                                                {realScore}{hasExistingBonus ? ` + ${existingPoints} bonus` : ''}
+                                                            </td>
+                                                            <td className="px-4 py-2 font-mono font-bold text-antique-gold">
+                                                                {previewScore}
+                                                                {previewScore !== (realScore + existingPoints) && (
+                                                                    <span className="text-xs ml-1 text-green-400">
+                                                                        ({previewScore > realScore + existingPoints ? '+' : ''}{previewScore - (realScore + existingPoints)})
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td className="px-4 py-2 text-gray-400">Weeks Played</td>
+                                                            <td className="px-4 py-2 font-mono text-warm-cream">
+                                                                {realWeeks}{hasExistingBonus ? ` + ${existingWeeks} bonus` : ''}
+                                                            </td>
+                                                            <td className="px-4 py-2 font-mono font-bold text-antique-gold">
+                                                                {previewWeeks}
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td className="px-4 py-2 text-gray-400">Avg Time</td>
+                                                            <td className="px-4 py-2 font-mono text-warm-cream" colSpan={2}>
+                                                                Unchanged — based only on real quiz data
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            {/* Status message */}
+                                            {wcStatus === 'success' && (
+                                                <div className="flex items-center gap-2 bg-green-900/30 border border-green-500/40 rounded-lg px-4 py-3 text-green-300 text-sm">
+                                                    <Check size={16} className="shrink-0" />
+                                                    {wcMessage}
+                                                </div>
+                                            )}
+                                            {wcStatus === 'error' && (
+                                                <div className="flex items-center gap-2 bg-red-900/30 border border-red-500/40 rounded-lg px-4 py-3 text-red-300 text-sm">
+                                                    <AlertCircle size={16} className="shrink-0" />
+                                                    {wcMessage}
+                                                </div>
+                                            )}
+
+                                            {/* Action buttons */}
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={() => handleApply(false)}
+                                                    disabled={wcLoading}
+                                                    className="flex-1 btn-vintage flex items-center justify-center gap-2 py-3"
+                                                >
+                                                    {wcLoading ? <Loader2 size={18} className="animate-spin" /> : <Gift size={18} />}
+                                                    {wcLoading ? 'Applying…' : 'Apply Bonus'}
+                                                </button>
+                                                {hasExistingBonus && (
+                                                    <button
+                                                        onClick={() => handleApply(true)}
+                                                        disabled={wcLoading}
+                                                        className="px-4 py-3 rounded font-serif font-bold text-sm bg-red-900/40 border border-red-500/40 text-red-300 hover:bg-red-900/60 transition-colors flex items-center gap-2"
+                                                    >
+                                                        <X size={16} /> Remove Bonus
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    );
+                })()}
 
                 {/* USER DETAILS MODAL */}
                 <AnimatePresence>

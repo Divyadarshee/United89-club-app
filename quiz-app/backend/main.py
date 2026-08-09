@@ -571,6 +571,30 @@ async def get_weeks():
         
     return weeks
 
+# --- ADMIN USER MANAGEMENT ---
+
+@app.get("/api/admin/users")
+async def get_all_users():
+    """Returns all registered users with their name, phone, and current wildcard bonus info."""
+    users_ref = db.collection("users")
+    user_docs = [doc async for doc in users_ref.stream()]
+    result = []
+    for doc in user_docs:
+        u = doc.to_dict()
+        result.append({
+            "user_id": doc.id,
+            "name": u.get("name", "Unknown"),
+            "phone": u.get("phone", doc.id),
+            "cumulative_score": u.get("cumulative_score", 0),
+            "weeks_played": u.get("weeks_played", 0),
+            "bonus_points": u.get("bonus_points", 0),
+            "bonus_weeks": u.get("bonus_weeks", 0),
+            "bonus_reason": u.get("bonus_reason", None),
+        })
+    result.sort(key=lambda x: x["name"].lower())
+    return result
+
+
 # --- ADMIN Q MANAGEMENT ---
 
 @app.post("/api/admin/questions")

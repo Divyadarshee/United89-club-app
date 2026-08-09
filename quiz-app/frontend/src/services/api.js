@@ -152,3 +152,15 @@ export const deleteTesterSubmission = async (userId, weekId = null) => {
     const response = await axios.delete(`${API_URL}/api/admin/tester-submission/${userId}`, { params });
     return response.data;
 };
+
+// Admin: Grant wildcard bonus to a user (idempotent - replaces existing bonus)
+export const grantWildcard = async (phone, bonusPoints, bonusWeeks, reason) => {
+    const response = await axios.post(`${API_URL}/api/admin/wildcard`, {
+        phone,
+        bonus_points: bonusPoints,
+        bonus_weeks: bonusWeeks,
+        reason
+    });
+    return response.data;
+};
+
