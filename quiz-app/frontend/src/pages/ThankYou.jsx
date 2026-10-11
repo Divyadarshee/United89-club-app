@@ -9,6 +9,8 @@ function ThankYou() {
     const location = useLocation();
     const { playSound } = useSoundManager();
     const alreadySubmitted = location.state?.alreadySubmitted;
+    const score = location.state?.score;
+    const timeTaken = location.state?.timeTaken;
 
     useEffect(() => {
         playSound('fanfare');
@@ -33,6 +35,19 @@ function ThankYou() {
                     : "Thanks for playing!"
                 }
             </p>
+
+            {score !== undefined && (
+                <div className="bg-purple-900/50 border border-purple-400/40 rounded-lg p-4 mb-6 shadow-inner">
+                    <p className="text-purple-200 text-lg font-serif">
+                        Your Score: <span className="font-bold text-emerald-400 text-2xl">{score}</span>
+                    </p>
+                    {timeTaken !== undefined && (
+                        <p className="text-purple-300 text-sm mt-1">
+                            Time Taken: <span className="font-semibold text-white">{timeTaken}s</span>
+                        </p>
+                    )}
+                </div>
+            )}
 
             <div className="bg-midnight-blue/40 rounded-lg p-5 mb-6 border border-antique-gold/30">
                 <p className="font-sans text-lg text-gray-300 leading-relaxed">

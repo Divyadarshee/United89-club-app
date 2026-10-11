@@ -832,20 +832,45 @@ function AdminDashboard() {
                                                 {phone}
                                                 <button
                                                     type="button"
+                                                    onClick={() => handleViewUserAnswers({ user_id: phone, name: `Tester (${phone})` })}
+                                                    title="View this tester's submission for selected week"
+                                                    className="text-purple-400 hover:text-cyan-300 transition-colors"
+                                                >
+                                                    <Eye size={14} />
+                                                </button>
+                                                <button
+                                                    type="button"
                                                     onClick={async () => {
                                                         if (window.confirm(`Reset submission for ${phone} in week ${selectedWeek}?`)) {
                                                             try {
-                                                                await deleteTesterSubmission(phone, selectedWeek);
-                                                                alert(`Submission reset for ${phone}!`);
+                                                                const res = await deleteTesterSubmission(phone, selectedWeek);
+                                                                alert(res?.message || `Submission reset for ${phone}!`);
                                                             } catch (err) {
                                                                 alert(err.response?.data?.detail || 'Failed to reset submission');
                                                             }
                                                         }
                                                     }}
-                                                    title="Reset this tester's submission"
+                                                    title="Reset this tester's submission for selected week"
                                                     className="text-purple-400 hover:text-green-400 transition-colors"
                                                 >
                                                     <RefreshCw size={14} />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={async () => {
+                                                        if (window.confirm(`Reset ALL submissions for tester ${phone}? This will clear all their test history.`)) {
+                                                            try {
+                                                                const res = await deleteTesterSubmission(phone, 'all');
+                                                                alert(res?.message || `All submissions reset for ${phone}!`);
+                                                            } catch (err) {
+                                                                alert(err.response?.data?.detail || 'Failed to reset all submissions');
+                                                            }
+                                                        }
+                                                    }}
+                                                    title="Reset ALL test submissions for this tester"
+                                                    className="text-purple-400 hover:text-amber-400 transition-colors"
+                                                >
+                                                    <Trash2 size={13} />
                                                 </button>
                                                 <button
                                                     type="button"

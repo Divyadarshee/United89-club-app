@@ -86,24 +86,6 @@ async def get_week_config(week_id: str):
         return doc.to_dict()
     return None
 
-async def is_tester_phone(phone: str) -> bool:
-    """Check if the given phone number is in the tester list"""
-    try:
-        doc = await db.collection("config").document("quiz_settings").get()
-        if doc.exists:
-            config = doc.to_dict()
-            tester_phones = config.get("tester_phones", [])
-            # Normalize the input phone for comparison
-            normalized_input = normalize_phone(phone)
-            # Check against normalized tester phones
-            for tester in tester_phones:
-                if normalize_phone(tester) == normalized_input:
-                    return True
-        return False
-    except Exception as e:
-        print(f"Error checking tester status: {e}")
-        return False
-
 def normalize_phone(phone: str) -> str:
     """Normalize phone number by removing +91, spaces, dashes, and keeping only digits"""
     # Remove common prefixes and formatting
@@ -114,6 +96,55 @@ def normalize_phone(phone: str) -> str:
     if len(phone) > 10 and phone.startswith("91"):
         phone = phone[2:]
     return phone
+
+async def get_tester_phones_set() -> set[str]:
+    """Get the set of normalized tester phone numbers from config"""
+    try:
+        doc = await db.collection("config").document("quiz_settings").get()
+        if doc.exists:
+            config = doc.to_dict()
+            tester_phones = config.get("tester_phones", [])
+            return {normalize_phone(t) for t in tester_phones if t}
+        return set()
+    except Exception as e:
+        print(f"Error fetching tester phones: {e}")
+        return set()
+
+async def is_tester_phone(phone: str) -> bool:
+    """Check if the given phone number is in the tester list"""
+    try:
+        tester_phones = await get_tester_phones_set()
+        return normalize_phone(phone) in tester_phones
+    except Exception as e:
+        print(f"Error checking tester status: {e}")
+        return False
+
+async def get_user_doc_ref(user_id: str):
+    """Find user document reference by user_id or normalized phone"""
+    # 1. Try direct ID
+    ref = db.collection("users").document(user_id)
+    doc = await ref.get()
+    if doc.exists:
+        return ref, doc
+    
+    # 2. Try with/without +91
+    norm = normalize_phone(user_id)
+    alternatives = [f"+91{norm}", norm, f"91{norm}"]
+    for alt in alternatives:
+        if alt != user_id:
+            ref = db.collection("users").document(alt)
+            doc = await ref.get()
+            if doc.exists:
+                return ref, doc
+                
+    # 3. Query by phone field
+    users_query = db.collection("users").where("phone", "in", alternatives)
+    docs = [d async for d in users_query.stream()]
+    if docs:
+        return docs[0].reference, docs[0]
+        
+    return None, None
+
 
 async def is_phone_whitelisted(phone: str) -> bool:
     """Check if phone number is in the approved whitelist"""
@@ -415,6 +446,7 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, a
 
     try:
         users_list = []
+        tester_phones = await get_tester_phones_set()
         
         if type == "overall":
             # For overall leaderboard, we calculate aggregates EXCLUDING the current week
@@ -429,6 +461,10 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, a
             for user_doc in user_docs:
                 u = user_doc.to_dict()
                 user_id = user_doc.id
+                
+                # Exclude testers from overall leaderboard
+                if normalize_phone(user_id) in tester_phones or normalize_phone(u.get("phone", "")) in tester_phones:
+                    continue
                 
                 # Get all submissions for this user EXCEPT current week
                 submissions_ref = db.collection("users").document(user_id).collection("submissions")
@@ -499,18 +535,23 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, a
             users_list.sort(key=lambda x: (-x["score"], x["avg_time"]))
         else:
             # Weekly Leaderboard - Query submissions for the specific week
-            submissions_query = db.collection_group("submissions").where("week_id", "==", target_week).order_by("score", direction=firestore.Query.DESCENDING).order_by("time_taken", direction=firestore.Query.ASCENDING).limit(50)
+            fetch_limit = 50 + len(tester_phones) * 5
+            submissions_query = db.collection_group("submissions").where("week_id", "==", target_week).order_by("score", direction=firestore.Query.DESCENDING).order_by("time_taken", direction=firestore.Query.ASCENDING).limit(fetch_limit)
             
             subs = [sub async for sub in submissions_query.stream()]
             
             for sub in subs:
                 s_data = sub.to_dict()
                 
-                # Use cached user_name from submission (no extra query needed)
-                name = s_data.get("user_name", "Unknown")
-                
                 # Get user_id from the parent path (users/{user_id}/submissions/{week_id})
                 user_id = sub.reference.parent.parent.id if sub.reference.parent.parent else None
+                
+                # Skip tester phones from weekly leaderboard
+                if user_id and normalize_phone(user_id) in tester_phones:
+                    continue
+                
+                # Use cached user_name from submission (no extra query needed)
+                name = s_data.get("user_name", "Unknown")
                 
                 # For current week, hide scores (anti-cheating)
                 users_list.append({
@@ -521,6 +562,10 @@ async def get_leaderboard(type: str = "weekly", week_id: Optional[str] = None, a
                     "week_id": target_week,
                     "is_current_week": is_current_week  # Flag for frontend
                 })
+
+        # Cap weekly results to 50
+        if type == "weekly":
+            users_list = users_list[:50]
 
         # Rank
         for i, u in enumerate(users_list):
@@ -674,7 +719,10 @@ async def delete_question(question_id: str):
 async def get_user_submission(user_id: str, week_id: str):
     """Fetch a specific user's submission details for a given week"""
     try:
-        sub_ref = db.collection("users").document(user_id).collection("submissions").document(week_id)
+        user_ref, user_doc = await get_user_doc_ref(user_id)
+        if not user_ref or not user_doc.exists:
+            raise HTTPException(status_code=404, detail="User not found")
+        sub_ref = user_ref.collection("submissions").document(week_id)
         sub_doc = await sub_ref.get()
         
         if not sub_doc.exists:
@@ -682,7 +730,7 @@ async def get_user_submission(user_id: str, week_id: str):
         
         data = sub_doc.to_dict()
         return {
-            "user_id": user_id,
+            "user_id": user_ref.id,
             "week_id": week_id,
             "score": data.get("score", 0),
             "time_taken": data.get("time_taken", 0),
@@ -698,7 +746,7 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
     """
     Public endpoint for users to view their own submission with question details.
     Returns submission data along with questions and correct answers for answer review.
-    Correct answers are only shown if answers_visible is True in config.
+    Correct answers are only shown if answers_visible is True in config (or if user is tester).
     """
     try:
         # Use provided week_id or get current active week
@@ -707,17 +755,24 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
         if target_week == "inactive":
             raise HTTPException(status_code=400, detail="No active quiz week")
         
+        is_tester = await is_tester_phone(user_id)
+        
         # Check if answers should be visible:
-        # 1. True if the week has passed (i.e., target_week < current_iso_week)
-        # 2. Otherwise, defer to global configuration
+        # 1. Always true for testers (testing/verifying quiz)
+        # 2. True if the week has passed (i.e., target_week < current_iso_week)
+        # 3. Otherwise, defer to global configuration
         current_iso_week = get_current_iso_week()
-        if target_week < current_iso_week:
+        if is_tester or target_week < current_iso_week:
             answers_visible = True
         else:
             answers_visible = await get_answers_visible()
         
-        # Get user's submission
-        sub_ref = db.collection("users").document(user_id).collection("submissions").document(target_week)
+        # Get user's submission flexibly
+        user_ref, user_doc = await get_user_doc_ref(user_id)
+        if not user_ref or not user_doc.exists:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        sub_ref = user_ref.collection("submissions").document(target_week)
         sub_doc = await sub_ref.get()
         
         if not sub_doc.exists:
@@ -753,12 +808,13 @@ async def get_my_submission(user_id: str, week_id: Optional[str] = None):
             questions_with_answers.append(question_data)
         
         return {
-            "user_id": user_id,
+            "user_id": user_ref.id,
             "week_id": target_week,
             "score": submission_data.get("score", 0),
             "time_taken": submission_data.get("time_taken", 0),
             "questions": questions_with_answers,
-            "answers_visible": answers_visible
+            "answers_visible": answers_visible,
+            "is_tester": is_tester
         }
     except HTTPException:
         raise
@@ -899,9 +955,9 @@ async def add_questions_batch(question_batch: QuestionBatchCreate):
 @app.delete("/api/admin/tester-submission/{user_id}")
 async def delete_tester_submission(user_id: str, week_id: Optional[str] = None):
     """
-    Delete a tester user's submission for a given week.
+    Delete a tester user's submission for a given week (or all weeks if week_id == 'all').
     Only works for users whose phone number is in the tester list.
-    Resets their has_submitted status for that week.
+    Resets their submission status.
     """
     # Check if user is a tester
     is_tester = await is_tester_phone(user_id)
@@ -911,34 +967,68 @@ async def delete_tester_submission(user_id: str, week_id: Optional[str] = None):
             detail="This action is only allowed for tester phone numbers."
         )
     
-    # Determine week
+    # Resolve the user document reference
+    user_ref, user_doc = await get_user_doc_ref(user_id)
+    if not user_ref or not user_doc.exists:
+        return {"status": "no_user", "message": f"User document for {user_id} not found."}
+    
+    actual_user_id = user_ref.id
     target_week = week_id or await get_active_week_id()
     
     try:
-        # Delete the submission document
-        submission_ref = db.collection("users").document(user_id).collection("submissions").document(target_week)
-        submission_doc = await submission_ref.get()
-        
-        if not submission_doc.exists:
-            return {"status": "no_submission", "message": "No submission found for this week."}
-        
-        await submission_ref.delete()
-        
-        # Clear the has_submitted flag in user doc
-        user_ref = db.collection("users").document(user_id)
-        await user_ref.update({"has_submitted": False})
-        
-        # Invalidate leaderboard cache
-        cache_key = f"weekly_{target_week}"
-        if cache_key in leaderboard_cache:
-            del leaderboard_cache[cache_key]
-        if "overall" in leaderboard_cache:
-            del leaderboard_cache["overall"]
-        
-        return {
-            "status": "success", 
-            "message": f"Deleted submission for {user_id} in week {target_week}."
-        }
+        if target_week == "all":
+            # Delete ALL submissions for this tester
+            subs = [s async for s in user_ref.collection("submissions").stream()]
+            deleted_count = 0
+            for s in subs:
+                await s.reference.delete()
+                deleted_count += 1
+            
+            await user_ref.update({
+                "has_submitted": False,
+                "submitted": False,
+                "cumulative_score": 0,
+                "cumulative_time": 0,
+                "weeks_played": 0
+            })
+            leaderboard_cache.clear()
+            return {
+                "status": "success",
+                "message": f"Deleted all {deleted_count} submissions for tester {actual_user_id} and reset stats."
+            }
+        else:
+            submission_ref = user_ref.collection("submissions").document(target_week)
+            submission_doc = await submission_ref.get()
+            
+            if not submission_doc.exists:
+                return {"status": "no_submission", "message": f"No submission found for week {target_week}."}
+            
+            sub_data = submission_doc.to_dict()
+            old_score = sub_data.get("score", 0)
+            old_time = sub_data.get("time_taken", 0)
+            
+            await submission_ref.delete()
+            
+            # Check remaining submissions
+            remaining_subs = [s async for s in user_ref.collection("submissions").stream()]
+            update_data = {
+                "has_submitted": False,
+                "cumulative_score": firestore.Increment(-old_score),
+                "cumulative_time": firestore.Increment(-old_time),
+                "weeks_played": firestore.Increment(-1)
+            }
+            if len(remaining_subs) == 0:
+                update_data["submitted"] = False
+                update_data["cumulative_score"] = 0
+                update_data["cumulative_time"] = 0
+                update_data["weeks_played"] = 0
+                
+            await user_ref.update(update_data)
+            leaderboard_cache.clear()
+            return {
+                "status": "success", 
+                "message": f"Deleted submission for {actual_user_id} in week {target_week}."
+            }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

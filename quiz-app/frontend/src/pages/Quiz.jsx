@@ -183,9 +183,9 @@ function Quiz() {
         const duration = Math.round((Date.now() - startTime) / 1000);
 
         try {
-            await submitAnswers(userId, answers, duration, weekId);
+            const res = await submitAnswers(userId, answers, duration, weekId);
             localStorage.setItem('has_submitted', 'true');
-            navigate('/thank-you');
+            navigate('/thank-you', { state: { score: res?.score, timeTaken: duration } });
         } catch (error) {
             console.error('Submission failed:', error);
             alert('Failed to submit. Please try again.');

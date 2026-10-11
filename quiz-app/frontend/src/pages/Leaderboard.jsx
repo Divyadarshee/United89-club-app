@@ -30,9 +30,20 @@ function Leaderboard() {
     const [loadingAnswers, setLoadingAnswers] = useState(false);
     const [answersError, setAnswersError] = useState(null);
 
+    // Tester state
+    const [isTester, setIsTester] = useState(false);
+    const [myTesterSub, setMyTesterSub] = useState(null);
+
     // Check if user has submitted (from localStorage)
     const userId = localStorage.getItem('user_id');
     const hasSubmitted = localStorage.getItem('has_submitted') === 'true';
+
+    const normalizePhone = (p) => {
+        if (!p) return '';
+        let digits = String(p).replace(/\D/g, '');
+        if (digits.length > 10 && digits.startsWith('91')) digits = digits.slice(2);
+        return digits;
+    };
 
     // Calculate week IDs using proper ISO 8601 week numbering
     const getWeekId = (weeksOffset = 0) => {
@@ -86,6 +97,18 @@ function Leaderboard() {
                 const current = weeksData?.find(w => w.is_current);
                 const currentId = current?.week_id || getWeekId(0);
                 setCurrentWeekId(currentId);
+
+                // Detect if current user is a tester
+                const userIsTester = configData?.tester_phones?.some(tp => normalizePhone(tp) === normalizePhone(userId));
+                setIsTester(!!userIsTester);
+                if (userIsTester && userId) {
+                    try {
+                        const mySub = await getMySubmission(userId, currentId);
+                        setMyTesterSub(mySub);
+                    } catch {
+                        setMyTesterSub(null);
+                    }
+                }
 
                 // Calculate last week ID
                 const lastId = getWeekId(-1);
@@ -182,11 +205,15 @@ function Leaderboard() {
     }, [activeTab, lastWeekId, currentWeekId, selectedPastWeek]);
 
     // Check if "View My Answers" should be shown
-    // Hidden for: 1) overall tab, 2) current week (scores not yet revealed)
+    // Hidden for: 1) overall tab, 2) current week (unless user is a tester)
     const shouldShowViewAnswers = () => {
         // For overall tab, don't show the button (no specific week)
         if (activeTab === 'overall') {
             return false;
+        }
+        // Testers can always view their answers, even for current week!
+        if (isTester) {
+            return true;
         }
         // For current week, don't show (scores hidden during active quiz)
         if (activeTab === 'thisWeek') {
@@ -426,6 +453,25 @@ function Leaderboard() {
                             {activeTab === 'pastWeek' && selectedPastWeek && `${selectedPastWeek} (${getWeekDateRange(selectedPastWeek)})`}
                         </p>
                     </div>
+
+                    {/* Tester Score Banner (Visible only to tester) */}
+                    {isTester && (
+                        <div className="bg-purple-900/60 border border-purple-400/40 rounded-xl p-3 mb-4 text-center w-full max-w-lg shadow-lg">
+                            <div className="flex flex-wrap items-center justify-center gap-2 text-purple-200 text-sm font-semibold">
+                                <span>🧪 Tester Account</span>
+                                {myTesterSub ? (
+                                    <span className="text-white">
+                                        • Your Score: <strong className="text-emerald-400 font-bold text-base">{myTesterSub.score}/{myTesterSub.questions?.length || 10}</strong> ({formatTime(myTesterSub.time_taken)})
+                                    </span>
+                                ) : (
+                                    <span className="text-purple-300 font-normal">• Not submitted for {currentWeekId}</span>
+                                )}
+                            </div>
+                            <p className="text-purple-300 text-xs mt-1">
+                                Testers can click &quot;View My Answers&quot; below to review full answer keys anytime.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Leaderboard Card - Single view based on tab */}
                     <div className="w-full max-w-lg">
