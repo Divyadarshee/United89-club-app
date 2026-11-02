@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 # 1. Update the base image to your target Python version
 FROM python:3.14-slim
 
@@ -7,7 +6,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# 3. Enable performance and caching optimizations
+# 3. Enable performance optimizations
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
@@ -19,15 +18,13 @@ ENV PATH="/app/.venv/bin:$PATH"
 COPY pyproject.toml uv.lock ./
 
 # 6. Install dependencies without the application code itself
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-install-project
+RUN uv sync --frozen --no-install-project
 
 # 7. Copy the rest of your application code
 COPY . .
 
 # 8. Run a final fast sync to include your local package code
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen
+RUN uv sync --frozen
 
 EXPOSE 8080
 
