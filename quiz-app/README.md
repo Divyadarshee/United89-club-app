@@ -4,12 +4,12 @@ A full-stack MVP for a Quiz Show application using FastAPI, React, and Google Cl
 
 ## Project Structure
 
-- `backend/`: FastAPI application (Python 3.11)
+- `backend/`: FastAPI application (Python 3.14)
 - `frontend/`: React application (Vite)
 
 ## Prerequisites
 
-- Python 3.11+
+- Python 3.14+
 - Node.js 18+
 - Docker (optional)
 - Google Cloud Service Account Credentials (JSON)
@@ -18,49 +18,32 @@ A full-stack MVP for a Quiz Show application using FastAPI, React, and Google Cl
 
 ### 1. Backend Setup (FastAPI + uv)
 
-The backend uses `uv` for fast package management, but regular `pip` works too.
+The backend uses `uv` for workspace dependency and virtual environment management (Python 3.14).
 
 1.  Navigate to the backend directory:
     ```bash
     cd backend
     ```
 
-2.  Create a virtual environment:
+2.  Sync dependencies and environment:
     ```bash
-    # using uv (recommended)
-    uv venv
-    
-    # OR using standard python
-    python -m venv .venv
+    # using uv (recommended - automatically creates .venv with Python 3.14 and installs locked deps)
+    uv sync
     ```
 
-3.  Activate the environment:
-    ```bash
-    # macOS/Linux
-    source .venv/bin/activate
-    
-    # Windows
-    .venv\Scripts\activate
-    ```
-
-4.  Install dependencies:
-    ```bash
-    # using uv
-    uv pip install -r requirements.txt
-    
-    # OR using standard pip
-    pip install -r requirements.txt
-    ```
-
-5.  **Firestore Credentials**:
+3.  **Firestore Credentials**:
     Ensure you have your Google Cloud Service Account JSON file.
     Export the path to your credentials:
     ```bash
     export GOOGLE_APPLICATION_CREDENTIALS="/path/to/your/service-account-key.json"
     ```
 
-6.  Run the server:
+4.  Run the server:
     ```bash
+    # using uv
+    uv run uvicorn main:app --reload --port 8080
+
+    # OR after activating .venv (source .venv/bin/activate)
     uvicorn main:app --reload --port 8080
     ```
     The API will be available at `http://localhost:8080`.

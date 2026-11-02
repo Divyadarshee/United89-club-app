@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getLeaderboard, getConfig, getMySubmission, getWeeks } from '../services/api';
 import { Trophy, Clock, Medal, Home, Calendar, Award, Crown, Star, Sparkles, Eye, X, Check, Loader2, ChevronDown, History, Lock } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { isFinaleUnlocked } from '../utils/featureFlags';
 
 function Leaderboard() {
     const [weeklyUsers, setWeeklyUsers] = useState([]);
@@ -11,6 +12,7 @@ function Leaderboard() {
     const [overallUsers, setOverallUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('thisWeek'); // 'lastWeek' | 'thisWeek' | 'overall'
+    const [finaleUnlocked, setFinaleUnlocked] = useState(false);
     const confettiTriggered = useRef(false);
     const pastWeeksDropdownRef = useRef(null);
     const navigate = useNavigate();
@@ -98,9 +100,10 @@ function Leaderboard() {
                 const currentId = current?.week_id || getWeekId(0);
                 setCurrentWeekId(currentId);
 
-                // Detect if current user is a tester
+                // Detect if current user is a tester or finale is unlocked
                 const userIsTester = configData?.tester_phones?.some(tp => normalizePhone(tp) === normalizePhone(userId));
                 setIsTester(!!userIsTester);
+                setFinaleUnlocked(isFinaleUnlocked({ phone: userId }, configData));
                 if (userIsTester && userId) {
                     try {
                         const mySub = await getMySubmission(userId, currentId);
@@ -442,6 +445,26 @@ function Leaderboard() {
                                 )}
                             </AnimatePresence>
                         </div>
+
+                        {/* 2026 Season Finale Quick Tabs (Visible only when unlocked) */}
+                        {finaleUnlocked && (
+                            <>
+                                <button
+                                    onClick={() => navigate('/rewind?tab=highlights')}
+                                    className="px-3.5 py-2 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-[#0b1528] rounded-full text-xs sm:text-sm font-black shadow-lg hover:scale-105 transition-transform flex items-center gap-1.5"
+                                >
+                                    <Sparkles size={14} />
+                                    <span>2026 Rewind & Awards</span>
+                                </button>
+                                <button
+                                    onClick={() => navigate('/profile')}
+                                    className="px-3.5 py-2 bg-midnight-blue/80 hover:bg-midnight-blue text-amber-200 border border-antique-gold/50 rounded-full text-xs sm:text-sm font-bold shadow-lg transition-all flex items-center gap-1.5"
+                                >
+                                    <Crown size={14} className="text-amber-400" />
+                                    <span>My Profile & Certs</span>
+                                </button>
+                            </>
+                        )}
                     </div>
 
                     {/* Week Date Range Label */}

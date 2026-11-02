@@ -13,7 +13,7 @@ A monorepo for quiz challenge applications, supporting multiple deployments.
 
 ### 📚 Quiz App (`/quiz-app`)
 A full-stack Quiz Show application. Built with:
-- **Backend**: FastAPI (Python 3.11) with Google Cloud Firestore
+- **Backend**: FastAPI (Python 3.14) with Google Cloud Firestore
 - **Frontend**: React (Vite) with Tailwind CSS
 
 See the [Quiz App README](./quiz-app/README.md) for detailed setup and development instructions.
@@ -37,7 +37,7 @@ quiz-challenge-app/
 
 ## Prerequisites
 
-- Python 3.11+
+- Python 3.14+
 - Node.js 18+
 - Google Cloud Service Account Credentials (for Firestore)
 - Docker (optional, for containerized deployment)

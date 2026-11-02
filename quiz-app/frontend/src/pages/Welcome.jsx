@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSoundManager } from '../hooks/useSoundManager';
 import { getConfig } from '../services/api';
-import { X, Lock, Trophy } from 'lucide-react';
+import { X, Lock, Trophy, User, Sparkles, Award } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
+import { useAuth } from '../context/AuthContext';
 import { JagannathEyes, AshokChakra } from '../components/ThemedIcons';
+import { isFinaleUnlocked } from '../utils/featureFlags';
 
 function Welcome() {
     const [showRules, setShowRules] = useState(false);
@@ -13,6 +15,7 @@ function Welcome() {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
     const { playSound } = useSoundManager();
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchConfig = async () => {
@@ -170,22 +173,83 @@ function Welcome() {
                             {activeTheme === 'independence_day' ? 'Unfurl the Freedom Challenge 🇮🇳' : 'Start the Challenge'}
                         </button>
 
-                        <div className="mt-4">
+                        <div className="mt-4 flex items-center justify-center">
                             {localStorage.getItem('has_submitted') === 'true' ? (
                                 <button
-                                    onClick={() => navigate('/leaderboard')}
-                                    className="text-antique-gold hover:text-white underline font-serif text-lg tracking-wider transition-colors"
+                                    onClick={() => {
+                                        playSound('click');
+                                        navigate('/leaderboard');
+                                    }}
+                                    className="text-antique-gold hover:text-white underline font-serif text-sm tracking-wider transition-colors"
                                 >
                                     View Leaderboard
                                 </button>
                             ) : (
-                                <div className="flex items-center justify-center gap-2 text-gray-400 font-serif text-base tracking-wide">
-                                    <Lock size={16} />
+                                <div className="flex items-center justify-center gap-2 text-gray-400 font-serif text-xs tracking-wide">
+                                    <Lock size={13} />
                                     <span>Submit quiz to unlock leaderboard</span>
                                 </div>
                             )}
                         </div>
                     </>
+                )}
+
+                {/* 2026 SEASON FINALE HERO CARD (Visible only when unlocked) */}
+                {isFinaleUnlocked(user, config) && (
+                    <div className="mt-8 max-w-lg mx-auto p-5 rounded-2xl bg-gradient-to-br from-[#132546]/95 via-[#0b1528]/95 to-[#1b1407]/95 border-2 border-antique-gold/60 shadow-2xl">
+                        <div className="flex items-center justify-center gap-2 text-amber-300 font-serif text-xs uppercase tracking-[0.2em] mb-1">
+                            <Sparkles size={14} />
+                            <span>40-Week Grand Finale Showcase</span>
+                            <Sparkles size={14} />
+                        </div>
+                        <h3 className="text-xl sm:text-2xl font-serif font-bold text-white mb-2">
+                            2026 Club Rewind &amp; Personal Wrapped
+                        </h3>
+                        <p className="text-xs sm:text-sm text-gray-300 font-sans mb-4">
+                            Relive 40 weeks of UCE ’89 trivia! Watch the Club Highlights &amp; Hall of Fame, or unwrap your own personal 2026 story reel with certificates.
+                        </p>
+
+                        {/* Primary Action: Personal Story Reel */}
+                        <div className="mb-3">
+                            <button
+                                onClick={() => {
+                                    playSound('fanfare');
+                                    navigate('/profile?playStory=true');
+                                }}
+                                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:from-amber-200 hover:to-yellow-300 text-[#0b1528] font-serif font-black text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                <Sparkles size={18} />
+                                <span>🎬 Play My 2026 Wrapped Story</span>
+                            </button>
+                            <p className="text-[11px] text-amber-200/70 font-sans mt-1">
+                                Personalized 6-slide story with your attendance, speed, awards &amp; certificate
+                            </p>
+                        </div>
+
+                        {/* Secondary Actions: Club-Wide Rewind & Hall of Fame */}
+                        <div className="flex flex-col sm:flex-row gap-2 justify-center pt-1 border-t border-antique-gold/20">
+                            <button
+                                onClick={() => {
+                                    playSound('click');
+                                    navigate('/rewind?tab=highlights');
+                                }}
+                                className="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-amber-200 border border-antique-gold/40 font-serif font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                <Trophy size={14} className="text-antique-gold" />
+                                <span>🌍 Watch Club Rewind</span>
+                            </button>
+                            <button
+                                onClick={() => {
+                                    playSound('click');
+                                    navigate('/rewind?tab=hallOfFame');
+                                }}
+                                className="flex-1 py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-amber-200 border border-antique-gold/40 font-serif font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                <Award size={14} className="text-antique-gold" />
+                                <span>🏛️ Hall of Fame &amp; Awards</span>
+                            </button>
+                        </div>
+                    </div>
                 )}
             </motion.div>
 

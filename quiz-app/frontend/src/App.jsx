@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX, Sparkles } from 'lucide-react';
 import Entry from './pages/Entry';
 import Welcome from './pages/Welcome';
 import Quiz from './pages/Quiz';
@@ -9,13 +9,24 @@ import ThankYou from './pages/ThankYou';
 import AdminLogin from './pages/AdminLogin';
 import AdminDashboard from './pages/AdminDashboard';
 import Leaderboard from './pages/Leaderboard';
+import Profile from './pages/Profile';
+import SeasonRewind from './pages/SeasonRewind';
 import PageTransition from './components/PageTransition';
 import BackgroundSlideshow from './components/BackgroundSlideshow';
+import UserNav from './components/UserNav';
 import { useSoundManager } from './hooks/useSoundManager';
 import { SoundProvider } from './context/SoundContext';
 import { ConfigProvider, useConfig } from './context/ConfigContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { isFinaleUnlocked } from './utils/featureFlags';
 
-// Secure Route Component
+// Protected Route for Regular Authenticated Members
+const ProtectedRoute = ({ children }) => {
+  const isAuth = !!localStorage.getItem('access_token') || !!localStorage.getItem('user_id');
+  return isAuth ? children : <Navigate to="/" replace />;
+};
+
+// Secure Route Component for Admin Dashboard
 const AdminRoute = ({ children }) => {
   const isAuth = localStorage.getItem('admin_auth') === 'true';
   return isAuth ? children : <Navigate to="/admin" replace />;
@@ -33,6 +44,16 @@ const AnimatedRoutes = () => {
         <Route path="/thank-you" element={<PageTransition><ThankYou /></PageTransition>} />
         <Route path="/leaderboard" element={<PageTransition><Leaderboard /></PageTransition>} />
 
+        {/* Member Profile Route */}
+        <Route path="/profile" element={
+          <ProtectedRoute>
+            <PageTransition><Profile /></PageTransition>
+          </ProtectedRoute>
+        } />
+
+        {/* 2026 Season Finale: Rewind, Hall of Fame & Certificates */}
+        <Route path="/rewind" element={<PageTransition><SeasonRewind /></PageTransition>} />
+
         {/* Admin Routes */}
         <Route path="/admin" element={<PageTransition><AdminLogin /></PageTransition>} />
         <Route path="/admin/dashboard" element={
@@ -48,7 +69,12 @@ const AnimatedRoutes = () => {
 
 const Layout = () => {
   const { isMuted, toggleMute } = useSoundManager();
-  const { activeTheme } = useConfig();
+  const { activeTheme, config } = useConfig();
+  const { user } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const finaleUnlocked = isFinaleUnlocked(user, config);
 
   const themeClassMap = {
     rath_yatra: 'theme-rath-yatra',
@@ -80,6 +106,11 @@ const Layout = () => {
           {themeBannerMap[activeTheme]}
         </div>
       )}
+
+      {/* Top Left User Identity & Profile Badge */}
+      <UserNav />
+
+      {/* Sound Mute/Unmute Toggle */}
       <div className="fixed bottom-4 left-4 md:bottom-auto md:left-auto md:top-5 md:right-5 z-50">
         <button
           onClick={toggleMute}
@@ -88,6 +119,29 @@ const Layout = () => {
           {isMuted ? <VolumeX size={20} color="#c5a059" /> : <Volume2 size={20} color="#c5a059" />}
         </button>
       </div>
+
+      {/* Floating Action Button (Visible only when unlocked) */}
+      {finaleUnlocked && !location.pathname.startsWith('/admin') && (
+        <div className="fixed bottom-4 right-4 z-50">
+          {location.pathname === '/profile' ? (
+            <button
+              onClick={() => navigate('/welcome')}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-[#0a1428]/95 border-2 border-antique-gold/70 text-amber-200 font-serif font-bold text-xs sm:text-sm shadow-2xl backdrop-blur-md hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+            >
+              <span>← Return to Lounge</span>
+            </button>
+          ) : location.pathname !== '/rewind' ? (
+            <button
+              onClick={() => navigate('/profile?playStory=true')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-[#0b1528] font-serif font-black text-xs sm:text-sm shadow-2xl border-2 border-white/40 hover:scale-105 active:scale-95 transition-transform cursor-pointer"
+            >
+              <Sparkles size={16} />
+              <span>🎬 2026 Wrapped &amp; Certs</span>
+            </button>
+          ) : null}
+        </div>
+      )}
+
       <div className="bg-grain"></div> {/* Film Grain Overlay */}
       <BackgroundSlideshow />
       <AnimatedRoutes />
@@ -99,9 +153,11 @@ function App() {
   return (
     <Router>
       <ConfigProvider>
-        <SoundProvider>
-          <Layout />
-        </SoundProvider>
+        <AuthProvider>
+          <SoundProvider>
+            <Layout />
+          </SoundProvider>
+        </AuthProvider>
       </ConfigProvider>
     </Router>
   );

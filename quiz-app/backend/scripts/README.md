@@ -2,6 +2,8 @@
 
 This folder contains one-time utility scripts for database seeding and configuration.
 
+> **Tip:** You can run any script with `uv run python scripts/<script_name>.py` (or directly with `python scripts/<script_name>.py` if `.venv` is activated).
+
 ## Scripts
 
 ### `seed_whitelist.py`
@@ -12,7 +14,7 @@ This folder contains one-time utility scripts for database seeding and configura
 **Usage**:
 ```bash
 cd quiz-app/backend
-python scripts/seed_whitelist.py
+uv run python scripts/seed_whitelist.py
 ```
 
 **Prerequisites**:

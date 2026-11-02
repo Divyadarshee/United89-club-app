@@ -1,23 +1,35 @@
-FROM python:3.11-slim
+# syntax=docker/dockerfile:1
+# 1. Update the base image to your target Python version
+FROM python:3.14-slim
 
-# Install uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+# 2. Install uv from the official image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 WORKDIR /app
 
-# Create virtual environment
-ENV VIRTUAL_ENV=/app/.venv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+# 3. Enable performance and caching optimizations
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
-# Copy requirements and install dependencies
-COPY requirements.txt .
-RUN uv venv && uv pip install -r requirements.txt
+# 4. Inject the uv virtual environment onto the system PATH
+ENV PATH="/app/.venv/bin:$PATH"
 
-# Copy application code
+# 5. Copy ONLY the configuration and lock files first
+# This ensures Docker caches your dependencies; they won't re-install when you change code.
+COPY pyproject.toml uv.lock ./
+
+# 6. Install dependencies without the application code itself
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project
+
+# 7. Copy the rest of your application code
 COPY . .
 
-# Expose port
+# 8. Run a final fast sync to include your local package code
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen
+
 EXPOSE 8080
 
-# Run application
+# 9. Run the application (since the PATH is set, uvicorn resolves perfectly)
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

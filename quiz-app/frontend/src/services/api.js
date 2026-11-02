@@ -2,8 +2,277 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
+// Configured Axios instance with auto-token injection and token refresh interceptor
+const apiClient = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json'
+    }
+});
+
+// 1. Request Interceptor: Attach Bearer Access Token to every request if present
+apiClient.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('access_token');
+        if (token && !config.headers.Authorization) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+// 2. Response Interceptor: Handle 401 Unauthorized via Silent Refresh (Access 15m + Refresh 15d)
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
+apiClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        // If error is 401 (token expired) and not already retrying
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            const refreshToken = localStorage.getItem('refresh_token');
+
+            // If we don't even have a refresh token, we can't refresh
+            if (!refreshToken) {
+                return Promise.reject(error);
+            }
+
+            if (isRefreshing) {
+                // If another request is already refreshing the token, queue this request
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then((token) => {
+                        originalRequest.headers.Authorization = `Bearer ${token}`;
+                        return apiClient(originalRequest);
+                    })
+                    .catch((err) => Promise.reject(err));
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            try {
+                // Call backend refresh endpoint
+                const res = await axios.post(`${API_URL}/api/auth/refresh`, {
+                    refresh_token: refreshToken
+                });
+
+                const { access_token, refresh_token: newRefreshToken } = res.data;
+                localStorage.setItem('access_token', access_token);
+                if (newRefreshToken) {
+                    localStorage.setItem('refresh_token', newRefreshToken);
+                }
+
+                apiClient.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+                originalRequest.headers.Authorization = `Bearer ${access_token}`;
+
+                processQueue(null, access_token);
+                return apiClient(originalRequest);
+            } catch (refreshError) {
+                processQueue(refreshError, null);
+                // Refresh token is expired or revoked - clear tokens and force re-login
+                localStorage.removeItem('access_token');
+                localStorage.removeItem('refresh_token');
+                window.dispatchEvent(new Event('auth:logout'));
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
+
+// ============================================
+// AUTH & OTP ENDPOINTS
+// ============================================
+
+/**
+ * Exchange Firebase Auth ID token (Phone SMS or Google Sign-In) for custom 15m Access + 15d Refresh tokens
+ */
+export const loginWithFirebase = async (idToken, name = '', phone = '') => {
+    const response = await apiClient.post('/api/auth/firebase-login', {
+        id_token: idToken,
+        name,
+        phone
+    });
+    return response.data;
+};
+
+/**
+ * Admin: Send OTP (Restricted to 9437555900)
+ */
+export const sendAdminOtp = async (phone) => {
+    const response = await apiClient.post('/api/auth/admin/send-otp', { phone });
+    return response.data;
+};
+
+/**
+ * Admin: Verify OTP & get admin access
+ */
+export const verifyAdminOtp = async (phone, otp) => {
+    const response = await apiClient.post('/api/auth/admin/verify-otp', { phone, otp });
+    return response.data;
+};
+
+/**
+ * Step 1 of Login: Request an OTP to be sent to user's phone number
+ */
+export const sendOtp = async (phone, name = '') => {
+    try {
+        const response = await apiClient.post('/api/auth/send-otp', { phone, name });
+        return response.data;
+    } catch (err) {
+        // Fallback for development if backend OTP endpoint is not yet connected
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            console.warn('[AUTH] /api/auth/send-otp endpoint not found on backend. Falling back to dev simulation.');
+            return {
+                status: 'simulated',
+                message: 'Development Mode: Use OTP 123456 to verify.',
+                debug_otp: '123456'
+            };
+        }
+        throw err;
+    }
+};
+
+/**
+ * Step 2 of Login: Verify OTP code and receive Access + Refresh tokens
+ */
+export const verifyOtp = async (phone, otp, name = '') => {
+    try {
+        const response = await apiClient.post('/api/auth/verify-otp', { phone, otp, name });
+        return response.data;
+    } catch (err) {
+        // Fallback for development if backend OTP endpoint is not yet connected
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            if (otp === '123456') {
+                console.warn('[AUTH] Dev mode OTP matched! Generating simulated local session.');
+                // Call legacy register endpoint or simulate tokens
+                let legacyData = { user_id: phone, has_submitted: false, week_id: 'week_active' };
+                try {
+                    legacyData = await registerUser(name || 'Alumni Member', phone);
+                } catch {
+                    // ignore if backend offline
+                }
+
+                // Simulated tokens (15m and 15d)
+                const mockAccessToken = `dev_access_${phone}_${Date.now()}`;
+                const mockRefreshToken = `dev_refresh_${phone}_${Date.now()}`;
+
+                return {
+                    access_token: mockAccessToken,
+                    refresh_token: mockRefreshToken,
+                    token_type: 'bearer',
+                    has_submitted: legacyData.has_submitted || false,
+                    week_id: legacyData.week_id,
+                    user: {
+                        user_id: phone,
+                        phone: phone,
+                        name: name || 'Alumni Member',
+                        batch: '1989',
+                        city: 'Bhubaneswar, India',
+                        bio: 'Proud United89 Alumni & Quiz Enthusiast',
+                        avatar: 'avatar-1',
+                        cumulative_score: 45,
+                        weeks_played: 6,
+                        rank: '#4'
+                    }
+                };
+            }
+            throw new Error('Invalid OTP. In dev mode, enter 123456');
+        }
+        throw err;
+    }
+};
+
+/**
+ * Explicit refresh token call
+ */
+export const refreshAccessToken = async (refreshToken) => {
+    const response = await apiClient.post('/api/auth/refresh', {
+        refresh_token: refreshToken
+    });
+    return response.data;
+};
+
+// ============================================
+// PROFILE ENDPOINTS
+// ============================================
+
+/**
+ * Fetch current authenticated user's profile details & quiz stats
+ */
+export const getMyProfile = async () => {
+    try {
+        const response = await apiClient.get('/api/profile/me');
+        return response.data;
+    } catch (err) {
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            // Mock profile fallback for frontend development preview
+            const savedProfile = localStorage.getItem('dev_user_profile');
+            if (savedProfile) return JSON.parse(savedProfile);
+
+            const phone = localStorage.getItem('user_id') || '+91 94375 55900';
+            return {
+                user_id: phone,
+                phone: phone,
+                name: 'Divyadarshee Das',
+                batch: '1989',
+                city: 'Bhubaneswar, India',
+                bio: 'UCE89 batch alumnus & trivia enthusiast.',
+                avatar: 'avatar-1',
+                cumulative_score: 120,
+                weeks_played: 8,
+                rank: '#3',
+                badges: ['Top 5', 'Veteran', 'Perfect Score Week 12']
+            };
+        }
+        throw err;
+    }
+};
+
+/**
+ * Update current authenticated user's profile details
+ */
+export const updateMyProfile = async (profileData) => {
+    try {
+        const response = await apiClient.put('/api/profile/me', profileData);
+        return response.data;
+    } catch (err) {
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            // Save locally in dev fallback mode
+            const current = await getMyProfile();
+            const updated = { ...current, ...profileData };
+            localStorage.setItem('dev_user_profile', JSON.stringify(updated));
+            return { status: 'success', user: updated };
+        }
+        throw err;
+    }
+};
+
+// ============================================
+// EXISTING APP ENDPOINTS (Backwards Compatible)
+// ============================================
+
 export const registerUser = async (name, phone) => {
-    const response = await axios.post(`${API_URL}/api/register`, { name, phone });
+    const response = await apiClient.post('/api/register', { name, phone });
     return response.data;
 };
 
@@ -11,17 +280,17 @@ export const getQuestions = async (weekId = null, userId = null) => {
     const params = {};
     if (weekId) params.week_id = weekId;
     if (userId) params.user_id = userId;
-    const response = await axios.get(`${API_URL}/api/questions`, { params });
+    const response = await apiClient.get('/api/questions', { params });
     return response.data;
 };
 
 export const getConfig = async () => {
-    const response = await axios.get(`${API_URL}/api/config`);
+    const response = await apiClient.get('/api/config');
     return response.data;
 };
 
 export const submitAnswers = async (userId, answers, timeTaken, weekId) => {
-    const response = await axios.post(`${API_URL}/api/submit`, {
+    const response = await apiClient.post('/api/submit', {
         user_id: userId,
         answers,
         time_taken: timeTaken,
@@ -32,94 +301,73 @@ export const submitAnswers = async (userId, answers, timeTaken, weekId) => {
 
 // Public Leaderboard
 export const getLeaderboard = async (type = 'weekly', weekId = null, admin = false) => {
-    // Always ensure type has a value
     const safeType = type || 'weekly';
     const params = { type: safeType };
     if (weekId) params.week_id = weekId;
     if (admin) params.admin = true;
 
     console.log('[API] getLeaderboard called with params:', params);
-    const response = await axios.get(`${API_URL}/api/leaderboard`, { params });
+    const response = await apiClient.get('/api/leaderboard', { params });
     console.log('[API] getLeaderboard response:', response.data?.length, 'items');
     return response.data;
 };
 
 // Admin Endpoints
 export const getUsers = async () => {
-    const response = await axios.get(`${API_URL}/api/admin/users`);
+    const response = await apiClient.get('/api/admin/users');
     return response.data;
 };
 
 export const getWeeks = async () => {
-    const response = await axios.get(`${API_URL}/api/admin/weeks`);
+    const response = await apiClient.get('/api/admin/weeks');
     return response.data;
 };
 
 export const deleteQuestion = async (questionId) => {
-    const response = await axios.delete(`${API_URL}/api/admin/questions/${questionId}`);
+    const response = await apiClient.delete(`/api/admin/questions/${questionId}`);
     return response.data;
 };
 
 export const addQuestion = async (questionData) => {
-    const response = await axios.post(`${API_URL}/api/admin/questions`, questionData);
+    const response = await apiClient.post('/api/admin/questions', questionData);
     return response.data;
 };
 
 export const updateConfig = async (configData) => {
-    const response = await axios.post(`${API_URL}/api/admin/config`, configData);
+    const response = await apiClient.post('/api/admin/config', configData);
     return response.data;
 };
 
 export const getAdminQuestions = async (weekId = null) => {
     const params = weekId ? { week_id: weekId } : {};
-    const response = await axios.get(`${API_URL}/api/admin/questions-full`, { params });
+    const response = await apiClient.get('/api/admin/questions-full', { params });
     return response.data;
 };
 
 export const generateQuestions = async (weekId, prompt = null) => {
     const params = { week_id: weekId };
     if (prompt) params.prompt = prompt;
-    const response = await axios.post(`${API_URL}/api/admin/generate-questions`, null, {
-        params
-    });
+    const response = await apiClient.post('/api/admin/generate-questions', null, { params });
     return response.data;
 };
 
-// ============================================
-// NEW TWO-STEP QUESTION GENERATION APIs
-// ============================================
-
-/**
- * Step 1: Generate trending topics using Google Search
- * Returns a list of 10-15 trending topics from recent news
- */
 export const generateTrendingTopics = async (weekId, prompt = null) => {
     const params = { week_id: weekId };
     if (prompt) params.prompt = prompt;
-    const response = await axios.post(`${API_URL}/api/admin/generate-topics`, null, {
-        params
-    });
+    const response = await apiClient.post('/api/admin/generate-topics', null, { params });
     return response.data;
 };
 
-/**
- * Step 2: Generate tiered quiz questions with selected trending topics
- * Returns questions organized by difficulty: easy (10), medium (6), hard (4)
- */
 export const generateTieredQuestions = async (weekId, selectedTopics) => {
-    const response = await axios.post(`${API_URL}/api/admin/generate-tiered-questions`, {
+    const response = await apiClient.post('/api/admin/generate-tiered-questions', {
         week_id: weekId,
         selected_topics: selectedTopics
     });
     return response.data;
 };
 
-/**
- * Regenerate questions using agent memory with user feedback
- * Uses the same session to maintain context about selected topics
- */
 export const regenerateQuestionsWithFeedback = async (weekId, sessionId, feedback) => {
-    const response = await axios.post(`${API_URL}/api/admin/regenerate-questions`, {
+    const response = await apiClient.post('/api/admin/regenerate-questions', {
         week_id: weekId,
         session_id: sessionId,
         feedback: feedback
@@ -128,34 +376,31 @@ export const regenerateQuestionsWithFeedback = async (weekId, sessionId, feedbac
 };
 
 export const addBatchQuestions = async (questions) => {
-    const response = await axios.post(`${API_URL}/api/admin/questions/batch`, { questions });
+    const response = await apiClient.post('/api/admin/questions/batch', { questions });
     return response.data;
 };
 
 export const getSubmissionDetails = async (userId, weekId) => {
-    const response = await axios.get(`${API_URL}/api/admin/submission/${userId}`, {
+    const response = await apiClient.get(`/api/admin/submission/${userId}`, {
         params: { week_id: weekId }
     });
     return response.data;
 };
 
-// Public endpoint for users to view their own answers
 export const getMySubmission = async (userId, weekId = null) => {
     const params = weekId ? { week_id: weekId } : {};
-    const response = await axios.get(`${API_URL}/api/my-submission/${userId}`, { params });
+    const response = await apiClient.get(`/api/my-submission/${userId}`, { params });
     return response.data;
 };
 
-// Admin: Delete tester submission
 export const deleteTesterSubmission = async (userId, weekId = null) => {
     const params = weekId ? { week_id: weekId } : {};
-    const response = await axios.delete(`${API_URL}/api/admin/tester-submission/${userId}`, { params });
+    const response = await apiClient.delete(`/api/admin/tester-submission/${userId}`, { params });
     return response.data;
 };
 
-// Admin: Grant wildcard bonus to a user (idempotent - replaces existing bonus)
 export const grantWildcard = async (phone, bonusPoints, bonusWeeks, reason) => {
-    const response = await axios.post(`${API_URL}/api/admin/wildcard`, {
+    const response = await apiClient.post('/api/admin/wildcard', {
         phone,
         bonus_points: bonusPoints,
         bonus_weeks: bonusWeeks,
@@ -163,4 +408,3 @@ export const grantWildcard = async (phone, bonusPoints, bonusWeeks, reason) => {
     });
     return response.data;
 };
-

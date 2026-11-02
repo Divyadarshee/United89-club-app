@@ -9,6 +9,7 @@ services:
       - GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json # Mount your key here
     volumes:
       - ./backend:/app
+      - /app/.venv
       # Uncomment and update path to your local key
       # - ./path/to/your/key.json:/app/credentials.json
 
