@@ -1,7 +1,8 @@
 # Stage 1: Build
-FROM node:22-alpine as build
+FROM node:24-alpine AS build
 WORKDIR /app
 COPY package*.json ./
+RUN npm install --global npm@12.2.1
 RUN npm ci
 COPY . .
 
