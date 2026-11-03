@@ -5,7 +5,7 @@ import confetti from 'canvas-confetti';
 import {
   Trophy, Award, Crown, Zap, Clock, Shield, Star, Flame, Calendar,
   Download, Upload, Trash2, Sparkles, User, Users, Play, Pause,
-  ChevronRight, ChevronLeft, ChevronDown, Copy, Check, Home, BarChart3, Search, Medal, Globe
+  ChevronRight, ChevronLeft, ChevronDown, Copy, Check, Home, BarChart3, Search, Medal, Globe, Edit3
 } from 'lucide-react';
 import { FINALE_DATA } from '../data/finaleData';
 import { renderCertificateToDataUrl, renderWrappedCardToDataUrl } from '../utils/certificateRenderer';
@@ -13,6 +13,7 @@ import { useSoundManager } from '../hooks/useSoundManager';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { normalizePhone, isFinaleUnlocked, isFinaleAdmin } from '../utils/featureFlags';
+import { AdminMemberBar, AdminMemberPickerModal } from '../components/AdminMemberControls';
 
 const STORY_SLIDES = [
   {
@@ -262,6 +263,23 @@ export default function SeasonRewind() {
     setSearchParams({ tab: activeTab, member: norm });
   };
 
+  const [showMemberPickerModal, setShowMemberPickerModal] = useState(false);
+
+  const currentPlayerIdx = useMemo(() => {
+    const idx = FINALE_DATA.players.findIndex((p) => p.normPhone === selectedPlayer?.normPhone);
+    return idx >= 0 ? idx : 0;
+  }, [selectedPlayer?.normPhone]);
+
+  const handlePrevMember = () => {
+    const prevIdx = (currentPlayerIdx - 1 + FINALE_DATA.players.length) % FINALE_DATA.players.length;
+    handleSelectMember(FINALE_DATA.players[prevIdx].normPhone);
+  };
+
+  const handleNextMember = () => {
+    const nextIdx = (currentPlayerIdx + 1) % FINALE_DATA.players.length;
+    handleSelectMember(FINALE_DATA.players[nextIdx].normPhone);
+  };
+
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file || !selectedPlayer) return;
@@ -359,15 +377,8 @@ export default function SeasonRewind() {
   return (
     <div className="min-h-screen w-full text-amber-50 pb-20 px-2 sm:px-4 md:px-8 max-w-6xl mx-auto">
       {/* Top Header Bar */}
-      <div className="pt-4 pb-3 flex flex-wrap items-center justify-between gap-2 border-b border-antique-gold/30 mb-4">
+      <div className="pt-14 sm:pt-4 pb-3 flex flex-wrap items-center justify-between gap-2 border-b border-antique-gold/30 mb-4">
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/welcome')}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-midnight-blue/80 border border-antique-gold/40 text-antique-gold hover:bg-antique-gold/20 text-xs sm:text-sm font-sans transition-all"
-          >
-            <Home size={15} />
-            <span>Home</span>
-          </button>
           <button
             onClick={() => navigate('/leaderboard')}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-midnight-blue/80 border border-antique-gold/40 text-amber-100 hover:bg-antique-gold/20 text-xs sm:text-sm font-sans transition-all"
@@ -439,6 +450,18 @@ export default function SeasonRewind() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-6"
         >
+          {/* Admin Member Switcher Bar for Mobile & Desktop */}
+          {isAdmin && (
+            <AdminMemberBar
+              selectedPlayer={selectedPlayer}
+              onPrev={handlePrevMember}
+              onNext={handleNextMember}
+              onOpenPicker={() => setShowMemberPickerModal(true)}
+              currentIndex={currentPlayerIdx}
+              totalCount={FINALE_DATA.players.length}
+            />
+          )}
+
           {/* Member Switcher Bar */}
           <div className="bg-[#0d1b3a]/90 border border-antique-gold/40 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg relative">
             <div className="flex items-center gap-3">
@@ -463,61 +486,18 @@ export default function SeasonRewind() {
             </div>
 
             {isAdmin ? (
-              <div className="relative">
-                <button
-                  onClick={() => setShowMemberDropdown((v) => !v)}
-                  className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg bg-midnight-blue border border-antique-gold text-amber-100 hover:bg-antique-gold/20 text-xs sm:text-sm font-sans font-semibold transition-all"
-                >
-                  <Users size={16} className="text-antique-gold" />
-                  <span>Admin: Switch Member ({FINALE_DATA.players.length})</span>
-                  <ChevronRight
-                    size={16}
-                    className={`transition-transform ${showMemberDropdown ? 'rotate-90' : ''}`}
-                  />
-                </button>
-
-                {showMemberDropdown && (
-                  <div className="absolute right-0 mt-2 w-full sm:w-80 max-h-80 overflow-y-auto bg-[#081026] border-2 border-antique-gold rounded-xl shadow-2xl z-50 p-2">
-                    <div className="sticky top-0 bg-[#081026] pb-2">
-                      <div className="flex items-center gap-2 bg-midnight-blue/90 border border-antique-gold/40 rounded-lg px-2.5 py-1.5">
-                        <Search size={14} className="text-antique-gold" />
-                        <input
-                          type="text"
-                          placeholder="Search member name..."
-                          value={memberSearch}
-                          onChange={(e) => setMemberSearch(e.target.value)}
-                          className="bg-transparent text-xs text-white focus:outline-none w-full"
-                          autoFocus
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1">
-                      {filteredDropdownMembers.map((p) => (
-                        <button
-                          key={p.normPhone}
-                          onClick={() => handleSelectMember(p.normPhone)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition-colors ${
-                            p.normPhone === selectedNorm
-                              ? 'bg-antique-gold text-midnight-blue font-bold'
-                              : 'hover:bg-white/10 text-amber-50'
-                          }`}
-                        >
-                          <div className="truncate pr-2">
-                            <span className="font-semibold">
-                              {p.rank ? `#${p.rank} ` : ''}
-                              {p.displayName}
-                            </span>
-                            {p.hasSpecialAward && <span className="ml-1.5">🏆</span>}
-                          </div>
-                          <span className="text-[11px] opacity-80 flex-shrink-0">
-                            {p.weeksPlayed > 0 ? `${p.pureScore} pts (${p.weeksPlayed}w)` : 'Pilot'}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  playSound?.('click');
+                  setShowMemberPickerModal(true);
+                }}
+                className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg bg-midnight-blue border border-antique-gold text-amber-100 hover:bg-antique-gold/20 text-xs sm:text-sm font-sans font-semibold transition-all active:scale-95 cursor-pointer shadow-md"
+              >
+                <Users size={16} className="text-antique-gold" />
+                <span>Admin: Switch Member ({FINALE_DATA.players.length})</span>
+                <ChevronRight size={16} className="text-antique-gold" />
+              </button>
             ) : (
               <div className="text-xs font-serif text-amber-200/90 bg-black/40 border border-antique-gold/30 px-3 py-2 rounded-lg">
                 <span>Personal Showcase</span>
@@ -638,31 +618,14 @@ export default function SeasonRewind() {
                   </div>
                 )}
 
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
                 <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/20 border border-antique-gold text-amber-200 hover:bg-amber-500/30 text-xs font-sans font-semibold transition-all"
+                  onClick={() => navigate('/profile?tab=details')}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-amber-500/20 border border-antique-gold text-amber-200 hover:bg-amber-500/30 text-xs font-sans font-semibold transition-all cursor-pointer"
+                  title="Update your official profile picture in Profile"
                 >
-                  <Upload size={14} />
-                  <span>
-                    {memberPhotos[selectedPlayer.normPhone] ? 'Change Photo' : 'Add Member Photo'}
-                  </span>
+                  <Edit3 size={14} />
+                  <span>Edit Profile Photo</span>
                 </button>
-                {memberPhotos[selectedPlayer.normPhone] && (
-                  <button
-                    onClick={handleRemovePhoto}
-                    className="flex items-center gap-1 px-2.5 py-2 rounded-lg bg-red-900/40 border border-red-500/40 text-red-200 hover:bg-red-900/70 text-xs font-sans transition-all"
-                    title="Remove uploaded photo"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
               </div>
             </div>
 
@@ -1406,6 +1369,16 @@ export default function SeasonRewind() {
             </div>
           </div>
         </motion.div>
+      )}
+
+      {/* Admin Scroll-Locked Member Picker Modal */}
+      {isAdmin && (
+        <AdminMemberPickerModal
+          isOpen={showMemberPickerModal}
+          onClose={() => setShowMemberPickerModal(false)}
+          selectedNorm={selectedPlayer?.normPhone}
+          onSelect={handleSelectMember}
+        />
       )}
     </div>
   );

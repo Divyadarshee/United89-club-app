@@ -19,9 +19,9 @@ origins = [
     # Uncomment for local development
     # "http://localhost:5173",
     # "http://localhost:8080",
-    # "http://127.0.0.1:5173",
-    # "http://127.0.0.1:8080",
-    
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:8080",
+
     # United89 URLs
     "https://united89-quiz-frontend-432448119899.asia-south2.run.app",
     "https://united89-quiz-backend-432448119899.asia-south2.run.app",

@@ -338,7 +338,7 @@ function Leaderboard() {
     );
 
     return (
-        <div className="w-full max-w-5xl mx-auto p-4 min-h-screen flex flex-col items-center">
+        <div className="w-full max-w-5xl mx-auto p-4 pt-14 sm:pt-6 min-h-screen flex flex-col items-center">
 
             {/* Header */}
             <motion.div
@@ -571,9 +571,9 @@ function Leaderboard() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
                 onClick={() => navigate('/welcome')}
-                className="mt-6 btn-vintage flex items-center gap-2 px-6 py-2.5 shadow-xl"
+                className="mt-6 btn-vintage flex items-center gap-2 px-6 py-2.5 shadow-xl cursor-pointer"
             >
-                <Home size={18} /> Back to Lobby
+                <Home size={18} /> Return to Lounge
             </motion.button>
 
             {/* My Answers Modal */}

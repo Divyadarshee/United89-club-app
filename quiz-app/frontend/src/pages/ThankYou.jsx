@@ -63,7 +63,7 @@ function ThankYou() {
             </div>
 
             <button onClick={handleHome} className="btn-vintage flex items-center justify-center gap-2 w-full">
-                <Home size={20} /> Back to Lobby
+                <Home size={20} /> Return to Lounge
             </button>
         </motion.div>
     );
