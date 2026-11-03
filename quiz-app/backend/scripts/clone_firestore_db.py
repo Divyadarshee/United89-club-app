@@ -24,7 +24,7 @@ def copy_collection(source_db, target_db, collection_name, batch_size=400):
     
     if not docs:
         print(f"   ℹ️ No documents found in '{collection_name}'. Skipping.")
-        return
+        return 0
 
     print(f"   Found {len(docs)} documents in '{collection_name}'. Copying in batches...")
     
@@ -64,31 +64,45 @@ def copy_collection(source_db, target_db, collection_name, batch_size=400):
         batch.commit()
 
     print(f"   ✅ Finished '{collection_name}': {total_copied} total items replicated.")
+    return total_copied
 
 def main():
     parser = argparse.ArgumentParser(description="Replicate Firestore Database from Prod to Dev")
     parser.add_argument("--source", default="first-firestore-db", help="Source DB name (default: first-firestore-db)")
     parser.add_argument("--target", default="dev-firestore-db", help="Target DB name (default: dev-firestore-db)")
-    parser.add_argument("--collections", nargs="+", default=["users", "questions", "config", "weeks"], help="Collections to copy")
+    parser.add_argument("--collections", nargs="+", default=None, help="Specific collections to copy (default: auto-discover ALL collections in source DB)")
     
     args = parser.parse_args()
-    
-    print("=" * 60)
-    print("🔄 FIRESTORE DATABASE REPLICATION (PROD -> DEV)")
-    print(f"   Source DB: {args.source}")
-    print(f"   Target DB: {args.target}")
-    print(f"   Collections: {', '.join(args.collections)}")
-    print("=" * 60)
 
     init_firebase()
 
     source_db = firestore.Client(database=args.source)
     target_db = firestore.Client(database=args.target)
 
-    for coll in args.collections:
-        copy_collection(source_db, target_db, coll)
+    # Auto-discover all root collections if not explicitly specified
+    if args.collections:
+        collections_to_copy = args.collections
+    else:
+        print(f"🔍 Auto-discovering all root collections in '{args.source}'...")
+        collections_to_copy = [c.id for c in source_db.collections()]
+        if not collections_to_copy:
+            print(f"⚠️ No collections found in source database '{args.source}'!")
+            return
 
-    print("\n🎉 Database replication complete!")
+    print("=" * 60)
+    print("🔄 FIRESTORE DATABASE REPLICATION")
+    print(f"   Source DB:    {args.source}")
+    print(f"   Target DB:    {args.target}")
+    print(f"   Collections:  {', '.join(collections_to_copy)}")
+    print("=" * 60)
+
+    grand_total = 0
+    for coll in collections_to_copy:
+        grand_total += copy_collection(source_db, target_db, coll)
+
+    print("\n" + "=" * 60)
+    print(f"🎉 Complete! Successfully replicated {grand_total} total documents & subdocuments.")
+    print("=" * 60)
 
 if __name__ == "__main__":
     main()
