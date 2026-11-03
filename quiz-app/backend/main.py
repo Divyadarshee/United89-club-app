@@ -22,10 +22,14 @@ origins = [
     # "http://127.0.0.1:5173",
     # "http://127.0.0.1:8080",
 
-    # United89 URLs
+    # United89 Prod URLs
     "https://united89-quiz-frontend-432448119899.asia-south2.run.app",
     "https://united89-quiz-backend-432448119899.asia-south2.run.app",
     "https://united89-club.web.app",
+    # United89 Dev URLs
+    "https://united89-quiz-frontend-dev-432448119899.asia-south2.run.app",
+    "https://united89-quiz-backend-dev-432448119899.asia-south2.run.app",
+    "https://united89-club-dev.web.app",
     # UCE URLs
     "https://uce-quiz-frontend-432448119899.asia-south2.run.app",
     "https://uce-quiz-backend-432448119899.asia-south2.run.app",

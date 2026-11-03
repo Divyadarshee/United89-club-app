@@ -15,9 +15,11 @@ async def get_config():
             data.setdefault("answers_visible", False)
             data.setdefault("active_theme", "default")
             data.setdefault("finale_mode", "testers_only")
+            data.setdefault("question_count", 10)
             return data
         return {
             "timer_duration_minutes": 10,
+            "question_count": 10,
             "quiz_active": True,
             "leaderboard_active": False,
             "answers_visible": False,
@@ -28,6 +30,7 @@ async def get_config():
     except Exception:
         return {
             "timer_duration_minutes": 10,
+            "question_count": 10,
             "quiz_active": True,
             "leaderboard_active": False,
             "answers_visible": False,
@@ -42,6 +45,7 @@ async def update_config(config: QuizConfig):
     try:
         await db.collection("config").document("quiz_settings").set({
             "timer_duration_minutes": config.timer_duration_minutes,
+            "question_count": config.question_count or 10,
             "quiz_active": config.quiz_active,
             "leaderboard_active": config.leaderboard_active,
             "answers_visible": config.answers_visible,

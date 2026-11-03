@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, Sparkles, Home } from 'lucide-react';
@@ -14,6 +14,7 @@ import SeasonRewind from './pages/SeasonRewind';
 import PageTransition from './components/PageTransition';
 import BackgroundSlideshow from './components/BackgroundSlideshow';
 import UserNav from './components/UserNav';
+import AppTour from './components/AppTour';
 import { useSoundManager } from './hooks/useSoundManager';
 import { SoundProvider } from './context/SoundContext';
 import { ConfigProvider, useConfig } from './context/ConfigContext';
@@ -78,6 +79,27 @@ const Layout = () => {
   const navigate = useNavigate();
 
   const finaleUnlocked = isFinaleUnlocked(user, config);
+  const [isTourOpen, setIsTourOpen] = useState(false);
+
+  // Listen for manual tour launch requests
+  useEffect(() => {
+    const handleStartTour = () => setIsTourOpen(true);
+    window.addEventListener('start-app-tour', handleStartTour);
+    return () => window.removeEventListener('start-app-tour', handleStartTour);
+  }, []);
+
+  // Auto-launch walkthrough demo on first visit to Welcome lounge
+  useEffect(() => {
+    if (location.pathname === '/welcome') {
+      const hasSeen = localStorage.getItem('has_seen_app_tour');
+      if (!hasSeen) {
+        const timer = setTimeout(() => {
+          setIsTourOpen(true);
+        }, 1200);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [location.pathname]);
 
   const themeClassMap = {
     rath_yatra: 'theme-rath-yatra',
@@ -114,7 +136,7 @@ const Layout = () => {
       <UserNav />
 
       {/* Sound Mute/Unmute Toggle */}
-      <div className="fixed bottom-4 left-4 md:bottom-auto md:left-auto md:top-5 md:right-5 z-50">
+      <div id="tour-sound-toggle" className="fixed bottom-4 left-4 md:bottom-auto md:left-auto md:top-5 md:right-5 z-50">
         <button
           onClick={toggleMute}
           className="bg-midnight-blue/50 border border-antique-gold p-3 rounded-full shadow-lg hover:bg-midnight-blue transition-colors"
@@ -135,6 +157,9 @@ const Layout = () => {
           </button>
         </div>
       )}
+
+      {/* Interactive Step-by-Step App Walkthrough Tour */}
+      <AppTour isOpen={isTourOpen} onClose={() => setIsTourOpen(false)} />
 
       <div className="bg-grain"></div> {/* Film Grain Overlay */}
       <BackgroundSlideshow />

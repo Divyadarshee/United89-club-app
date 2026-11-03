@@ -13,7 +13,7 @@ function AdminDashboard() {
     const [questions, setQuestions] = useState([]);
     const [leaderboard, setLeaderboard] = useState([]);
     const [fullQuestions, setFullQuestions] = useState([]); // For answer checking
-    const [config, setConfig] = useState({ timer_duration_minutes: 10, quiz_active: true, leaderboard_active: false, active_theme: 'default' });
+    const [config, setConfig] = useState({ timer_duration_minutes: 10, question_count: 10, quiz_active: true, leaderboard_active: false, active_theme: 'default' });
 
     // UI States
     const [leaderboardType, setLeaderboardType] = useState('weekly'); // 'weekly' or 'overall'
@@ -611,12 +611,23 @@ function AdminDashboard() {
     return (
         <div className="w-full max-w-6xl mx-auto p-4">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 border-b border-antique-gold/30 pb-4">
-                <h1 className="text-4xl font-serif text-white drop-shadow-md">
-                    Admin Dashboard
-                </h1>
+                <div className="flex items-center gap-3">
+                    <h1 className="text-3xl sm:text-4xl font-serif text-white drop-shadow-md">
+                        Admin Dashboard
+                    </h1>
+                    <button
+                        type="button"
+                        onClick={() => window.dispatchEvent(new CustomEvent('start-app-tour'))}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-antique-gold/50 text-amber-200 text-xs font-serif font-bold shadow-md transition-all cursor-pointer active:scale-95"
+                        title="Start Admin Console Walkthrough"
+                    >
+                        <Sparkles size={14} className="text-antique-gold" />
+                        <span>Admin Tour 🎓</span>
+                    </button>
+                </div>
 
                 {/* Week Selector */}
-                <div className="flex items-center gap-3 bg-white/95 p-3 rounded-lg border-2 border-antique-gold shadow-lg">
+                <div id="tour-admin-week" className="flex items-center gap-3 bg-white/95 p-3 rounded-lg border-2 border-antique-gold shadow-lg">
                     <Calendar className="text-royal-blue" size={24} />
                     <div className="flex flex-col">
                         <label className="text-xs text-royal-blue font-sans uppercase tracking-wider font-bold">Active Week</label>
@@ -636,7 +647,7 @@ function AdminDashboard() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-0 overflow-x-auto">
+            <div id="tour-admin-tabs" className="flex gap-2 mb-0 overflow-x-auto">
                 <TabButton id="questions" label="Questions" icon={FileQuestion} />
                 <TabButton id="settings" label="Global Settings" icon={Settings} />
                 <TabButton id="users" label="Leaderboard" icon={Users} />
@@ -669,6 +680,7 @@ function AdminDashboard() {
                                 </h2>
                                 <div className="flex gap-2">
                                     <button
+                                        id="tour-admin-ai-btn"
                                         onClick={handleStartNewGenerationClick}
                                         disabled={isGenerating || isPastWeek}
                                         className={`py-2 px-3 sm:px-4 text-xs sm:text-sm flex items-center gap-2 transition-all shadow-lg rounded font-serif font-bold whitespace-nowrap shrink-0 ${isPastWeek
@@ -763,13 +775,37 @@ function AdminDashboard() {
                             <Settings size={24} /> Global Configuration
                         </h2>
                         <form onSubmit={handleUpdateConfig} className="max-w-md">
-                            <label className="block font-sans text-warm-cream mb-2 font-bold">Timer Duration (Minutes)</label>
-                            <input
-                                type="number"
-                                value={config.timer_duration_minutes}
-                                onChange={e => setConfig({ ...config, timer_duration_minutes: parseInt(e.target.value) })}
-                                className="input-vintage text-lg mb-6"
-                            />
+                            {/* Timer Duration & Question Count */}
+                            <div id="tour-admin-timer-count" className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label className="block font-sans text-warm-cream mb-2 font-bold text-sm">
+                                        ⏱️ Timer Duration (Mins)
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max="60"
+                                        value={config.timer_duration_minutes ?? 10}
+                                        onChange={e => setConfig({ ...config, timer_duration_minutes: parseInt(e.target.value) || 10 })}
+                                        className="input-vintage text-base w-full"
+                                    />
+                                    <p className="text-[11px] text-gray-400 mt-1">Clock for weekly quiz</p>
+                                </div>
+                                <div>
+                                    <label className="block font-sans text-warm-cream mb-2 font-bold text-sm">
+                                        📝 Question Count
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="5"
+                                        max="50"
+                                        value={config.question_count ?? 10}
+                                        onChange={e => setConfig({ ...config, question_count: parseInt(e.target.value) || 10 })}
+                                        className="input-vintage text-base w-full"
+                                    />
+                                    <p className="text-[11px] text-gray-400 mt-1">e.g. 10 or 20 questions</p>
+                                </div>
+                            </div>
 
                             {/* App Theme Selector */}
                             <div className="mb-6 p-4 bg-amber-900/30 rounded border border-amber-500/30">
@@ -790,18 +826,32 @@ function AdminDashboard() {
                                 </p>
                             </div>
 
-                            {/* Quiz Active Toggle */}
-                            <div className="flex items-center gap-4 mb-4 p-4 bg-green-900/30 rounded border border-green-500/30">
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={config.quiz_active}
-                                        onChange={e => setConfig({ ...config, quiz_active: e.target.checked })}
-                                        className="sr-only peer"
+                            {/* Quiz Active Toggle - Pixel Perfect Flex Switch */}
+                            <div id="tour-admin-quiz-toggle" className="flex items-center justify-between mb-4 p-4 bg-green-950/40 rounded-xl border border-green-500/40 shadow-sm">
+                                <div>
+                                    <span className="font-serif font-bold text-warm-cream text-base block">
+                                        Quiz Active (Allow Submissions)
+                                    </span>
+                                    <p className="text-xs text-gray-300 font-sans mt-0.5">
+                                        {config.quiz_active ? '✅ Quiz is OPEN. Members can take quiz.' : '⏸️ Quiz is PAUSED. Submissions blocked.'}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={config.quiz_active}
+                                    onClick={() => setConfig({ ...config, quiz_active: !config.quiz_active })}
+                                    className={`relative inline-flex h-7 w-14 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                        config.quiz_active ? 'bg-emerald-500' : 'bg-gray-700'
+                                    }`}
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                                            config.quiz_active ? 'translate-x-7' : 'translate-x-0'
+                                        }`}
                                     />
-                                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                                    <span className="ml-3 font-serif font-bold text-warm-cream">Quiz Active (Allow Submissions)</span>
-                                </label>
+                                </button>
                             </div>
 
                             {/* Note about automatic score visibility */}

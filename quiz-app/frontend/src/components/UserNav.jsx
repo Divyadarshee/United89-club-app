@@ -71,7 +71,7 @@ export default function UserNav() {
 
     return (
         <div ref={dropdownRef} className="fixed top-3 left-3 sm:top-4 sm:left-4 z-40 flex items-center">
-            <div className="relative">
+            <div id="tour-profile" className="relative">
                 <button
                     onClick={() => {
                         playSound('click');
@@ -208,6 +208,24 @@ export default function UserNav() {
                                     <span>Admin Dashboard</span>
                                 </button>
                             )}
+
+                            {/* App Walkthrough Tour Option */}
+                            <button
+                                onClick={() => {
+                                    playSound('click');
+                                    setDropdownOpen(false);
+                                    if (location.pathname !== '/welcome') {
+                                        navigate('/welcome');
+                                    }
+                                    setTimeout(() => {
+                                        window.dispatchEvent(new CustomEvent('start-app-tour'));
+                                    }, 200);
+                                }}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-amber-300 hover:bg-amber-500/20 hover:text-white rounded-lg transition-colors cursor-pointer border border-amber-400/30 my-0.5 font-medium"
+                            >
+                                <Sparkles size={15} className="text-amber-400" />
+                                <span>Take App Tour (Tutorial)</span>
+                            </button>
 
                             <div className="h-px bg-antique-gold/20 my-1" />
 

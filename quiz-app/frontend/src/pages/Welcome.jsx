@@ -163,17 +163,24 @@ function Welcome() {
                 ) : (
                     // Quiz is open - normal flow
                     <>
-                        <button
-                            onClick={handleStartClick}
-                            className={activeTheme === 'independence_day'
-                                ? "text-xl py-4 px-10 mb-6 w-full md:w-auto bg-gradient-to-r from-orange-500 via-white to-emerald-600 hover:from-orange-400 hover:to-emerald-500 text-[#000080] font-serif font-black rounded-lg shadow-2xl border-2 border-blue-950/40 transform hover:-translate-y-0.5 transition-all duration-200"
-                                : "btn-vintage text-xl py-4 px-10 shadow-2xl border-white/20 mb-6 w-full md:w-auto"
-                            }
-                        >
-                            {activeTheme === 'independence_day' ? 'Unfurl the Freedom Challenge 🇮🇳' : 'Start the Challenge'}
-                        </button>
+                        <div id="tour-quiz-challenge" className="flex flex-col items-center">
+                            <span className="text-[11px] sm:text-xs font-mono font-bold text-amber-300 uppercase tracking-widest bg-black/50 px-3.5 py-1 rounded-full border border-antique-gold/40 mb-3 shadow flex items-center gap-1.5">
+                                <span>📝 {config?.question_count || 10} Questions</span>
+                                <span className="opacity-60">•</span>
+                                <span>⏱️ {config?.timer_duration_minutes || 10} Mins</span>
+                            </span>
+                            <button
+                                onClick={handleStartClick}
+                                className={activeTheme === 'independence_day'
+                                    ? "text-xl py-4 px-10 mb-6 w-full md:w-auto bg-gradient-to-r from-orange-500 via-white to-emerald-600 hover:from-orange-400 hover:to-emerald-500 text-[#000080] font-serif font-black rounded-lg shadow-2xl border-2 border-blue-950/40 transform hover:-translate-y-0.5 transition-all duration-200"
+                                    : "btn-vintage text-xl py-4 px-10 shadow-2xl border-white/20 mb-6 w-full md:w-auto"
+                                }
+                            >
+                                {activeTheme === 'independence_day' ? 'Unfurl the Freedom Challenge 🇮🇳' : 'Start the Challenge'}
+                            </button>
+                        </div>
 
-                        <div className="mt-4 flex items-center justify-center">
+                        <div id="tour-leaderboard" className="mt-4 flex items-center justify-center">
                             {localStorage.getItem('has_submitted') === 'true' ? (
                                 <button
                                     onClick={() => {
@@ -196,7 +203,7 @@ function Welcome() {
 
                 {/* 2026 SEASON FINALE HERO CARD (Visible only when unlocked) */}
                 {isFinaleUnlocked(user, config) && (
-                    <div className="mt-8 max-w-lg mx-auto p-5 rounded-2xl bg-gradient-to-br from-[#132546]/95 via-[#0b1528]/95 to-[#1b1407]/95 border-2 border-antique-gold/60 shadow-2xl">
+                    <div id="tour-season-finale" className="mt-8 max-w-lg mx-auto p-5 rounded-2xl bg-gradient-to-br from-[#132546]/95 via-[#0b1528]/95 to-[#1b1407]/95 border-2 border-antique-gold/60 shadow-2xl">
                         <div className="flex items-center justify-center gap-2 text-amber-300 font-serif text-xs uppercase tracking-[0.2em] mb-1">
                             <Sparkles size={14} />
                             <span>40-Week Grand Finale Showcase</span>
@@ -274,26 +281,13 @@ function Welcome() {
                                     <X size={24} />
                                 </button>
                             </div>
-                            <div className="p-8 text-text-charcoal font-serif">
-                                <ul className="list-disc pl-6 space-y-4 mb-8 text-lg leading-relaxed marker:text-royal-blue">
-                                    {activeTheme === 'rath_yatra' ? (
-                                        <>
-                                            <li>You have <strong className="text-royal-blue">10 minutes</strong> to complete your chariot run!</li>
-                                            <li>Once the Yatra starts, the clock ticks continuously—no pausing.</li>
-                                        </>
-                                    ) : activeTheme === 'independence_day' ? (
-                                        <>
-                                            <li>You have <strong className="text-royal-blue">10 minutes</strong> to prove your patriotic knowledge!</li>
-                                            <li>Once the tricolor is raised, the clock starts—no pausing.</li>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <li>There are <strong className="text-royal-blue">10 minutes</strong> on the clock.</li>
-                                            <li>Once you start, the clock ticks—no pausing.</li>
-                                        </>
-                                    )}
+                            <div className="p-6 sm:p-8 text-text-charcoal font-serif">
+                                <ul className="list-disc pl-6 space-y-3.5 mb-8 text-base sm:text-lg leading-relaxed marker:text-royal-blue">
+                                    <li>This week's challenge contains <strong className="text-royal-blue">{config?.question_count || 10} questions</strong>.</li>
+                                    <li>You have <strong className="text-royal-blue">{config?.timer_duration_minutes || 10} minutes</strong> on the clock.</li>
+                                    <li>Once started, the clock ticks continuously—no pausing.</li>
                                     <li>Each question has one correct answer.</li>
-                                    <li>Most correct answers in the least time is the winner!</li>
+                                    <li>Highest score in the least time claims the top spot on the Leaderboard!</li>
                                 </ul>
                                 <button onClick={confirmStart} className="btn-vintage w-full">
                                     {activeTheme === 'rath_yatra' ? 'Pull the Chariot (Start Quiz)' : activeTheme === 'independence_day' ? 'Raise the Flag (Start Quiz)' : "I'm Ready to Play"}

@@ -17,4 +17,8 @@ except Exception as e:
     print(f"Warning: Failed to initialize Firebase Admin: {e}")
 
 # Async Firestore Client
-db = firestore.AsyncClient(database=DB_NAME)
+try:
+    db = firestore.AsyncClient(database=DB_NAME)
+except Exception as e:
+    print(f"Warning: Failed to initialize firestore.AsyncClient: {e}")
+    db = None

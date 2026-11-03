@@ -403,7 +403,7 @@ export default function SeasonRewind() {
       </div>
 
       {/* Mobile-First Sticky 3-Tab Switcher */}
-      <div className="sticky top-2 z-30 bg-[#09132c]/95 backdrop-blur-md p-1.5 rounded-xl border border-antique-gold/40 shadow-2xl mb-5 grid grid-cols-3 gap-1.5">
+      <div id="tour-rewind-tabs" className="sticky top-2 z-30 bg-[#09132c]/95 backdrop-blur-md p-1.5 rounded-xl border border-antique-gold/40 shadow-2xl mb-5 grid grid-cols-3 gap-1.5">
         <button
           onClick={() => handleTabChange('profile')}
           className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg font-serif font-bold text-xs sm:text-sm transition-all ${
@@ -473,7 +473,7 @@ export default function SeasonRewind() {
                   <span className="text-[11px] uppercase tracking-wider font-sans text-antique-gold font-semibold">
                     {selectedPlayer.normPhone === loggedInNorm
                       ? '✨ Your Personal 2026 Profile'
-                      : 'Viewing Member Profile'}
+                      : 'Alumni Member Profile'}
                   </span>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200">
                     {selectedPlayer.persona}
@@ -484,25 +484,6 @@ export default function SeasonRewind() {
                 </h2>
               </div>
             </div>
-
-            {isAdmin ? (
-              <button
-                type="button"
-                onClick={() => {
-                  playSound?.('click');
-                  setShowMemberPickerModal(true);
-                }}
-                className="w-full sm:w-auto flex items-center justify-between gap-2 px-4 py-2.5 rounded-lg bg-midnight-blue border border-antique-gold text-amber-100 hover:bg-antique-gold/20 text-xs sm:text-sm font-sans font-semibold transition-all active:scale-95 cursor-pointer shadow-md"
-              >
-                <Users size={16} className="text-antique-gold" />
-                <span>Admin: Switch Member ({FINALE_DATA.players.length})</span>
-                <ChevronRight size={16} className="text-antique-gold" />
-              </button>
-            ) : (
-              <div className="text-xs font-serif text-amber-200/90 bg-black/40 border border-antique-gold/30 px-3 py-2 rounded-lg">
-                <span>Personal Showcase</span>
-              </div>
-            )}
           </div>
 
           {/* Special Award Spotlight Banner (If Award Holder) */}
