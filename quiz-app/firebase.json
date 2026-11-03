@@ -35,6 +35,20 @@
           }
         }
       ]
+    },
+    {
+      "site": "uce-quiz-dev",
+      "public": "public",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "uce-quiz-frontend-dev",
+            "region": "asia-south2"
+          }
+        }
+      ]
     }
   ]
 }
