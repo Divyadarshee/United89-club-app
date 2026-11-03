@@ -31,7 +31,7 @@ export default function AppTour({ isOpen, onClose }) {
 
     // Measure target element on screen
     const updateTargetRect = useCallback(() => {
-        if (!isOpen) return;
+        if (!isOpen || !step) return;
 
         let el = document.getElementById(step.targetId);
         if (!el && step.fallbackId) {
@@ -53,26 +53,53 @@ export default function AppTour({ isOpen, onClose }) {
         }
     }, [isOpen, step]);
 
-    // Scroll target into view and update rect
+    // Scroll target into view and update rect with intelligent tab coordination
     useEffect(() => {
-        if (!isOpen) return;
+        if (!isOpen || !step) return;
 
-        let el = document.getElementById(step.targetId);
-        if (!el && step.fallbackId) {
-            el = document.getElementById(step.fallbackId);
+        // If this step requests a specific tab, trigger the tab switch immediately
+        if (step.tab) {
+            window.dispatchEvent(new CustomEvent('tour-switch-tab', { detail: { tab: step.tab } }));
+            const tabBtn = document.getElementById(`tab-btn-${step.tab}`);
+            if (tabBtn) tabBtn.click();
         }
 
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
-            const t1 = setTimeout(updateTargetRect, 200);
-            const t2 = setTimeout(updateTargetRect, 450);
-            return () => {
-                clearTimeout(t1);
-                clearTimeout(t2);
-            };
-        } else {
-            updateTargetRect();
-        }
+        let isMounted = true;
+        let attempts = 0;
+        const maxAttempts = 10;
+        let settleTimeout = null;
+
+        const locateAndHighlight = () => {
+            if (!isMounted) return;
+
+            let el = document.getElementById(step.targetId);
+            if (!el && step.fallbackId) {
+                el = document.getElementById(step.fallbackId);
+            }
+
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                updateTargetRect();
+                // Settle calculation after smooth scroll
+                settleTimeout = setTimeout(() => {
+                    if (isMounted) updateTargetRect();
+                }, 300);
+            } else if (attempts < maxAttempts) {
+                attempts++;
+                setTimeout(locateAndHighlight, 50);
+            } else {
+                updateTargetRect();
+            }
+        };
+
+        // Allow a quick tick (80ms if tab switch requested, 10ms otherwise) for React to mount the tab
+        const initialTimer = setTimeout(locateAndHighlight, step.tab ? 80 : 10);
+
+        return () => {
+            isMounted = false;
+            clearTimeout(initialTimer);
+            if (settleTimeout) clearTimeout(settleTimeout);
+        };
     }, [isOpen, currentStepIdx, step, updateTargetRect]);
 
     // Recalculate on window resize or scroll

@@ -91,6 +91,17 @@ function AdminDashboard() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab, selectedWeek, leaderboardType]);
 
+    // Tour integration: switch active tab when requested by interactive walkthrough
+    useEffect(() => {
+        const handleTourTabSwitch = (e) => {
+            if (e.detail?.tab) {
+                setActiveTab(e.detail.tab);
+            }
+        };
+        window.addEventListener('tour-switch-tab', handleTourTabSwitch);
+        return () => window.removeEventListener('tour-switch-tab', handleTourTabSwitch);
+    }, []);
+
     const loadWeeks = async () => {
         try {
             const w = await getWeeks();
@@ -594,6 +605,8 @@ function AdminDashboard() {
 
     const TabButton = ({ id, label, icon: Icon }) => (
         <button
+            id={`tab-btn-${id}`}
+            data-tab={id}
             onClick={() => setActiveTab(id)}
             className={`
                 flex items-center gap-2 px-6 py-3 rounded-t-lg font-serif font-bold transition-all
@@ -1026,9 +1039,9 @@ function AdminDashboard() {
                 {/* LEADERBOARD TAB */}
                 {activeTab === 'users' && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-serif text-warm-cream flex items-center gap-2">
-                                <Users size={24} /> Results
+                        <div id="tour-admin-leaderboard" className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 p-3 bg-midnight-blue/40 rounded-xl border border-antique-gold/30">
+                            <h2 className="text-xl sm:text-2xl font-serif text-warm-cream flex items-center gap-2">
+                                <Users size={24} className="text-antique-gold" /> Results & Submissions
                             </h2>
 
                             {/* Toggle Type */}

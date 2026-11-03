@@ -69,8 +69,18 @@ test('grand finale step explains both distinct experiences: Personal Wrapped and
 test('admin tour steps include Quiz Active toggle and Question Count / Timer duration settings', () => {
     const toggleStep = ADMIN_STEPS.find(s => s.targetId === 'tour-admin-quiz-toggle');
     assert.ok(toggleStep, 'Admin steps must contain a Quiz Active toggle step');
+    assert.equal(toggleStep.tab, 'settings', 'Quiz Active toggle step must be mapped to the settings tab');
 
     const timerCountStep = ADMIN_STEPS.find(s => s.targetId === 'tour-admin-timer-count');
     assert.ok(timerCountStep, 'Admin steps must contain Timer & Question Count step');
+    assert.equal(timerCountStep.tab, 'settings', 'Timer & Question Count step must be mapped to the settings tab');
     assert.ok(timerCountStep.description.toLowerCase().includes('question count'));
+
+    const aiStep = ADMIN_STEPS.find(s => s.targetId === 'tour-admin-ai-btn');
+    assert.ok(aiStep, 'Admin steps must contain AI Quiz Generation step');
+    assert.equal(aiStep.tab, 'questions', 'AI step must be mapped to the questions tab');
+
+    const leaderboardStep = ADMIN_STEPS.find(s => s.targetId === 'tour-admin-leaderboard');
+    assert.ok(leaderboardStep, 'Admin steps must contain Leaderboard step targeting tour-admin-leaderboard');
+    assert.equal(leaderboardStep.tab, 'users', 'Leaderboard step must be mapped to the users tab');
 });
