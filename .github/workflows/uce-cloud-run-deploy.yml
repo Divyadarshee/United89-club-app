@@ -4,21 +4,30 @@ on:
   push:
     branches:
       - main
+      - master
+      - develop
+  workflow_dispatch:
 
 env:
   PROJECT_ID: ${{ vars.GEMINI_API_GCLOUD_PROJECT_ID }}
-  REGION: ${{ vars.GCLOUD_REGION }}
-  BACKEND_SERVICE: ${{ vars.UCE_BACKEND_SERVICE }}
-  FRONTEND_SERVICE: ${{ vars.UCE_FRONTEND_SERVICE }}
-  DB_NAME: ${{ vars.UCE_DB_NAME }}
+  REGION: ${{ vars.GCLOUD_REGION || 'asia-south2' }}
 
 jobs:
-  deploy:
+  # =========================================================================
+  # UCE BACKEND DEPLOYMENT (Runs in parallel with Frontend)
+  # =========================================================================
+  deploy-backend:
+    name: 'Deploy UCE Backend'
     runs-on: 'ubuntu-latest'
 
     permissions:
       contents: 'read'
       id-token: 'write'
+
+    env:
+      # If on main/master -> prod backend & prod firestore DB; otherwise -> dev
+      BACKEND_SERVICE: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && (vars.UCE_BACKEND_SERVICE || 'uce-quiz-backend') || (vars.UCE_DEV_BACKEND_SERVICE || 'uce-quiz-backend-dev') }}
+      DB_NAME: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && (vars.UCE_DB_NAME || 'uce-db') || (vars.UCE_DEV_DB_NAME || 'uce-dev-db') }}
 
     steps:
       - name: 'Checkout'
@@ -35,6 +44,10 @@ jobs:
 
       - name: 'Build and Deploy Backend'
         run: |
+          echo "Environment target: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && 'Production' || 'Development' }}"
+          echo "Deploying UCE Backend service: ${{ env.BACKEND_SERVICE }}"
+          echo "Using Firestore Database: ${{ env.DB_NAME }}"
+
           # Build Backend Image
           gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }} quiz-app/backend --project ${{ env.PROJECT_ID }}
           
@@ -52,10 +65,62 @@ jobs:
             --set-env-vars GOOGLE_CLOUD_LOCATION=${{ vars.GOOGLE_CLOUD_LOCATION }} \
             --project ${{ env.PROJECT_ID }}
 
+      - name: 'Backend Deployment Summary'
+        run: |
+          echo "UCE Backend Deployment Complete!"
+          echo "Backend URL: $(gcloud run services describe ${{ env.BACKEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})"
+
+  # =========================================================================
+  # UCE FRONTEND DEPLOYMENT (Runs in parallel with Backend)
+  # =========================================================================
+  deploy-frontend:
+    name: 'Deploy UCE Frontend'
+    runs-on: 'ubuntu-latest'
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    env:
+      # If on main/master -> prod frontend & backend; otherwise -> dev
+      FRONTEND_SERVICE: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && (vars.UCE_FRONTEND_SERVICE || 'uce-quiz-frontend') || (vars.UCE_DEV_FRONTEND_SERVICE || 'uce-quiz-frontend-dev') }}
+      BACKEND_SERVICE: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && (vars.UCE_BACKEND_SERVICE || 'uce-quiz-backend') || (vars.UCE_DEV_BACKEND_SERVICE || 'uce-quiz-backend-dev') }}
+
+    steps:
+      - name: 'Checkout'
+        uses: 'actions/checkout@v4'
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GEMINI_API_PROJECT_CLIENT_JSON }}'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      - name: 'Determine Backend URL'
+        id: backend_url
+        run: |
+          # Query existing backend Cloud Run service URL
+          URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }} 2>/dev/null || true)
+          
+          # Fallback if service doesn't exist yet (first-time deployment)
+          if [ -z "$URL" ]; then
+            echo "Backend service not yet created. Generating deterministic Cloud Run URL..."
+            PROJECT_NUM=$(gcloud projects describe ${{ env.PROJECT_ID }} --format 'value(projectNumber)')
+            URL="https://${{ env.BACKEND_SERVICE }}-${PROJECT_NUM}.${{ env.REGION }}.run.app"
+          fi
+          
+          echo "Resolved Backend URL: $URL"
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
       - name: 'Build and Deploy Frontend'
         run: |
-          # Get Backend URL (needed for building the React app)
-          BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})
+          BACKEND_URL="${{ steps.backend_url.outputs.url }}"
+          echo "Environment target: ${{ (github.ref_name == 'main' || github.ref_name == 'master') && 'Production' || 'Development' }}"
+          echo "Deploying UCE Frontend service: ${{ env.FRONTEND_SERVICE }}"
+          echo "Connecting Frontend to Backend at: ${BACKEND_URL}"
           
           # Create a temporary cloudbuild.yaml to pass VITE_API_URL build arg
           cat > quiz-app/frontend/cloudbuild_gh_actions.yaml <<EOF
@@ -84,8 +149,7 @@ jobs:
         if: always()
         run: rm -f quiz-app/frontend/cloudbuild_gh_actions.yaml
 
-      - name: 'Show Deployment Summary'
+      - name: 'Frontend Deployment Summary'
         run: |
-          echo "UCE Deployment Complete!"
-          echo "Backend: $(gcloud run services describe ${{ env.BACKEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})"
-          echo "Frontend: $(gcloud run services describe ${{ env.FRONTEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})"
+          echo "UCE Frontend Deployment Complete!"
+          echo "Frontend URL: $(gcloud run services describe ${{ env.FRONTEND_SERVICE }} --platform managed --region ${{ env.REGION }} --format 'value(status.url)' --project ${{ env.PROJECT_ID }})"
