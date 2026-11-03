@@ -37,36 +37,38 @@ export const LOUNGE_STEPS = [
 export const ADMIN_STEPS = [
     {
         targetId: 'tour-admin-week',
+        tab: 'questions',
         title: 'Active Week & ISO Archives',
         icon: '📅',
         description: 'Select the active week to manage questions and inspect submissions. Past weeks are automatically archive-protected so historical scores stay preserved.',
     },
     {
         targetId: 'tour-admin-quiz-toggle',
+        tab: 'settings',
         title: 'Quiz Active Switch',
         icon: '⚡',
         description: 'Toggle the quiz ON or OFF with a single tap. When active, members can take the quiz; when paused, submissions are temporarily held.',
-        fallbackId: 'tour-admin-tabs',
     },
     {
         targetId: 'tour-admin-timer-count',
+        tab: 'settings',
         title: 'Timer & Question Count',
         icon: '⏱️',
         description: 'Configure the challenge clock duration (in minutes) and target question count (e.g. 10 or 20 questions) for upcoming challenges.',
-        fallbackId: 'tour-admin-tabs',
     },
     {
         targetId: 'tour-admin-ai-btn',
+        tab: 'questions',
         title: 'Gemini AI Quiz Generation',
         icon: '✨',
         description: 'Generate trending topics with Gemini AI, or craft full multiple-choice questions with verified correct answers in seconds.',
-        fallbackId: 'tour-admin-tabs',
     },
     {
-        targetId: 'tour-admin-tabs',
-        title: 'Leaderboard & Tester Audit',
+        targetId: 'tour-admin-leaderboard',
+        tab: 'users',
+        title: 'Leaderboard & Member Audit',
         icon: '👥',
-        description: 'Review live member submissions, inspect submitted answers question-by-question, and reset submissions for tester phone numbers.',
+        description: 'Review live member submissions, inspect individual submitted answers question-by-question with the Eye icon, and track alumni performance.',
     },
 ];
 
