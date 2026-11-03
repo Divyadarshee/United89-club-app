@@ -30,10 +30,14 @@ origins = [
     "https://united89-quiz-frontend-dev-432448119899.asia-south2.run.app",
     "https://united89-quiz-backend-dev-432448119899.asia-south2.run.app",
     "https://united89-club-dev.web.app",
-    # UCE URLs
+    # UCE Prod URLs
     "https://uce-quiz-frontend-432448119899.asia-south2.run.app",
     "https://uce-quiz-backend-432448119899.asia-south2.run.app",
-    "https://uce-quiz.web.app"
+    "https://uce-quiz.web.app",
+    # UCE Dev URLs
+    "https://uce-quiz-frontend-dev-432448119899.asia-south2.run.app",
+    "https://uce-quiz-backend-dev-432448119899.asia-south2.run.app",
+    "https://uce-quiz-dev.web.app",
 ]
 
 app.add_middleware(
