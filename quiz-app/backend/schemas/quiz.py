@@ -10,6 +10,7 @@ class SubmitAnswers(BaseModel):
 
 class QuizConfig(BaseModel):
     timer_duration_minutes: int
+    question_count: Optional[int] = 10
     quiz_active: bool
     leaderboard_active: bool = False
     answers_visible: bool = False  # Controls when users can see correct answers

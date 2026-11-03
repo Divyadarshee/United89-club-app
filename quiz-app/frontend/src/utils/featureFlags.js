@@ -5,6 +5,17 @@ export function normalizePhone(p) {
     return digits;
 }
 
+function getStoredItem(key) {
+    try {
+        if (typeof localStorage !== 'undefined' && localStorage) {
+            return localStorage.getItem(key);
+        }
+    } catch {
+        // Fallback for secure sandboxes/environments without localStorage
+    }
+    return null;
+}
+
 /**
  * Checks if the 2026 Season Finale Showcase is unlocked for the current user.
  * - If config.finale_mode === 'public', unlocked for all members.
@@ -15,11 +26,11 @@ export function isFinaleUnlocked(user, config) {
         return true;
     }
 
-    const phone = user?.phone || localStorage.getItem('user_id') || '';
+    const phone = user?.phone || getStoredItem('user_id') || '';
     const norm = normalizePhone(phone);
 
     // Admin always has access
-    if (norm === '9437555900' || localStorage.getItem('admin_auth') === 'true') {
+    if (norm === '9437555900' || getStoredItem('admin_auth') === 'true') {
         return true;
     }
 
@@ -37,7 +48,7 @@ export function isFinaleUnlocked(user, config) {
  */
 export function isFinaleAdmin(user) {
     if (user?.role === 'admin') return true;
-    const phone = user?.phone || user?.user_id || localStorage.getItem('user_id') || '';
+    const phone = user?.phone || user?.user_id || getStoredItem('user_id') || '';
     const norm = normalizePhone(phone);
-    return norm === '9437555900' || localStorage.getItem('admin_auth') === 'true';
+    return norm === '9437555900' || getStoredItem('admin_auth') === 'true';
 }

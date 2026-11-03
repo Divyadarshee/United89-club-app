@@ -554,7 +554,7 @@ export default function PersonalStoryModal({
                                             {player.pureScore}
                                         </div>
                                         <div className="text-xs font-mono uppercase tracking-wider text-amber-200 mt-1">
-                                            Pure Score • Club Rank #{player.pureRank || '--'}
+                                            Season Score • Club Rank #{player.rank || player.pureRank || '--'}
                                         </div>
                                     </motion.div>
 
@@ -827,7 +827,7 @@ export default function PersonalStoryModal({
                                                 {player.displayName}
                                             </h4>
                                             <p className="text-[11px] text-amber-300 font-mono">
-                                                {player.pureScore} Pts • Rank #{player.pureRank} • {player.persona}
+                                                {player.pureScore} Pts • Rank #{player.rank || player.pureRank} • {player.persona}
                                             </p>
                                         </div>
                                     </motion.div>

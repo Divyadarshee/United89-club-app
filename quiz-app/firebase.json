@@ -35,6 +35,34 @@
           }
         }
       ]
+    },
+    {
+      "site": "uce-quiz-dev",
+      "public": "public",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "uce-quiz-frontend-dev",
+            "region": "asia-south2"
+          }
+        }
+      ]
+    },
+    {
+      "site": "united89-club-dev",
+      "public": "public",
+      "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "united89-quiz-frontend-dev",
+            "region": "asia-south2"
+          }
+        }
+      ]
     }
   ]
 }

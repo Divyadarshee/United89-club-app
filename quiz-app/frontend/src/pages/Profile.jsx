@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
     User, Phone, MapPin, Calendar, Award, Trophy, CheckCircle, 
     Save, LogOut, ShieldCheck, Sparkles, AlertCircle, Edit3,
-    Download, Upload, Trash2, Copy, Check, Crown, Medal, Zap, Clock, BarChart3, Search, Camera, Image as ImageIcon, Users
+    Download, Upload, Trash2, Copy, Check, Crown, Medal, Zap, Clock, BarChart3, Search, Camera, Image as ImageIcon, Users, Eye
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
@@ -105,11 +105,47 @@ export default function Profile() {
     }, [isAdmin, loggedInPhoneNorm, user?.name, selectedMemberNorm]);
 
     const finalePlayer = useMemo(() => {
-        return (
-            FINALE_DATA.players.find((p) => p.normPhone === selectedMemberNorm) ||
-            FINALE_DATA.players[0]
-        );
+        const found = FINALE_DATA.players.find((p) => p.normPhone === selectedMemberNorm);
+        const idx = found ? FINALE_DATA.players.indexOf(found) : 0;
+        const basePlayer = found || FINALE_DATA.players[0];
+        if (!basePlayer) return null;
+        const calculatedRank = basePlayer.rank || (idx + 1);
+        return {
+            ...basePlayer,
+            rank: calculatedRank,
+            pureRank: calculatedRank,
+        };
     }, [selectedMemberNorm]);
+
+    // Detect whether an admin is inspecting another member's profile
+    const isViewingOtherMember = useMemo(() => {
+        return Boolean(
+            isAdmin &&
+            finalePlayer &&
+            loggedInPhoneNorm &&
+            finalePlayer.normPhone !== loggedInPhoneNorm
+        );
+    }, [isAdmin, finalePlayer, loggedInPhoneNorm]);
+
+    const activeDisplayName = isViewingOtherMember
+        ? (finalePlayer?.displayName || finalePlayer?.realName || 'Alumni Member')
+        : (user?.name || name || 'Alumni Member');
+
+    const activePhone = isViewingOtherMember
+        ? (finalePlayer?.uid || finalePlayer?.normPhone || '')
+        : (user?.phone || '');
+
+    const activeTotalScore = isViewingOtherMember
+        ? (finalePlayer?.pureScore ?? 0)
+        : (user?.cumulative_score !== undefined ? user.cumulative_score : (finalePlayer?.pureScore ?? 0));
+
+    const activeWeeksPlayed = isViewingOtherMember
+        ? (finalePlayer?.weeksPlayed ?? 0)
+        : (user?.weeks_played !== undefined ? user.weeks_played : (finalePlayer?.weeksPlayed ?? 1));
+
+    const activeRank = isViewingOtherMember
+        ? (finalePlayer?.rank ? `#${finalePlayer.rank}` : '#--')
+        : (user?.rank ? (String(user.rank).startsWith('#') ? user.rank : `#${user.rank}`) : (finalePlayer?.rank ? `#${finalePlayer.rank}` : '#--'));
 
     const [showMemberPickerModal, setShowMemberPickerModal] = useState(false);
 
@@ -155,14 +191,16 @@ export default function Profile() {
         if (memberPhotos[finalePlayer.normPhone]) {
             return memberPhotos[finalePlayer.normPhone];
         }
-        if (selectedAvatar?.startsWith('data:image') || selectedAvatar?.startsWith('http')) {
-            return selectedAvatar;
-        }
-        if (user?.avatar?.startsWith('data:image') || user?.avatar?.startsWith('http')) {
-            return user.avatar;
+        if (!isViewingOtherMember) {
+            if (selectedAvatar?.startsWith('data:image') || selectedAvatar?.startsWith('http')) {
+                return selectedAvatar;
+            }
+            if (user?.avatar?.startsWith('data:image') || user?.avatar?.startsWith('http')) {
+                return user.avatar;
+            }
         }
         return null;
-    }, [finalePlayer, memberPhotos, selectedAvatar, user?.avatar]);
+    }, [finalePlayer, memberPhotos, selectedAvatar, user?.avatar, isViewingOtherMember]);
 
     const handleProfilePhotoUpload = (e) => {
         const file = e.target.files?.[0];
@@ -410,15 +448,32 @@ export default function Profile() {
 
                 {/* Profile Hero & Avatar */}
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-6 border-b border-antique-gold/20">
-                    <div className="flex flex-col items-center gap-2">
+                    <div id="tour-profile-avatar" className="flex flex-col items-center gap-2">
                         <div
                             className={`w-24 h-24 rounded-full ${
-                                selectedAvatar?.startsWith('data:image') || selectedAvatar?.startsWith('http')
+                                currentPhoto
                                     ? 'bg-black/50'
+                                    : isViewingOtherMember
+                                    ? 'bg-gradient-to-br from-amber-500/30 to-midnight-blue'
                                     : `bg-gradient-to-br ${getAvatarBg(selectedAvatar)}`
                             } flex items-center justify-center text-4xl shadow-xl border-2 border-antique-gold overflow-hidden relative`}
                         >
-                            {selectedAvatar?.startsWith('data:image') || selectedAvatar?.startsWith('http') ? (
+                            {currentPhoto ? (
+                                <img
+                                    src={currentPhoto}
+                                    alt={activeDisplayName}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : isViewingOtherMember ? (
+                                <div className="flex flex-col items-center justify-center text-center">
+                                    <span className="text-2xl font-serif font-black text-amber-300 drop-shadow">
+                                        #{finalePlayer?.rank || currentPlayerIdx + 1}
+                                    </span>
+                                    <span className="text-[9px] uppercase tracking-wider text-amber-200/80 font-mono">
+                                        Batch &apos;89
+                                    </span>
+                                </div>
+                            ) : selectedAvatar?.startsWith('data:image') || selectedAvatar?.startsWith('http') ? (
                                 <img
                                     src={selectedAvatar}
                                     alt="Profile Avatar"
@@ -447,37 +502,41 @@ export default function Profile() {
                                     profilePhotoInputRef.current?.click();
                                 }}
                                 className="px-2.5 py-1 text-[11px] font-sans font-semibold rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-antique-gold/40 flex items-center gap-1 transition-all"
-                                title="Upload Custom Photo"
+                                title={isViewingOtherMember ? `Upload Photo for ${activeDisplayName}` : "Upload Custom Photo"}
                             >
                                 <Camera size={12} />
-                                <span>{selectedAvatar?.startsWith('data:image') ? 'Change' : 'Upload Photo'}</span>
+                                <span>{currentPhoto ? 'Change Photo' : 'Upload Photo'}</span>
                             </button>
 
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    playSound('click');
-                                    setShowAvatarPicker(!showAvatarPicker);
-                                }}
-                                className="px-2.5 py-1 text-[11px] font-sans font-semibold rounded-md bg-midnight-blue hover:bg-white/10 text-antique-gold border border-antique-gold/30 flex items-center gap-1 transition-all"
-                                title="Pick Club Icon"
-                            >
-                                <Sparkles size={12} />
-                                <span>Icon</span>
-                            </button>
+                            {!isViewingOtherMember && (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            playSound('click');
+                                            setShowAvatarPicker(!showAvatarPicker);
+                                        }}
+                                        className="px-2.5 py-1 text-[11px] font-sans font-semibold rounded-md bg-midnight-blue hover:bg-white/10 text-antique-gold border border-antique-gold/30 flex items-center gap-1 transition-all"
+                                        title="Pick Club Icon"
+                                    >
+                                        <Sparkles size={12} />
+                                        <span>Icon</span>
+                                    </button>
 
-                            {selectedAvatar?.startsWith('data:image') && (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        playSound('click');
-                                        setSelectedAvatar('avatar-1');
-                                    }}
-                                    className="p-1 text-red-300 hover:text-white rounded bg-red-950/40 border border-red-800/40"
-                                    title="Reset to default icon"
-                                >
-                                    <Trash2 size={12} />
-                                </button>
+                                    {selectedAvatar?.startsWith('data:image') && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                playSound('click');
+                                                setSelectedAvatar('avatar-1');
+                                            }}
+                                            className="p-1 text-red-300 hover:text-white rounded bg-red-950/40 border border-red-800/40"
+                                            title="Reset to default icon"
+                                        >
+                                            <Trash2 size={12} />
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
@@ -485,27 +544,29 @@ export default function Profile() {
                     <div className="text-center sm:text-left flex-1">
                         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
                             <h1 className="text-2xl sm:text-3xl font-serif font-bold text-white tracking-wide">
-                                {user?.name || name || 'Alumni Member'}
+                                {activeDisplayName}
                             </h1>
                             <span className="px-2 py-0.5 text-[11px] font-mono font-semibold uppercase tracking-wider bg-antique-gold/20 text-antique-gold border border-antique-gold/40 rounded-full">
-                                Verified Member
+                                {isViewingOtherMember ? 'Admin Member View' : 'Verified Member'}
                             </span>
                         </div>
 
                         <p className="text-sm font-sans text-amber-200/80 mb-3 italic">
-                            {user?.bio || 'Proud member of the United89 alumni family.'}
+                            {isViewingOtherMember
+                                ? (finalePlayer?.persona ? `Playing Style: ${finalePlayer.persona}` : 'Proud contender in the 2026 Season Finale.')
+                                : (user?.bio || 'Proud member of the United89 alumni family.')}
                         </p>
 
                         <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-xs text-gray-300 font-sans">
                             <div className="flex items-center gap-1.5">
                                 <Phone size={14} className="text-antique-gold" />
-                                <span className="font-mono">{user?.phone || 'No phone'}</span>
+                                <span className="font-mono">{activePhone || 'No phone'}</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <Calendar size={14} className="text-antique-gold" />
-                                <span>Batch of {batch || '1989'}</span>
+                                <span>Batch of {isViewingOtherMember ? '1989' : (batch || '1989')}</span>
                             </div>
-                            {city && (
+                            {(!isViewingOtherMember && city) && (
                                 <div className="flex items-center gap-1.5">
                                     <MapPin size={14} className="text-antique-gold" />
                                     <span>{city}</span>
@@ -559,7 +620,7 @@ export default function Profile() {
                 </AnimatePresence>
 
                 {/* Subcategory Tab Selector */}
-                <div className="flex border-b border-antique-gold/20 my-6 bg-black/40 rounded-xl p-1 gap-1.5 shadow-inner">
+                <div id="tour-profile-tabs" className="flex border-b border-antique-gold/20 my-6 bg-black/40 rounded-xl p-1 gap-1.5 shadow-inner">
                     <button
                         type="button"
                         onClick={() => {
@@ -617,144 +678,201 @@ export default function Profile() {
                 {activeSubTab === 'details' && (
                     <div className="pt-2">
                         <h2 className="text-xs font-serif text-antique-gold uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Edit3 size={14} />
-                            <span>Edit Personal Details</span>
+                            {isViewingOtherMember ? <Eye size={14} /> : <Edit3 size={14} />}
+                            <span>{isViewingOtherMember ? 'Member Record Details' : 'Edit Personal Details'}</span>
                         </h2>
 
-                        {/* Feedback Messages */}
-                        {saveSuccess && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="mb-4 p-3 bg-emerald-950/70 border border-emerald-500/50 rounded-lg flex items-center gap-2.5 text-emerald-200 text-xs font-sans"
-                            >
-                                <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
-                                <span>Your profile has been updated successfully!</span>
-                            </motion.div>
-                        )}
-
-                        {errorMessage && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="mb-4 p-3 bg-red-950/70 border border-red-500/50 rounded-lg flex items-center gap-2.5 text-red-200 text-xs font-sans"
-                            >
-                                <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
-                                <span>{errorMessage}</span>
-                            </motion.div>
-                        )}
-
-                        <form onSubmit={handleSave} className="space-y-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-serif text-antique-gold mb-1">Full Name</label>
-                                    <input
-                                        type="text"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        required
-                                        placeholder="Enter your full name"
-                                        className="input-vintage text-sm"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-serif text-antique-gold mb-1">
-                                        Phone Number (Fixed ID)
-                                    </label>
-                                    <div className="relative">
-                                        <input
-                                            type="text"
-                                            value={user?.phone || ''}
-                                            disabled
-                                            className="input-vintage text-sm opacity-60 bg-black/40 cursor-not-allowed font-mono"
-                                        />
-                                        <ShieldCheck
-                                            size={16}
-                                            className="absolute right-3 top-3.5 text-antique-gold/70"
-                                            title="Primary Account Identifier"
-                                        />
+                        {/* Admin Inspection Banner when viewing other alumni */}
+                        {isViewingOtherMember ? (
+                            <div className="space-y-4">
+                                <div className="p-4 rounded-xl bg-midnight-blue/80 border border-antique-gold/40 text-left shadow-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-serif uppercase tracking-widest text-antique-gold flex items-center gap-1.5 font-bold">
+                                            <Eye size={14} /> Admin Member Inspection
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-300 font-sans leading-relaxed">
+                                        You are currently inspecting <strong>{activeDisplayName}</strong>&apos;s alumni profile, certificates, and stats. To edit your own personal account details, switch back to your account via the member selector above.
+                                    </p>
+                                    <div className="mt-3 pt-3 border-t border-antique-gold/20 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                        <div>
+                                            <span className="text-gray-400 block text-[11px]">Member Name</span>
+                                            <span className="text-white font-serif font-bold text-sm">{activeDisplayName}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-400 block text-[11px]">Registered ID / Phone</span>
+                                            <span className="text-amber-200 font-mono text-sm">{activePhone}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-400 block text-[11px]">Playing Style</span>
+                                            <span className="text-amber-300 font-sans">{finalePlayer?.persona || 'Stalwart Contender'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-gray-400 block text-[11px]">Season Standing</span>
+                                            <span className="text-antique-gold font-serif font-bold text-sm">
+                                                Rank #{finalePlayer?.rank} ({finalePlayer?.pureScore} Pts)
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <div className="flex items-center justify-between mb-1">
-                                    <label className="block text-xs font-serif text-antique-gold">
-                                        Linked Gmail Account (For 1-Click Google Sign-In)
-                                    </label>
-                                    {email && (
+                                <div className="p-4 rounded-xl bg-black/30 border border-antique-gold/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
+                                    <div>
+                                        <h4 className="text-sm font-serif font-bold text-white">Member Awards &amp; Certificates</h4>
+                                        <p className="text-xs text-gray-400 font-sans mt-0.5">
+                                            View official 2026 certificates and download high-resolution keepsakes for {activeDisplayName}.
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            playSound('click');
+                                            setActiveSubTab('awards');
+                                        }}
+                                        className="px-4 py-2 rounded-lg bg-gradient-to-r from-amber-400 to-amber-600 text-midnight-blue font-serif font-bold text-xs shadow hover:scale-105 transition-all cursor-pointer flex-shrink-0"
+                                    >
+                                        View Awards ({finalePlayer?.awards?.length || 0}) →
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                {/* Feedback Messages */}
+                                {saveSuccess && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mb-4 p-3 bg-emerald-950/70 border border-emerald-500/50 rounded-lg flex items-center gap-2.5 text-emerald-200 text-xs font-sans"
+                                    >
+                                        <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
+                                        <span>Your profile has been updated successfully!</span>
+                                    </motion.div>
+                                )}
+
+                                {errorMessage && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mb-4 p-3 bg-red-950/70 border border-red-500/50 rounded-lg flex items-center gap-2.5 text-red-200 text-xs font-sans"
+                                    >
+                                        <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
+                                        <span>{errorMessage}</span>
+                                    </motion.div>
+                                )}
+
+                                <form onSubmit={handleSave} className="space-y-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-serif text-antique-gold mb-1">Full Name</label>
+                                            <input
+                                                type="text"
+                                                value={name}
+                                                onChange={(e) => setName(e.target.value)}
+                                                required
+                                                placeholder="Enter your full name"
+                                                className="input-vintage text-sm"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-serif text-antique-gold mb-1">
+                                                Phone Number (Fixed ID)
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    value={user?.phone || ''}
+                                                    disabled
+                                                    className="input-vintage text-sm opacity-60 bg-black/40 cursor-not-allowed font-mono"
+                                                />
+                                                <ShieldCheck
+                                                    size={16}
+                                                    className="absolute right-3 top-3.5 text-antique-gold/70"
+                                                    title="Primary Account Identifier"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="block text-xs font-serif text-antique-gold">
+                                                Linked Gmail Account (For 1-Click Google Sign-In)
+                                            </label>
+                                            {email && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setEmail('')}
+                                                    className="text-[11px] text-amber-300/80 hover:text-white underline font-sans"
+                                                >
+                                                    Unlink / Clear
+                                                </button>
+                                            )}
+                                        </div>
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="e.g. yourname@gmail.com (auto-linked on first Google Sign-In)"
+                                            className="input-vintage text-sm font-mono"
+                                        />
+                                        <p className="text-[11px] text-amber-200/60 font-sans mt-1">
+                                            Locked to your phone number for security. You can change or clear this email here and click Save Profile Changes.
+                                        </p>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-serif text-antique-gold mb-1">Graduation Batch</label>
+                                            <input
+                                                type="text"
+                                                value={batch}
+                                                onChange={(e) => setBatch(e.target.value)}
+                                                placeholder="e.g. 1989"
+                                                className="input-vintage text-sm"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-serif text-antique-gold mb-1">
+                                                Current City / Location
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={city}
+                                                onChange={(e) => setCity(e.target.value)}
+                                                placeholder="e.g. Bhubaneswar, India"
+                                                className="input-vintage text-sm"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-serif text-antique-gold mb-1">
+                                            Bio / Personal Tagline
+                                        </label>
+                                        <textarea
+                                            value={bio}
+                                            onChange={(e) => setBio(e.target.value)}
+                                            rows={2}
+                                            placeholder="A brief sentence about yourself..."
+                                            className="input-vintage text-sm resize-none"
+                                        />
+                                    </div>
+
+                                    <div className="flex justify-end pt-2">
                                         <button
-                                            type="button"
-                                            onClick={() => setEmail('')}
-                                            className="text-[11px] text-amber-300/80 hover:text-white underline font-sans"
+                                            type="submit"
+                                            disabled={isSaving}
+                                            className="btn-vintage flex items-center gap-2 text-sm px-6 py-2.5 cursor-pointer"
                                         >
-                                            Unlink / Clear
+                                            <Save size={16} />
+                                            <span>{isSaving ? 'Saving...' : 'Save Profile Changes'}</span>
                                         </button>
-                                    )}
-                                </div>
-                                <input
-                                    type="email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    placeholder="e.g. yourname@gmail.com (auto-linked on first Google Sign-In)"
-                                    className="input-vintage text-sm font-mono"
-                                />
-                                <p className="text-[11px] text-amber-200/60 font-sans mt-1">
-                                    Locked to your phone number for security. You can change or clear this email here and click Save Profile Changes.
-                                </p>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs font-serif text-antique-gold mb-1">Graduation Batch</label>
-                                    <input
-                                        type="text"
-                                        value={batch}
-                                        onChange={(e) => setBatch(e.target.value)}
-                                        placeholder="e.g. 1989"
-                                        className="input-vintage text-sm"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-serif text-antique-gold mb-1">
-                                        Current City / Location
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={city}
-                                        onChange={(e) => setCity(e.target.value)}
-                                        placeholder="e.g. Bhubaneswar, India"
-                                        className="input-vintage text-sm"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-serif text-antique-gold mb-1">
-                                    Bio / Personal Tagline
-                                </label>
-                                <textarea
-                                    value={bio}
-                                    onChange={(e) => setBio(e.target.value)}
-                                    rows={2}
-                                    placeholder="A brief sentence about yourself..."
-                                    className="input-vintage text-sm resize-none"
-                                />
-                            </div>
-
-                            <div className="flex justify-end pt-2">
-                                <button
-                                    type="submit"
-                                    disabled={isSaving}
-                                    className="btn-vintage flex items-center gap-2 text-sm px-6 py-2.5 cursor-pointer"
-                                >
-                                    <Save size={16} />
-                                    <span>{isSaving ? 'Saving...' : 'Save Profile Changes'}</span>
-                                </button>
-                            </div>
-                        </form>
+                                    </div>
+                                </form>
+                            </>
+                        )}
                     </div>
                 )}
 
@@ -763,35 +881,14 @@ export default function Profile() {
                    ===================================================================== */}
                 {activeSubTab === 'awards' && finaleUnlocked && finalePlayer && (
                     <div className="pt-2 space-y-6">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                            <div>
-                                <h2 className="text-sm sm:text-base font-serif font-bold text-amber-300 uppercase tracking-widest flex items-center gap-2">
-                                    <Crown size={16} className="text-amber-400" />
-                                    <span>2026 Season Finale: My Awards &amp; Certificates</span>
-                                </h2>
-                                <p className="text-xs text-amber-100/75 font-sans mt-0.5">
-                                    Personalized High-Res Certificates &amp; WhatsApp Story Card
-                                </p>
-                            </div>
-
-                            {/* Member Switcher ONLY for Admin (9437555900) */}
-                            {isAdmin ? (
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        playSound('click');
-                                        setShowMemberPickerModal(true);
-                                    }}
-                                    className="px-3 py-1.5 rounded-lg bg-black/40 hover:bg-black/60 border border-antique-gold/40 hover:border-antique-gold text-xs font-serif text-amber-100 flex items-center gap-2 cursor-pointer shadow-md transition-all active:scale-95"
-                                >
-                                    <Search size={13} className="text-antique-gold" />
-                                    <span>Admin: <strong className="text-amber-300">{finalePlayer.displayName}</strong></span>
-                                </button>
-                            ) : (
-                                <div className="text-xs font-serif text-amber-200/90 bg-black/30 border border-antique-gold/25 px-3 py-1.5 rounded-lg">
-                                    <span>Personal 2026 Showcase</span>
-                                </div>
-                            )}
+                        <div>
+                            <h2 className="text-sm sm:text-base font-serif font-bold text-amber-300 uppercase tracking-widest flex items-center gap-2">
+                                <Crown size={16} className="text-amber-400" />
+                                <span>2026 Season Finale: My Awards &amp; Certificates</span>
+                            </h2>
+                            <p className="text-xs text-amber-100/75 font-sans mt-0.5">
+                                Personalized High-Res Certificates &amp; WhatsApp Story Card
+                            </p>
                         </div>
 
                         {/* 2026 Wrapped Personal Story Reel Banner */}
@@ -1063,7 +1160,7 @@ export default function Profile() {
                                         Total Points
                                     </span>
                                     <span className="text-2xl sm:text-3xl font-serif font-black text-amber-300 drop-shadow">
-                                        {user?.cumulative_score !== undefined ? user.cumulative_score : 0}
+                                        {activeTotalScore}
                                     </span>
                                     <span className="text-[10px] text-gray-400 block mt-0.5 font-sans">Points Earned</span>
                                 </div>
@@ -1073,7 +1170,7 @@ export default function Profile() {
                                         Challenges Played
                                     </span>
                                     <span className="text-2xl sm:text-3xl font-serif font-black text-white">
-                                        {user?.weeks_played !== undefined ? user.weeks_played : 1}
+                                        {activeWeeksPlayed}
                                     </span>
                                     <span className="text-[10px] text-gray-400 block mt-0.5 font-sans">Active Weeks</span>
                                 </div>
@@ -1083,30 +1180,53 @@ export default function Profile() {
                                         Standing Rank
                                     </span>
                                     <span className="text-2xl sm:text-3xl font-serif font-black text-antique-gold">
-                                        {user?.rank || '#--'}
+                                        {activeRank}
                                     </span>
                                     <span className="text-[10px] text-gray-400 block mt-0.5 font-sans">Leaderboard</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Finale Pure Stats Grid */}
+                        {/* 40-Week Season Marathon Showcase */}
                         {finaleUnlocked && finalePlayer && (
                             <div className="space-y-4">
-                                <p className="text-xs font-serif text-antique-gold uppercase tracking-wider flex items-center gap-1.5">
-                                    <Medal size={14} />
-                                    <span>2026 Marathon Pure Performance</span>
-                                </p>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                                    <p className="text-xs font-serif text-antique-gold uppercase tracking-wider flex items-center gap-1.5">
+                                        <Medal size={14} />
+                                        <span>40-Week Season Marathon Record</span>
+                                    </p>
+                                    <span className="text-[11px] text-amber-200/70 font-sans">
+                                        Official 2026 Grand Finale Analytics
+                                    </span>
+                                </div>
+
+                                {/* Quiz Playing Style (Persona) Banner */}
+                                {finalePlayer.persona && (
+                                    <div className="p-3 bg-gradient-to-r from-amber-500/10 via-midnight-blue to-black/40 border border-antique-gold/30 rounded-xl flex flex-wrap items-center justify-between gap-2 shadow-inner">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-serif text-antique-gold uppercase tracking-wider font-semibold">
+                                                Quiz Playing Style:
+                                            </span>
+                                            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/50 text-amber-200 text-xs font-medium">
+                                                {finalePlayer.persona}
+                                            </span>
+                                        </div>
+                                        <span className="text-[11px] text-gray-400 font-sans">
+                                            Speed &amp; accuracy profile across 40 weeks
+                                        </span>
+                                    </div>
+                                )}
+
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                                     <div className="bg-gradient-to-br from-amber-950/60 to-black/50 border border-antique-gold/30 rounded-xl p-3 text-center">
-                                        <span className="text-[10px] text-amber-200/70 uppercase tracking-wider block">Pure Rank</span>
+                                        <span className="text-[10px] text-amber-200/70 uppercase tracking-wider block">Season Rank</span>
                                         <span className="text-xl sm:text-2xl font-serif font-black text-amber-300">
-                                            {finalePlayer.pureRank ? `#${finalePlayer.pureRank}` : 'Member'}
+                                            #{finalePlayer.rank || currentPlayerIdx + 1}
                                         </span>
-                                        <span className="text-[10px] text-gray-400 block">{finalePlayer.persona}</span>
+                                        <span className="text-[10px] text-gray-400 block">Out of 49 Contenders</span>
                                     </div>
                                     <div className="bg-black/40 border border-antique-gold/25 rounded-xl p-3 text-center">
-                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Pure Score</span>
+                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Marathon Points</span>
                                         <span className="text-xl sm:text-2xl font-serif font-black text-white">
                                             {finalePlayer.pureScore}
                                         </span>
