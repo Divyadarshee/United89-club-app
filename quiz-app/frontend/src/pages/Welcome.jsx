@@ -52,7 +52,7 @@ function Welcome() {
     const { activeTheme } = useConfig();
 
     return (
-        <div className="relative w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="relative w-full max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[60vh] text-center pt-10 sm:pt-4">
             <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}

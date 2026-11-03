@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, ShieldCheck, KeyRound, AlertTriangle, X, RefreshCw, ArrowLeft } from 'lucide-react';
 import { useSoundManager } from '../hooks/useSoundManager';
+import { useAuth } from '../context/AuthContext';
 import { sendAdminOtp, verifyAdminOtp } from '../services/api';
 
 const DESIGNATED_ADMIN_PHONE = "+919437555900";
 
 function AdminLogin() {
+    const { user } = useAuth();
     const [step, setStep] = useState('request'); // 'request' or 'otp'
     const [otp, setOtp] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,6 +19,16 @@ function AdminLogin() {
 
     const navigate = useNavigate();
     const { playSound } = useSoundManager();
+
+    // If admin is already authenticated in session/browser cache, bypass login
+    useEffect(() => {
+        const phone = user?.phone || user?.user_id || localStorage.getItem('user_id') || '';
+        const cleanPhone = String(phone).replace(/\D/g, '').slice(-10);
+        const isAdmin = localStorage.getItem('admin_auth') === 'true' || user?.role === 'admin' || cleanPhone === '9437555900';
+        if (isAdmin) {
+            navigate('/admin/dashboard', { replace: true });
+        }
+    }, [user, navigate]);
 
     // Countdown timer for OTP resend
     useEffect(() => {

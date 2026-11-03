@@ -8,6 +8,8 @@ import {
 import confetti from 'canvas-confetti';
 import { useSoundManager } from '../hooks/useSoundManager';
 import { getAvatarBg, getAvatarEmoji } from './UserNav';
+import { FINALE_DATA } from '../data/finaleData';
+import { AdminMemberBar, AdminMemberPickerModal } from './AdminMemberControls';
 
 const SLIDE_DURATION_MS = 6500; // 6.5 seconds per slide for relaxed reading
 
@@ -19,7 +21,11 @@ export default function PersonalStoryModal({
     onDownloadCert,
     onDownloadStory,
     certDataUrl,
-    wrappedDataUrl
+    wrappedDataUrl,
+    isAdmin = false,
+    onSelectMember,
+    onPrevMember,
+    onNextMember
 }) {
     const { playSound } = useSoundManager();
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -27,8 +33,36 @@ export default function PersonalStoryModal({
     const [progress, setProgress] = useState(0); // 0 to 100
     const [downloadingCert, setDownloadingCert] = useState(false);
     const [downloadingStory, setDownloadingStory] = useState(false);
+    const [showPickerModal, setShowPickerModal] = useState(false);
     const progressIntervalRef = useRef(null);
     const totalSlides = 6;
+
+    // Admin member cycling (Hooks MUST be declared unconditionally before any early return)
+    const currentPlayerIdx = useMemo(() => {
+        if (!player?.normPhone) return 0;
+        const idx = FINALE_DATA.players.findIndex((p) => p.normPhone === player.normPhone);
+        return idx >= 0 ? idx : 0;
+    }, [player?.normPhone]);
+
+    const handlePrev = useCallback(() => {
+        playSound?.('click');
+        if (onPrevMember) {
+            onPrevMember();
+        } else if (onSelectMember) {
+            const prevIdx = (currentPlayerIdx - 1 + FINALE_DATA.players.length) % FINALE_DATA.players.length;
+            onSelectMember(FINALE_DATA.players[prevIdx].normPhone);
+        }
+    }, [currentPlayerIdx, onPrevMember, onSelectMember, playSound]);
+
+    const handleNext = useCallback(() => {
+        playSound?.('click');
+        if (onNextMember) {
+            onNextMember();
+        } else if (onSelectMember) {
+            const nextIdx = (currentPlayerIdx + 1) % FINALE_DATA.players.length;
+            onSelectMember(FINALE_DATA.players[nextIdx].normPhone);
+        }
+    }, [currentPlayerIdx, onNextMember, onSelectMember, playSound]);
 
     // Trigger celebratory confetti
     const triggerConfetti = useCallback(() => {
@@ -44,7 +78,7 @@ export default function PersonalStoryModal({
         }
     }, []);
 
-    // Reset slide and progress when modal opens
+    // Reset slide and progress when modal opens or player changes
     useEffect(() => {
         if (isOpen) {
             setCurrentSlide(0);
@@ -54,7 +88,7 @@ export default function PersonalStoryModal({
             setDownloadingStory(false);
             playSound?.('fanfare');
         }
-    }, [isOpen, playSound]);
+    }, [isOpen, player?.normPhone, playSound]);
 
     // Handle slide change effects
     useEffect(() => {
@@ -150,11 +184,11 @@ export default function PersonalStoryModal({
     if (!isOpen || !player) return null;
 
     // Derived statistics
-    const attendancePct = Math.round((player.weeksPlayed / 40) * 100);
-    const accuracyPct = player.avgScore 
+    const attendancePct = Math.round((player?.weeksPlayed / 40) * 100);
+    const accuracyPct = player?.avgScore 
         ? (player.avgScore * 10).toFixed(1) 
-        : ((player.pureScore / (player.weeksPlayed * 10 || 1)) * 100).toFixed(1);
-    const questionsAnswered = (player.weeksPlayed || 0) * 10;
+        : ((player?.pureScore / (player?.weeksPlayed * 10 || 1)) * 100).toFixed(1);
+    const questionsAnswered = (player?.weeksPlayed || 0) * 10;
 
     return (
         <AnimatePresence>
@@ -243,6 +277,21 @@ export default function PersonalStoryModal({
                                 </button>
                             </div>
                         </div>
+
+                        {/* Admin Quick Member Switcher Bar for Phone/Desktop testing */}
+                        {isAdmin && (
+                            <div className="mt-2.5">
+                                <AdminMemberBar
+                                    selectedPlayer={player}
+                                    onPrev={handlePrev}
+                                    onNext={handleNext}
+                                    onOpenPicker={() => setShowPickerModal(true)}
+                                    currentIndex={currentPlayerIdx}
+                                    totalCount={FINALE_DATA.players.length}
+                                    compact={true}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Left & Right Tap Zones: ONLY active on slides 0 to 4 so they NEVER block slide 5 buttons */}
@@ -895,6 +944,18 @@ export default function PersonalStoryModal({
                         </button>
                     </div>
                 </motion.div>
+
+                {/* Admin Member Picker Modal inside Story Reel */}
+                {isAdmin && (
+                    <AdminMemberPickerModal
+                        isOpen={showPickerModal}
+                        onClose={() => setShowPickerModal(false)}
+                        selectedNorm={player?.normPhone}
+                        onSelect={(normPhone) => {
+                            if (onSelectMember) onSelectMember(normPhone);
+                        }}
+                    />
+                )}
             </div>
         </AnimatePresence>
     );

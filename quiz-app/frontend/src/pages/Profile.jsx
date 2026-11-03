@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     User, Phone, MapPin, Calendar, Award, Trophy, CheckCircle, 
-    Save, ArrowLeft, LogOut, ShieldCheck, Sparkles, AlertCircle, Edit3,
-    Download, Upload, Trash2, Copy, Check, Crown, Medal, Zap, Clock, BarChart3, Search, Camera, Image as ImageIcon
+    Save, LogOut, ShieldCheck, Sparkles, AlertCircle, Edit3,
+    Download, Upload, Trash2, Copy, Check, Crown, Medal, Zap, Clock, BarChart3, Search, Camera, Image as ImageIcon, Users
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
@@ -14,6 +14,7 @@ import { FINALE_DATA } from '../data/finaleData';
 import { renderCertificateToDataUrl, renderWrappedCardToDataUrl } from '../utils/certificateRenderer';
 import { normalizePhone, isFinaleAdmin, isFinaleUnlocked } from '../utils/featureFlags';
 import PersonalStoryModal from '../components/PersonalStoryModal';
+import { AdminMemberBar, AdminMemberPickerModal } from '../components/AdminMemberControls';
 
 export default function Profile() {
     const { user, updateProfile, logout, refreshProfile } = useAuth();
@@ -51,11 +52,22 @@ export default function Profile() {
     const [showMemberSwitcher, setShowMemberSwitcher] = useState(false);
     const [showStoryModal, setShowStoryModal] = useState(false);
     const [searchParams] = useSearchParams();
+    const [activeSubTab, setActiveSubTab] = useState(() => {
+        const tab = searchParams.get('tab');
+        if (tab === 'awards' || tab === 'stats' || tab === 'details') return tab;
+        if (searchParams.get('playStory') === 'true') return 'awards';
+        return 'details';
+    });
 
     // Auto-launch personal story reel if navigated with ?playStory=true
     useEffect(() => {
         if (searchParams.get('playStory') === 'true') {
             setShowStoryModal(true);
+            setActiveSubTab('awards');
+        }
+        const tab = searchParams.get('tab');
+        if (tab === 'awards' || tab === 'stats' || tab === 'details') {
+            setActiveSubTab(tab);
         }
     }, [searchParams]);
 
@@ -98,6 +110,25 @@ export default function Profile() {
             FINALE_DATA.players[0]
         );
     }, [selectedMemberNorm]);
+
+    const [showMemberPickerModal, setShowMemberPickerModal] = useState(false);
+
+    const currentPlayerIdx = useMemo(() => {
+        const idx = FINALE_DATA.players.findIndex((p) => p.normPhone === finalePlayer?.normPhone);
+        return idx >= 0 ? idx : 0;
+    }, [finalePlayer?.normPhone]);
+
+    const handlePrevMember = useCallback(() => {
+        playSound('click');
+        const prevIdx = (currentPlayerIdx - 1 + FINALE_DATA.players.length) % FINALE_DATA.players.length;
+        setSelectedMemberNorm(FINALE_DATA.players[prevIdx].normPhone);
+    }, [currentPlayerIdx, playSound]);
+
+    const handleNextMember = useCallback(() => {
+        playSound('click');
+        const nextIdx = (currentPlayerIdx + 1) % FINALE_DATA.players.length;
+        setSelectedMemberNorm(FINALE_DATA.players[nextIdx].normPhone);
+    }, [currentPlayerIdx, playSound]);
 
     const [certType, setCertType] = useState('award'); // 'award' | 'participation'
     const [selectedAwardIdx, setSelectedAwardIdx] = useState(0);
@@ -322,56 +353,55 @@ export default function Profile() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="w-full max-w-3xl mx-auto py-8 text-amber-50"
+            className="w-full max-w-3xl mx-auto pt-16 sm:pt-6 pb-8 px-2 sm:px-4 text-amber-50"
         >
             {/* Sticky Top Navigation Bar */}
-            <div className="sticky top-0 z-30 py-3 mb-6 bg-[#0a1428]/95 backdrop-blur-md border-b border-antique-gold/30 px-3 sm:px-4 rounded-b-xl flex flex-wrap items-center justify-between gap-3 shadow-xl">
+            <div className="sticky top-16 sm:top-2 z-30 py-2.5 mb-5 bg-[#0a1428]/95 backdrop-blur-md border border-antique-gold/30 px-3 sm:px-4 rounded-xl flex items-center justify-end gap-2 shadow-xl">
+                {finaleUnlocked && (
+                    <>
+                        <button
+                            onClick={() => {
+                                playSound('fanfare');
+                                setShowStoryModal(true);
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-serif font-black text-[#0b1528] bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:from-amber-200 hover:to-yellow-300 rounded-lg shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                        >
+                            <Sparkles size={13} />
+                            <span>Play My Wrapped</span>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                playSound('click');
+                                navigate('/rewind?tab=highlights');
+                            }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-serif font-bold text-amber-200 bg-white/10 hover:bg-white/20 border border-antique-gold/40 rounded-lg transition-all cursor-pointer"
+                        >
+                            <span>🌍 Club Rewind</span>
+                        </button>
+                    </>
+                )}
+
                 <button
-                    onClick={() => {
-                        playSound('click');
-                        navigate('/welcome');
-                    }}
-                    className="flex items-center gap-1.5 text-antique-gold hover:text-white transition-colors font-serif text-xs sm:text-sm tracking-wide bg-black/40 hover:bg-black/60 px-3 py-1.5 rounded-lg border border-antique-gold/30 cursor-pointer"
+                    onClick={handleLogout}
+                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-red-300 hover:text-white bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 rounded-lg transition-all cursor-pointer"
+                    title="Sign Out"
                 >
-                    <ArrowLeft size={16} />
-                    <span>← Lounge</span>
+                    <LogOut size={13} />
                 </button>
-
-                <div className="flex items-center gap-2">
-                    {finaleUnlocked && (
-                        <>
-                            <button
-                                onClick={() => {
-                                    playSound('fanfare');
-                                    setShowStoryModal(true);
-                                }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-serif font-black text-[#0b1528] bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:from-amber-200 hover:to-yellow-300 rounded-lg shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
-                            >
-                                <Sparkles size={13} />
-                                <span>Play My Wrapped</span>
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    playSound('click');
-                                    navigate('/rewind?tab=highlights');
-                                }}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-serif font-bold text-amber-200 bg-white/10 hover:bg-white/20 border border-antique-gold/40 rounded-lg transition-all cursor-pointer"
-                            >
-                                <span>🌍 Club Rewind</span>
-                            </button>
-                        </>
-                    )}
-
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs text-red-300 hover:text-white bg-red-950/40 hover:bg-red-900/60 border border-red-800/40 rounded-lg transition-all cursor-pointer"
-                        title="Sign Out"
-                    >
-                        <LogOut size={13} />
-                    </button>
-                </div>
             </div>
+
+            {/* Admin Member Switcher Bar (Mobile-First sticky navigation across all tabs) */}
+            {isAdmin && (
+                <AdminMemberBar
+                    selectedPlayer={finalePlayer}
+                    onPrev={handlePrevMember}
+                    onNext={handleNextMember}
+                    onOpenPicker={() => setShowMemberPickerModal(true)}
+                    currentIndex={currentPlayerIdx}
+                    totalCount={FINALE_DATA.players.length}
+                />
+            )}
 
             {/* Main Profile Card */}
             <div className="card-vintage text-left relative overflow-hidden mb-6">
@@ -528,140 +558,235 @@ export default function Profile() {
                     )}
                 </AnimatePresence>
 
-                {/* Club / Quiz Stats Section */}
-                <div className="py-6 border-b border-antique-gold/20">
-                    <h2 className="text-xs font-serif text-antique-gold uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Trophy size={14} />
-                        <span>Club Quiz Standing</span>
-                    </h2>
+                {/* Subcategory Tab Selector */}
+                <div className="flex border-b border-antique-gold/20 my-6 bg-black/40 rounded-xl p-1 gap-1.5 shadow-inner">
+                    <button
+                        type="button"
+                        onClick={() => {
+                            playSound('click');
+                            setActiveSubTab('details');
+                        }}
+                        className={`flex-1 py-2 px-2.5 sm:px-3 rounded-lg text-xs sm:text-sm font-serif font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
+                            activeSubTab === 'details'
+                                ? 'bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-[#0b1528] shadow-md'
+                                : 'text-amber-200/70 hover:text-white hover:bg-white/5'
+                        }`}
+                    >
+                        <User size={15} />
+                        <span>Profile &amp; Account</span>
+                    </button>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                        <div className="bg-black/30 border border-antique-gold/20 rounded-xl p-4 text-center">
-                            <span className="text-[11px] font-sans text-gray-400 uppercase tracking-wider block mb-1">
-                                Total Points
-                            </span>
-                            <span className="text-2xl sm:text-3xl font-serif font-black text-amber-300 drop-shadow">
-                                {user?.cumulative_score !== undefined ? user.cumulative_score : 0}
-                            </span>
-                            <span className="text-[10px] text-gray-400 block mt-0.5 font-sans">Points Earned</span>
-                        </div>
-
-                        <div className="bg-black/30 border border-antique-gold/20 rounded-xl p-4 text-center">
-                            <span className="text-[11px] font-sans text-gray-400 uppercase tracking-wider block mb-1">
-                                Challenges Played
-                            </span>
-                            <span className="text-2xl sm:text-3xl font-serif font-black text-white">
-                                {user?.weeks_played !== undefined ? user.weeks_played : 1}
-                            </span>
-                            <span className="text-[10px] text-gray-400 block mt-0.5 font-sans">Active Weeks</span>
-                        </div>
-
-                        <div className="bg-black/30 border border-antique-gold/20 rounded-xl p-4 text-center col-span-2 sm:col-span-1">
-                            <span className="text-[11px] font-sans text-gray-400 uppercase tracking-wider block mb-1">
-                                Standing Rank
-                            </span>
-                            <span className="text-2xl sm:text-3xl font-serif font-black text-antique-gold">
-                                {user?.rank || '#--'}
-                            </span>
-                            <span className="text-[10px] text-gray-400 block mt-0.5 font-sans">Leaderboard</span>
-                        </div>
-                    </div>
-
-                    {/* Recent Quiz Submissions History */}
-                    {user?.submissions_history && user.submissions_history.length > 0 ? (
-                        <div className="mt-4 pt-4 border-t border-antique-gold/15">
-                            <p className="text-[11px] font-serif text-amber-200/80 uppercase tracking-wider mb-2.5">
-                                Recent Weekly Challenges
-                            </p>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                {user.submissions_history.slice(0, 6).map((sub) => (
-                                    <div
-                                        key={sub.week_id}
-                                        className="flex items-center justify-between px-3 py-2 rounded-lg bg-black/40 border border-antique-gold/20 text-xs"
-                                    >
-                                        <span className="font-mono text-amber-100">{sub.week_id}</span>
-                                        <span className="font-serif font-bold text-antique-gold">
-                                            {sub.score} pts · {sub.time_taken}s
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ) : (
-                        <p className="mt-3 text-xs text-amber-200/60 font-sans italic text-center">
-                            Complete your first weekly quiz challenge to unlock your live leaderboard rank & score history.
-                        </p>
+                    {finaleUnlocked && finalePlayer && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                playSound('click');
+                                setActiveSubTab('awards');
+                            }}
+                            className={`flex-1 py-2 px-2.5 sm:px-3 rounded-lg text-xs sm:text-sm font-serif font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
+                                activeSubTab === 'awards'
+                                    ? 'bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-[#0b1528] shadow-md'
+                                    : 'text-amber-200/70 hover:text-white hover:bg-white/5'
+                            }`}
+                        >
+                            <Award size={15} />
+                            <span>Awards &amp; Certs</span>
+                        </button>
                     )}
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            playSound('click');
+                            setActiveSubTab('stats');
+                        }}
+                        className={`flex-1 py-2 px-2.5 sm:px-3 rounded-lg text-xs sm:text-sm font-serif font-bold flex items-center justify-center gap-1.5 sm:gap-2 transition-all cursor-pointer ${
+                            activeSubTab === 'stats'
+                                ? 'bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 text-[#0b1528] shadow-md'
+                                : 'text-amber-200/70 hover:text-white hover:bg-white/5'
+                        }`}
+                    >
+                        <BarChart3 size={15} />
+                        <span>Stats &amp; Journey</span>
+                    </button>
                 </div>
 
                 {/* =====================================================================
-                    2026 SEASON FINALE: PERSONALIZED AWARDS, CERTIFICATES & WRAPPED HUB
+                    SUBCATEGORY 1: EDITABLE PROFILE & ACCOUNT DETAILS
                    ===================================================================== */}
-                {finaleUnlocked && finalePlayer && (
-                    <div className="py-6 border-b border-antique-gold/20 space-y-6">
+                {activeSubTab === 'details' && (
+                    <div className="pt-2">
+                        <h2 className="text-xs font-serif text-antique-gold uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Edit3 size={14} />
+                            <span>Edit Personal Details</span>
+                        </h2>
+
+                        {/* Feedback Messages */}
+                        {saveSuccess && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-4 p-3 bg-emerald-950/70 border border-emerald-500/50 rounded-lg flex items-center gap-2.5 text-emerald-200 text-xs font-sans"
+                            >
+                                <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
+                                <span>Your profile has been updated successfully!</span>
+                            </motion.div>
+                        )}
+
+                        {errorMessage && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-4 p-3 bg-red-950/70 border border-red-500/50 rounded-lg flex items-center gap-2.5 text-red-200 text-xs font-sans"
+                            >
+                                <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
+                                <span>{errorMessage}</span>
+                            </motion.div>
+                        )}
+
+                        <form onSubmit={handleSave} className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-serif text-antique-gold mb-1">Full Name</label>
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={(e) => setName(e.target.value)}
+                                        required
+                                        placeholder="Enter your full name"
+                                        className="input-vintage text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-serif text-antique-gold mb-1">
+                                        Phone Number (Fixed ID)
+                                    </label>
+                                    <div className="relative">
+                                        <input
+                                            type="text"
+                                            value={user?.phone || ''}
+                                            disabled
+                                            className="input-vintage text-sm opacity-60 bg-black/40 cursor-not-allowed font-mono"
+                                        />
+                                        <ShieldCheck
+                                            size={16}
+                                            className="absolute right-3 top-3.5 text-antique-gold/70"
+                                            title="Primary Account Identifier"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-1">
+                                    <label className="block text-xs font-serif text-antique-gold">
+                                        Linked Gmail Account (For 1-Click Google Sign-In)
+                                    </label>
+                                    {email && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setEmail('')}
+                                            className="text-[11px] text-amber-300/80 hover:text-white underline font-sans"
+                                        >
+                                            Unlink / Clear
+                                        </button>
+                                    )}
+                                </div>
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="e.g. yourname@gmail.com (auto-linked on first Google Sign-In)"
+                                    className="input-vintage text-sm font-mono"
+                                />
+                                <p className="text-[11px] text-amber-200/60 font-sans mt-1">
+                                    Locked to your phone number for security. You can change or clear this email here and click Save Profile Changes.
+                                </p>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-serif text-antique-gold mb-1">Graduation Batch</label>
+                                    <input
+                                        type="text"
+                                        value={batch}
+                                        onChange={(e) => setBatch(e.target.value)}
+                                        placeholder="e.g. 1989"
+                                        className="input-vintage text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-serif text-antique-gold mb-1">
+                                        Current City / Location
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={city}
+                                        onChange={(e) => setCity(e.target.value)}
+                                        placeholder="e.g. Bhubaneswar, India"
+                                        className="input-vintage text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-serif text-antique-gold mb-1">
+                                    Bio / Personal Tagline
+                                </label>
+                                <textarea
+                                    value={bio}
+                                    onChange={(e) => setBio(e.target.value)}
+                                    rows={2}
+                                    placeholder="A brief sentence about yourself..."
+                                    className="input-vintage text-sm resize-none"
+                                />
+                            </div>
+
+                            <div className="flex justify-end pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={isSaving}
+                                    className="btn-vintage flex items-center gap-2 text-sm px-6 py-2.5 cursor-pointer"
+                                >
+                                    <Save size={16} />
+                                    <span>{isSaving ? 'Saving...' : 'Save Profile Changes'}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+                {/* =====================================================================
+                    SUBCATEGORY 2: 2026 SEASON FINALE AWARDS & CERTIFICATES STUDIO
+                   ===================================================================== */}
+                {activeSubTab === 'awards' && finaleUnlocked && finalePlayer && (
+                    <div className="pt-2 space-y-6">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
                                 <h2 className="text-sm sm:text-base font-serif font-bold text-amber-300 uppercase tracking-widest flex items-center gap-2">
                                     <Crown size={16} className="text-amber-400" />
-                                    <span>2026 Season Finale: My Awards, Certificates & Wrapped</span>
+                                    <span>2026 Season Finale: My Awards &amp; Certificates</span>
                                 </h2>
                                 <p className="text-xs text-amber-100/75 font-sans mt-0.5">
-                                    Official 40-Quiz Pure Standings • Download Personalized Certificates & WhatsApp Card
+                                    Personalized High-Res Certificates &amp; WhatsApp Story Card
                                 </p>
                             </div>
 
                             {/* Member Switcher ONLY for Admin (9437555900) */}
                             {isAdmin ? (
-                                <div className="relative">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            playSound('click');
-                                            setShowMemberSwitcher(!showMemberSwitcher);
-                                        }}
-                                        className="px-3 py-1.5 rounded-lg bg-black/40 border border-antique-gold/40 hover:border-antique-gold text-xs font-serif text-amber-100 flex items-center gap-2"
-                                    >
-                                        <Search size={13} className="text-antique-gold" />
-                                        <span>Admin View: <strong className="text-amber-300">{finalePlayer.displayName}</strong></span>
-                                    </button>
-
-                                    {showMemberSwitcher && (
-                                        <div className="absolute right-0 mt-2 w-72 max-h-80 overflow-y-auto rounded-xl bg-[#0d1b33] border border-antique-gold/50 shadow-2xl p-2 z-50">
-                                        <input
-                                            type="text"
-                                            value={memberSearch}
-                                            onChange={(e) => setMemberSearch(e.target.value)}
-                                            placeholder="Search any of 49 members..."
-                                            className="w-full px-2.5 py-1.5 mb-2 rounded bg-black/50 border border-antique-gold/30 text-xs text-white placeholder:text-gray-400"
-                                        />
-                                        <div className="space-y-1">
-                                            {filteredMembers.map((m) => (
-                                                <button
-                                                    key={m.normPhone}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        playSound('click');
-                                                        setSelectedMemberNorm(m.normPhone);
-                                                        setShowMemberSwitcher(false);
-                                                    }}
-                                                    className={`w-full text-left px-2.5 py-1.5 rounded text-xs flex items-center justify-between ${
-                                                        m.normPhone === finalePlayer.normPhone
-                                                            ? 'bg-antique-gold/25 text-amber-200 font-bold'
-                                                            : 'text-gray-200 hover:bg-white/10'
-                                                    }`}
-                                                >
-                                                    <span className="truncate">
-                                                        {m.pureRank ? `#${m.pureRank} ` : ''}{m.displayName}
-                                                    </span>
-                                                    <span className="font-mono text-[10px] text-antique-gold ml-2">
-                                                        {m.pureScore} pts
-                                                    </span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        playSound('click');
+                                        setShowMemberPickerModal(true);
+                                    }}
+                                    className="px-3 py-1.5 rounded-lg bg-black/40 hover:bg-black/60 border border-antique-gold/40 hover:border-antique-gold text-xs font-serif text-amber-100 flex items-center gap-2 cursor-pointer shadow-md transition-all active:scale-95"
+                                >
+                                    <Search size={13} className="text-antique-gold" />
+                                    <span>Admin: <strong className="text-amber-300">{finalePlayer.displayName}</strong></span>
+                                </button>
                             ) : (
                                 <div className="text-xs font-serif text-amber-200/90 bg-black/30 border border-antique-gold/25 px-3 py-1.5 rounded-lg">
                                     <span>Personal 2026 Showcase</span>
@@ -695,49 +820,11 @@ export default function Profile() {
                                     playSound('fanfare');
                                     setShowStoryModal(true);
                                 }}
-                                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:from-amber-200 hover:to-yellow-300 text-[#0b1528] font-serif font-black text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 flex-shrink-0"
+                                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:from-amber-200 hover:to-yellow-300 text-[#0b1528] font-serif font-black text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 flex-shrink-0 cursor-pointer"
                             >
                                 <Sparkles size={16} />
                                 <span>Play 2026 Story</span>
                             </button>
-                        </div>
-
-                        {/* Finale Pure Stats Grid */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div className="bg-gradient-to-br from-amber-950/60 to-black/50 border border-antique-gold/30 rounded-xl p-3 text-center">
-                                <span className="text-[10px] text-amber-200/70 uppercase tracking-wider block">Pure Rank</span>
-                                <span className="text-xl sm:text-2xl font-serif font-black text-amber-300">
-                                    {finalePlayer.pureRank ? `#${finalePlayer.pureRank}` : 'Member'}
-                                </span>
-                                <span className="text-[10px] text-gray-400 block">{finalePlayer.persona}</span>
-                            </div>
-                            <div className="bg-black/40 border border-antique-gold/25 rounded-xl p-3 text-center">
-                                <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Pure Score</span>
-                                <span className="text-xl sm:text-2xl font-serif font-black text-white">
-                                    {finalePlayer.pureScore}
-                                </span>
-                                <span className="text-[10px] text-amber-300/80 block">
-                                    Avg {finalePlayer.avgScore}/10 • {finalePlayer.weeksPlayed}/40 Wks
-                                </span>
-                            </div>
-                            <div className="bg-black/40 border border-antique-gold/25 rounded-xl p-3 text-center">
-                                <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Perfect 10/10s</span>
-                                <span className="text-xl sm:text-2xl font-serif font-black text-emerald-400">
-                                    {finalePlayer.count10}
-                                </span>
-                                <span className="text-[10px] text-gray-400 block">
-                                    {finalePlayer.count9Plus} scores of 9+
-                                </span>
-                            </div>
-                            <div className="bg-black/40 border border-antique-gold/25 rounded-xl p-3 text-center">
-                                <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Speed & Podiums</span>
-                                <span className="text-xl sm:text-2xl font-serif font-black text-sky-300">
-                                    {finalePlayer.avgTime ? `${finalePlayer.avgTime}s` : '--'}
-                                </span>
-                                <span className="text-[10px] text-amber-300/80 block">
-                                    🥇{finalePlayer.gold} • 🏆{finalePlayer.podiums} Podiums
-                                </span>
-                            </div>
                         </div>
 
                         {/* Special Awards Won Section */}
@@ -775,7 +862,7 @@ export default function Profile() {
                                                         setCertType('award');
                                                         setSelectedAwardIdx(idx);
                                                     }}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-serif font-bold flex items-center gap-1.5 transition-all ${
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-serif font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                                                         certType === 'award' && selectedAwardIdx === idx
                                                             ? 'bg-antique-gold text-[#0b1528]'
                                                             : 'bg-white/10 text-amber-200 hover:bg-white/20'
@@ -788,7 +875,7 @@ export default function Profile() {
                                                     <button
                                                         type="button"
                                                         onClick={() => handleCopyPrompt(aw.id, aw.aiPrompt)}
-                                                        className="px-3 py-1.5 rounded-lg text-xs font-sans bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-400/40 text-indigo-200 flex items-center gap-1.5 transition-all"
+                                                        className="px-3 py-1.5 rounded-lg text-xs font-sans bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-400/40 text-indigo-200 flex items-center gap-1.5 transition-all cursor-pointer"
                                                     >
                                                         {copiedPromptId === aw.id ? (
                                                             <>
@@ -815,7 +902,7 @@ export default function Profile() {
                             <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div>
                                     <h3 className="text-sm font-serif font-bold text-amber-200 uppercase tracking-wider">
-                                        🎓 Personalized Certificate & WhatsApp Status Studio
+                                        🎓 Personalized Certificate &amp; WhatsApp Status Studio
                                     </h3>
                                     <p className="text-[11px] text-gray-400 font-sans">
                                         Add your photo (optional) to embed it inside the gold portrait frame before downloading!
@@ -834,7 +921,7 @@ export default function Profile() {
                                     <button
                                         type="button"
                                         onClick={() => photoInputRef.current?.click()}
-                                        className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-200 text-xs font-serif flex items-center gap-1.5 transition-all"
+                                        className="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-amber-200 text-xs font-serif flex items-center gap-1.5 transition-all cursor-pointer"
                                     >
                                         <Upload size={13} />
                                         <span>{currentPhoto ? 'Change Photo' : 'Add Your Photo'}</span>
@@ -849,7 +936,7 @@ export default function Profile() {
                                                     return next;
                                                 })
                                             }
-                                            className="p-1.5 rounded-lg bg-red-950/60 border border-red-500/40 text-red-300 hover:text-white"
+                                            className="p-1.5 rounded-lg bg-red-950/60 border border-red-500/40 text-red-300 hover:text-white cursor-pointer"
                                             title="Remove photo"
                                         >
                                             <Trash2 size={13} />
@@ -868,7 +955,7 @@ export default function Profile() {
                                             setCertType('award');
                                             setSelectedAwardIdx(idx);
                                         }}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-serif transition-all border ${
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-serif transition-all border cursor-pointer ${
                                             certType === 'award' && selectedAwardIdx === idx
                                                 ? 'bg-antique-gold text-[#0b1528] border-antique-gold font-bold shadow'
                                                 : 'bg-black/40 text-amber-200 border-antique-gold/30 hover:border-antique-gold'
@@ -880,13 +967,13 @@ export default function Profile() {
                                 <button
                                     type="button"
                                     onClick={() => setCertType('participation')}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-serif transition-all border ${
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-serif transition-all border cursor-pointer ${
                                         certType === 'participation' || !finalePlayer.awards?.length
                                             ? 'bg-antique-gold text-[#0b1528] border-antique-gold font-bold shadow'
                                             : 'bg-black/40 text-amber-200 border-antique-gold/30 hover:border-antique-gold'
                                     }`}
                                 >
-                                    📜 40-Week Excellence & Participation Certificate
+                                    📜 40-Week Excellence &amp; Participation Certificate
                                 </button>
                             </div>
 
@@ -916,7 +1003,7 @@ export default function Profile() {
                                                 `UCE89_2026_${finalePlayer.displayName.replace(/\s+/g, '_')}_${certType}_Certificate.png`
                                             )
                                         }
-                                        className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 hover:from-amber-300 hover:to-yellow-400 text-[#0b1528] font-serif font-black text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition-all"
+                                        className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 hover:from-amber-300 hover:to-yellow-400 text-[#0b1528] font-serif font-black text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer"
                                     >
                                         <Download size={16} />
                                         <span>Download High-Res Certificate (PNG)</span>
@@ -947,7 +1034,7 @@ export default function Profile() {
                                                 `UCE89_2026_${finalePlayer.displayName.replace(/\s+/g, '_')}_WhatsApp_Wrapped.png`
                                             )
                                         }
-                                        className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-serif font-bold text-xs shadow-lg flex items-center justify-center gap-1.5 transition-all"
+                                        className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-serif font-bold text-xs shadow-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                                     >
                                         <Download size={15} />
                                         <span>Download WhatsApp Wrapped</span>
@@ -955,226 +1042,190 @@ export default function Profile() {
                                 </div>
                             </div>
                         </div>
-
-                        {/* 40-Week Score Trajectory Chart */}
-                        {finalePlayer.weeklyJourney && (
-                            <div className="p-4 rounded-xl bg-black/30 border border-antique-gold/20">
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-xs font-serif text-antique-gold uppercase tracking-wider flex items-center gap-1.5">
-                                        <BarChart3 size={14} />
-                                        <span>40-Week Quiz Trajectory (Q1 – Q40)</span>
-                                    </span>
-                                    <span className="text-[11px] font-mono text-gray-400">
-                                        🟢 10/10 • 🔵 8–9/10 • 🟠 &lt;8
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-10 sm:grid-cols-20 gap-1.5 pt-2">
-                                    {finalePlayer.weeklyJourney.map((w) => {
-                                        const played = w.played && !w.isBonus;
-                                        const score = played ? w.score : 0;
-                                        const barColor = !played
-                                            ? 'bg-gray-800/60 border-gray-700/40'
-                                            : score === 10
-                                            ? 'bg-emerald-500 border-emerald-300'
-                                            : score >= 8
-                                            ? 'bg-sky-500 border-sky-300'
-                                            : 'bg-amber-500 border-amber-300';
-                                        return (
-                                            <div
-                                                key={w.quizNum}
-                                                title={
-                                                    played
-                                                        ? `Quiz ${w.quizNum} (${w.weekId}): ${w.score}/10 in ${w.time}s (Rank #${w.rank})`
-                                                        : `Quiz ${w.quizNum} (${w.weekId}): Did not play`
-                                                }
-                                                className="flex flex-col items-center gap-1 group"
-                                            >
-                                                <div className="w-full h-14 bg-black/40 rounded flex items-end p-0.5 border border-white/5">
-                                                    <div
-                                                        style={{ height: played ? `${Math.max(score * 10, 15)}%` : '10%' }}
-                                                        className={`w-full rounded-sm border-t ${barColor} transition-all`}
-                                                    />
-                                                </div>
-                                                <span className="text-[9px] font-mono text-gray-400">
-                                                    Q{w.quizNum}
-                                                </span>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
                     </div>
                 )}
 
-                {/* Editable Profile Form */}
-                <div className="pt-6">
-                    <h2 className="text-xs font-serif text-antique-gold uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Edit3 size={14} />
-                        <span>Edit Personal Details</span>
-                    </h2>
+                {/* =====================================================================
+                    SUBCATEGORY 3: STATS, STANDINGS & 40-WEEK JOURNEY
+                   ===================================================================== */}
+                {activeSubTab === 'stats' && (
+                    <div className="pt-2 space-y-6">
+                        {/* Club / Quiz Stats Section */}
+                        <div>
+                            <h2 className="text-xs font-serif text-antique-gold uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <Trophy size={14} />
+                                <span>Club Quiz Standing</span>
+                            </h2>
 
-                    {/* Feedback Messages */}
-                    {saveSuccess && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mb-4 p-3 bg-emerald-950/70 border border-emerald-500/50 rounded-lg flex items-center gap-2.5 text-emerald-200 text-xs font-sans"
-                        >
-                            <CheckCircle size={16} className="text-emerald-400 flex-shrink-0" />
-                            <span>Your profile has been updated successfully!</span>
-                        </motion.div>
-                    )}
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                <div className="bg-black/30 border border-antique-gold/20 rounded-xl p-4 text-center">
+                                    <span className="text-[11px] font-sans text-gray-400 uppercase tracking-wider block mb-1">
+                                        Total Points
+                                    </span>
+                                    <span className="text-2xl sm:text-3xl font-serif font-black text-amber-300 drop-shadow">
+                                        {user?.cumulative_score !== undefined ? user.cumulative_score : 0}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 block mt-0.5 font-sans">Points Earned</span>
+                                </div>
 
-                    {errorMessage && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="mb-4 p-3 bg-red-950/70 border border-red-500/50 rounded-lg flex items-center gap-2.5 text-red-200 text-xs font-sans"
-                        >
-                            <AlertCircle size={16} className="text-red-400 flex-shrink-0" />
-                            <span>{errorMessage}</span>
-                        </motion.div>
-                    )}
+                                <div className="bg-black/30 border border-antique-gold/20 rounded-xl p-4 text-center">
+                                    <span className="text-[11px] font-sans text-gray-400 uppercase tracking-wider block mb-1">
+                                        Challenges Played
+                                    </span>
+                                    <span className="text-2xl sm:text-3xl font-serif font-black text-white">
+                                        {user?.weeks_played !== undefined ? user.weeks_played : 1}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 block mt-0.5 font-sans">Active Weeks</span>
+                                </div>
 
-                    <form onSubmit={handleSave} className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-serif text-antique-gold mb-1">Full Name</label>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={(e) => setName(e.target.value)}
-                                    required
-                                    placeholder="Enter your full name"
-                                    className="input-vintage text-sm"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-serif text-antique-gold mb-1">
-                                    Phone Number (Fixed ID)
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        value={user?.phone || ''}
-                                        disabled
-                                        className="input-vintage text-sm opacity-60 bg-black/40 cursor-not-allowed font-mono"
-                                    />
-                                    <ShieldCheck
-                                        size={16}
-                                        className="absolute right-3 top-3.5 text-antique-gold/70"
-                                        title="Primary Account Identifier"
-                                    />
+                                <div className="bg-black/30 border border-antique-gold/20 rounded-xl p-4 text-center col-span-2 sm:col-span-1">
+                                    <span className="text-[11px] font-sans text-gray-400 uppercase tracking-wider block mb-1">
+                                        Standing Rank
+                                    </span>
+                                    <span className="text-2xl sm:text-3xl font-serif font-black text-antique-gold">
+                                        {user?.rank || '#--'}
+                                    </span>
+                                    <span className="text-[10px] text-gray-400 block mt-0.5 font-sans">Leaderboard</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div>
-                            <div className="flex items-center justify-between mb-1">
-                                <label className="block text-xs font-serif text-antique-gold">
-                                    Linked Gmail Account (For 1-Click Google Sign-In)
-                                </label>
-                                {email && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setEmail('')}
-                                        className="text-[11px] text-amber-300/80 hover:text-white underline font-sans"
-                                    >
-                                        Unlink / Clear
-                                    </button>
+                        {/* Finale Pure Stats Grid */}
+                        {finaleUnlocked && finalePlayer && (
+                            <div className="space-y-4">
+                                <p className="text-xs font-serif text-antique-gold uppercase tracking-wider flex items-center gap-1.5">
+                                    <Medal size={14} />
+                                    <span>2026 Marathon Pure Performance</span>
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                    <div className="bg-gradient-to-br from-amber-950/60 to-black/50 border border-antique-gold/30 rounded-xl p-3 text-center">
+                                        <span className="text-[10px] text-amber-200/70 uppercase tracking-wider block">Pure Rank</span>
+                                        <span className="text-xl sm:text-2xl font-serif font-black text-amber-300">
+                                            {finalePlayer.pureRank ? `#${finalePlayer.pureRank}` : 'Member'}
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 block">{finalePlayer.persona}</span>
+                                    </div>
+                                    <div className="bg-black/40 border border-antique-gold/25 rounded-xl p-3 text-center">
+                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Pure Score</span>
+                                        <span className="text-xl sm:text-2xl font-serif font-black text-white">
+                                            {finalePlayer.pureScore}
+                                        </span>
+                                        <span className="text-[10px] text-amber-300/80 block">
+                                            Avg {finalePlayer.avgScore}/10 • {finalePlayer.weeksPlayed}/40 Wks
+                                        </span>
+                                    </div>
+                                    <div className="bg-black/40 border border-antique-gold/25 rounded-xl p-3 text-center">
+                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Perfect 10/10s</span>
+                                        <span className="text-xl sm:text-2xl font-serif font-black text-emerald-400">
+                                            {finalePlayer.count10}
+                                        </span>
+                                        <span className="text-[10px] text-gray-400 block">
+                                            {finalePlayer.count9Plus} scores of 9+
+                                        </span>
+                                    </div>
+                                    <div className="bg-black/40 border border-antique-gold/25 rounded-xl p-3 text-center">
+                                        <span className="text-[10px] text-gray-400 uppercase tracking-wider block">Speed &amp; Podiums</span>
+                                        <span className="text-xl sm:text-2xl font-serif font-black text-sky-300">
+                                            {finalePlayer.avgTime ? `${finalePlayer.avgTime}s` : '--'}
+                                        </span>
+                                        <span className="text-[10px] text-amber-300/80 block">
+                                            🥇{finalePlayer.gold} • 🏆{finalePlayer.podiums} Podiums
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* 40-Week Score Trajectory Chart */}
+                                {finalePlayer.weeklyJourney && (
+                                    <div className="p-4 rounded-xl bg-black/30 border border-antique-gold/20">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <span className="text-xs font-serif text-antique-gold uppercase tracking-wider flex items-center gap-1.5">
+                                                <BarChart3 size={14} />
+                                                <span>40-Week Quiz Trajectory (Q1 – Q40)</span>
+                                            </span>
+                                            <span className="text-[11px] font-mono text-gray-400">
+                                                🟢 10/10 • 🔵 8–9/10 • 🟠 &lt;8
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-10 sm:grid-cols-20 gap-1.5 pt-2">
+                                            {finalePlayer.weeklyJourney.map((w) => {
+                                                const played = w.played && !w.isBonus;
+                                                const score = played ? w.score : 0;
+                                                const barColor = !played
+                                                    ? 'bg-gray-800/60 border-gray-700/40'
+                                                    : score === 10
+                                                    ? 'bg-emerald-500 border-emerald-300'
+                                                    : score >= 8
+                                                    ? 'bg-sky-500 border-sky-300'
+                                                    : 'bg-amber-500 border-amber-300';
+                                                return (
+                                                    <div
+                                                        key={w.quizNum}
+                                                        title={
+                                                            played
+                                                                ? `Quiz ${w.quizNum} (${w.weekId}): ${w.score}/10 in ${w.time}s (Rank #${w.rank})`
+                                                                : `Quiz ${w.quizNum} (${w.weekId}): Did not play`
+                                                        }
+                                                        className="flex flex-col items-center gap-1 group"
+                                                    >
+                                                        <div className="w-full h-14 bg-black/40 rounded flex items-end p-0.5 border border-white/5">
+                                                            <div
+                                                                style={{ height: played ? `${Math.max(score * 10, 15)}%` : '10%' }}
+                                                                className={`w-full rounded-sm border-t ${barColor} transition-all`}
+                                                            />
+                                                        </div>
+                                                        <span className="text-[9px] font-mono text-gray-400">
+                                                            Q{w.quizNum}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="e.g. yourname@gmail.com (auto-linked on first Google Sign-In)"
-                                className="input-vintage text-sm font-mono"
-                            />
-                            <p className="text-[11px] text-amber-200/60 font-sans mt-1">
-                                Locked to your phone number for security. You can change or clear this email here and click Save Profile Changes.
+                        )}
+
+                        {/* Recent Quiz Submissions History */}
+                        {user?.submissions_history && user.submissions_history.length > 0 ? (
+                            <div className="pt-4 border-t border-antique-gold/15">
+                                <p className="text-[11px] font-serif text-amber-200/80 uppercase tracking-wider mb-2.5">
+                                    Recent Weekly Challenges
+                                </p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    {user.submissions_history.slice(0, 6).map((sub) => (
+                                        <div
+                                            key={sub.week_id}
+                                            className="flex items-center justify-between px-3 py-2 rounded-lg bg-black/40 border border-antique-gold/20 text-xs"
+                                        >
+                                            <span className="font-mono text-amber-100">{sub.week_id}</span>
+                                            <span className="font-serif font-bold text-antique-gold">
+                                                {sub.score} pts · {sub.time_taken}s
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="mt-3 text-xs text-amber-200/60 font-sans italic text-center">
+                                Complete your first weekly quiz challenge to unlock your live leaderboard rank &amp; score history.
                             </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-xs font-serif text-antique-gold mb-1">Graduation Batch</label>
-                                <input
-                                    type="text"
-                                    value={batch}
-                                    onChange={(e) => setBatch(e.target.value)}
-                                    placeholder="e.g. 1989"
-                                    className="input-vintage text-sm"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-serif text-antique-gold mb-1">
-                                    Current City / Location
-                                </label>
-                                <input
-                                    type="text"
-                                    value={city}
-                                    onChange={(e) => setCity(e.target.value)}
-                                    placeholder="e.g. Bhubaneswar, India"
-                                    className="input-vintage text-sm"
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-serif text-antique-gold mb-1">
-                                Bio / Personal Tagline
-                            </label>
-                            <textarea
-                                value={bio}
-                                onChange={(e) => setBio(e.target.value)}
-                                rows={2}
-                                placeholder="A brief sentence about yourself..."
-                                className="input-vintage text-sm resize-none"
-                            />
-                        </div>
-
-                        <div className="flex justify-end pt-2">
-                            <button
-                                type="submit"
-                                disabled={isSaving}
-                                className="btn-vintage flex items-center gap-2 text-sm px-6 py-2.5"
-                            >
-                                <Save size={16} />
-                                <span>{isSaving ? 'Saving...' : 'Save Profile Changes'}</span>
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Bottom Quick Navigation & Action Footer */}
-            <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-midnight-blue/90 via-black/80 to-midnight-blue/90 border border-antique-gold/40 shadow-xl flex flex-wrap items-center justify-between gap-3 text-left">
-                <div>
-                    <h4 className="text-sm font-serif font-bold text-amber-200">
-                        Explore More of the 2026 Season Finale
-                    </h4>
-                    <p className="text-xs text-gray-400 font-sans mt-0.5">
-                        Relive the 40-week journey with your alumni friends or return to the Lounge.
-                    </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            playSound('click');
-                            navigate('/welcome');
-                        }}
-                        className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white font-serif text-xs border border-white/20 flex items-center gap-1.5 transition-all cursor-pointer"
-                    >
-                        <ArrowLeft size={14} />
-                        <span>Back to Lounge</span>
-                    </button>
-
-                    {finaleUnlocked && (
+            {finaleUnlocked && (
+                <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-midnight-blue/90 via-black/80 to-midnight-blue/90 border border-antique-gold/40 shadow-xl flex flex-wrap items-center justify-between gap-3 text-left">
+                    <div>
+                        <h4 className="text-sm font-serif font-bold text-amber-200">
+                            Explore More of the 2026 Season Finale
+                        </h4>
+                        <p className="text-xs text-gray-400 font-sans mt-0.5">
+                            Relive the 40-week journey with your alumni friends in the interactive Club Rewind.
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
                         <button
                             type="button"
                             onClick={() => {
@@ -1186,9 +1237,9 @@ export default function Profile() {
                             <Sparkles size={14} />
                             <span>Watch Club Rewind</span>
                         </button>
-                    )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Auth Session Transparency Badge */}
             <div className="flex items-center justify-center gap-2 text-[11px] font-mono text-antique-gold/60 py-2">
@@ -1206,7 +1257,21 @@ export default function Profile() {
                 onDownloadStory={handleDownloadWrapped}
                 certDataUrl={certDataUrl}
                 wrappedDataUrl={wrappedDataUrl}
+                isAdmin={isAdmin}
+                onSelectMember={setSelectedMemberNorm}
+                onPrevMember={handlePrevMember}
+                onNextMember={handleNextMember}
             />
+
+            {/* Admin Scroll-Locked Member Picker Modal */}
+            {isAdmin && (
+                <AdminMemberPickerModal
+                    isOpen={showMemberPickerModal}
+                    onClose={() => setShowMemberPickerModal(false)}
+                    selectedNorm={finalePlayer?.normPhone}
+                    onSelect={(normPhone) => setSelectedMemberNorm(normPhone)}
+                />
+            )}
         </motion.div>
     );
 }

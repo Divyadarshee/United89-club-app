@@ -47,8 +47,14 @@ async def firebase_login(req: FirebaseLoginRequest):
         user_data, has_submitted, week_id = await get_or_create_user(phone, req.name, google_email=token_email if token_email else None)
         user_profile = await get_user_profile(phone)
         
+        # Check RBAC role (Designated Admin phone: 9437555900)
+        norm_phone = normalize_phone(phone)
+        role = "admin" if norm_phone == "9437555900" else "member"
+        if "role" not in user_profile or user_profile["role"] != role:
+            user_profile["role"] = role
+        
         # Issue dual JWT tokens (15m access + 15d refresh)
-        access_token = create_access_token(user_id=phone, role="member")
+        access_token = create_access_token(user_id=phone, role=role)
         refresh_token = create_refresh_token(user_id=phone)
         
         return {
@@ -56,6 +62,8 @@ async def firebase_login(req: FirebaseLoginRequest):
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "user_id": phone,
+            "role": role,
+            "admin_auth": (role == "admin"),
             "has_submitted": has_submitted,
             "week_id": week_id,
             "user": user_profile
@@ -127,8 +135,14 @@ async def verify_otp(req: VerifyOtpRequest):
     user_data, has_submitted, week_id = await get_or_create_user(phone, req.name)
     user_profile = await get_user_profile(phone)
     
+    # Check RBAC role (Designated Admin phone: 9437555900)
+    norm_phone = normalize_phone(phone)
+    role = "admin" if norm_phone == "9437555900" else "member"
+    if "role" not in user_profile or user_profile["role"] != role:
+        user_profile["role"] = role
+
     # Generate tokens
-    access_token = create_access_token(user_id=phone, role="member")
+    access_token = create_access_token(user_id=phone, role=role)
     refresh_token = create_refresh_token(user_id=phone)
     
     return {
@@ -136,6 +150,8 @@ async def verify_otp(req: VerifyOtpRequest):
         "refresh_token": refresh_token,
         "token_type": "bearer",
         "user_id": phone,
+        "role": role,
+        "admin_auth": (role == "admin"),
         "has_submitted": has_submitted,
         "week_id": week_id,
         "user": user_profile
@@ -151,7 +167,9 @@ async def refresh_tokens(req: RefreshRequest):
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid refresh token payload")
         
-    new_access_token = create_access_token(user_id=user_id, role=payload.get("role", "member"))
+    norm_user = normalize_phone(user_id)
+    role = "admin" if norm_user == "9437555900" else payload.get("role", "member")
+    new_access_token = create_access_token(user_id=user_id, role=role)
     new_refresh_token = create_refresh_token(user_id=user_id)
     
     return {

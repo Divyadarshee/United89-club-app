@@ -36,7 +36,8 @@ export function isFinaleUnlocked(user, config) {
  * Checks if current user is the root finale admin (9437555900)
  */
 export function isFinaleAdmin(user) {
-    const phone = user?.phone || localStorage.getItem('user_id') || '';
+    if (user?.role === 'admin') return true;
+    const phone = user?.phone || user?.user_id || localStorage.getItem('user_id') || '';
     const norm = normalizePhone(phone);
     return norm === '9437555900' || localStorage.getItem('admin_auth') === 'true';
 }
