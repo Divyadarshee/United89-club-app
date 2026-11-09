@@ -77,7 +77,7 @@ function drawCornerOrnament(ctx, x, y, size, flipX = 1, flipY = 1) {
   ctx.restore();
 }
 
-function drawRoyalCrestOrPhoto(ctx, cx, cy, radius, photoImg, badgeLabel = 'UCE 89') {
+function drawRoyalCrestOrPhoto(ctx, cx, cy, radius, photoImg, badgeLabel = 'UCE 87') {
   ctx.save();
   // Outer golden rays / laurel ring
   const grad = ctx.createRadialGradient(cx, cy, radius * 0.6, cx, cy, radius * 1.28);
@@ -204,8 +204,8 @@ export async function renderCertificateToDataUrl({
   // 3. Top Header
   ctx.textAlign = 'center';
   ctx.fillStyle = '#c5a059';
-  ctx.font = 'bold 24px Georgia, serif';
-  ctx.fillText('✦   U C E  ’ 8 7   A L U M N I   Q U I Z   C L U B   •   T H E   U L T I M A T E   C H A L L E N G E   ✦', W / 2, 125);
+  ctx.font = 'bold 22px Georgia, serif';
+  ctx.fillText('✦   U C E  ’ 8 7   A L U M N I   Q U I Z   C L U B   •   T H E   U L T I M A T E   C H A L L E N G E   E X P E R I E N C E   ✦', W / 2, 125);
 
   // Main Certificate Title
   const titleGrad = ctx.createLinearGradient(W * 0.25, 150, W * 0.75, 220);
@@ -237,7 +237,7 @@ export async function renderCertificateToDataUrl({
   ctx.fillText(pillText, W / 2, 260);
 
   // 4. Centerpiece Crest or Member Photo
-  drawRoyalCrestOrPhoto(ctx, W / 2, 395, 92, photoImg, isAward ? 'HONOREE' : 'UCE 89');
+  drawRoyalCrestOrPhoto(ctx, W / 2, 395, 92, photoImg, isAward ? 'HONOREE' : 'UCE 87');
 
   // 5. "PROUDLY PRESENTED TO" & Member Name
   ctx.fillStyle = '#94a3b8';
@@ -354,10 +354,10 @@ export async function renderCertificateToDataUrl({
 
   ctx.fillStyle = '#f3d88c';
   ctx.font = 'italic bold 28px Georgia, serif';
-  ctx.fillText('UCE ’89 Quiz Masters', 430, footY - 18);
+  ctx.fillText('U N Das', 430, footY - 18);
   ctx.fillStyle = '#94a3b8';
-  ctx.font = '18px Arial, sans-serif';
-  ctx.fillText('ORGANIZING COMMITTEE • UCE BURLA BATCH OF 1989', 430, footY + 32);
+  ctx.font = '16px Arial, sans-serif';
+  ctx.fillText('ORGANIZER • ORGANIZING COMMITTEE • UCE BURLA BATCH OF 1987', 430, footY + 32);
 
   // Center Official Gold Seal
   ctx.save();
@@ -443,7 +443,7 @@ export async function renderWrappedCardToDataUrl({ player, photoDataUrl = null }
     245,
     95,
     photoImg,
-    player.rank ? `RANK #${player.rank}` : 'UCE 89'
+    player.rank ? `RANK #${player.rank}` : 'UCE 87'
   );
 
   // Name & Persona
@@ -551,7 +551,7 @@ export async function renderWrappedCardToDataUrl({ player, photoDataUrl = null }
   // Footer
   ctx.fillStyle = '#c5a059';
   ctx.font = 'bold 22px Georgia, serif';
-  ctx.fillText('UCE ’89 ULTIMATE CHALLENGE  •  40 WEEKS OF BRILLIANCE (2026)', W / 2, 1535);
+  ctx.fillText('UCE ’87 ULTIMATE CHALLENGE EXPERIENCE  •  40 WEEKS OF BRILLIANCE (2026)', W / 2, 1535);
 
   return canvas.toDataURL('image/png');
 }

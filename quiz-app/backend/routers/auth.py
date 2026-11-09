@@ -41,7 +41,7 @@ async def firebase_login(req: FirebaseLoginRequest):
             if not whitelisted:
                 raise HTTPException(
                     status_code=403,
-                    detail="This phone number is not on our guest list. Please use the WhatsApp number registered with UCE89 Alumni."
+                    detail="This phone number is not on our guest list. Please use the WhatsApp number registered with UCE87 Alumni."
                 )
                 
         user_data, has_submitted, week_id = await get_or_create_user(phone, req.name, google_email=token_email if token_email else None)
@@ -94,7 +94,7 @@ async def send_otp(req: SendOtpRequest):
         if not whitelisted:
             raise HTTPException(
                 status_code=403,
-                detail="This phone number is not on our guest list. Please use the WhatsApp number registered with UCE89 Alumni."
+                detail="This phone number is not on our guest list. Please use the WhatsApp number registered with UCE87 Alumni."
             )
             
     code, is_tester, is_resend = await generate_and_save_otp(phone)

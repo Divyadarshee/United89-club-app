@@ -213,7 +213,7 @@ function Welcome() {
                             2026 Club Rewind &amp; Personal Wrapped
                         </h3>
                         <p className="text-xs sm:text-sm text-gray-300 font-sans mb-4">
-                            Relive 40 weeks of UCE ’89 trivia! Watch the Club Highlights &amp; Hall of Fame, or unwrap your own personal 2026 story reel with certificates.
+                            Relive 40 weeks of UCE ’87 trivia! Watch the Club Highlights &amp; Hall of Fame, or unwrap your own personal 2026 story reel with certificates.
                         </p>
 
                         {/* Primary Action: Personal Story Reel */}

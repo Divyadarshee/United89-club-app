@@ -298,7 +298,7 @@ export default function Profile() {
             setCertDataUrl(url);
         }
         if (url && finalePlayer) {
-            handleDownloadImage(url, `UCE_89_Certificate_${finalePlayer.displayName.replace(/\s+/g, '_')}.png`);
+            handleDownloadImage(url, `UCE_87_Certificate_${finalePlayer.displayName.replace(/\s+/g, '_')}.png`);
         }
     };
 
@@ -312,7 +312,7 @@ export default function Profile() {
             setWrappedDataUrl(url);
         }
         if (url && finalePlayer) {
-            handleDownloadImage(url, `UCE_89_Wrapped_${finalePlayer.displayName.replace(/\s+/g, '_')}.png`);
+            handleDownloadImage(url, `UCE_87_Wrapped_${finalePlayer.displayName.replace(/\s+/g, '_')}.png`);
         }
     };
 
@@ -347,7 +347,7 @@ export default function Profile() {
         if (user) {
             setName(user.name || '');
             setEmail(user.email || '');
-            setBatch(user.batch || '1989');
+            setBatch(user.batch || '1987');
             setCity(user.city || '');
             setBio(user.bio || '');
             setSelectedAvatar(user.avatar || 'avatar-1');
@@ -470,7 +470,7 @@ export default function Profile() {
                                         #{finalePlayer?.rank || currentPlayerIdx + 1}
                                     </span>
                                     <span className="text-[9px] uppercase tracking-wider text-amber-200/80 font-mono">
-                                        Batch &apos;89
+                                        Batch &apos;87
                                     </span>
                                 </div>
                             ) : selectedAvatar?.startsWith('data:image') || selectedAvatar?.startsWith('http') ? (
@@ -554,7 +554,7 @@ export default function Profile() {
                         <p className="text-sm font-sans text-amber-200/80 mb-3 italic">
                             {isViewingOtherMember
                                 ? (finalePlayer?.persona ? `Playing Style: ${finalePlayer.persona}` : 'Proud contender in the 2026 Season Finale.')
-                                : (user?.bio || 'Proud member of the United89 alumni family.')}
+                                : (user?.bio || 'Proud member of the United87 alumni family.')}
                         </p>
 
                         <div className="flex flex-wrap justify-center sm:justify-start gap-4 text-xs text-gray-300 font-sans">
@@ -564,7 +564,7 @@ export default function Profile() {
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <Calendar size={14} className="text-antique-gold" />
-                                <span>Batch of {isViewingOtherMember ? '1989' : (batch || '1989')}</span>
+                                <span>Batch of {isViewingOtherMember ? '1987' : (batch || '1987')}</span>
                             </div>
                             {(!isViewingOtherMember && city) && (
                                 <div className="flex items-center gap-1.5">
@@ -828,7 +828,7 @@ export default function Profile() {
                                                 type="text"
                                                 value={batch}
                                                 onChange={(e) => setBatch(e.target.value)}
-                                                placeholder="e.g. 1989"
+                                                placeholder="e.g. 1987"
                                                 className="input-vintage text-sm"
                                             />
                                         </div>
@@ -1082,7 +1082,7 @@ export default function Profile() {
                                         {certDataUrl ? (
                                             <img
                                                 src={certDataUrl}
-                                                alt="Personalized UCE '89 Certificate"
+                                                alt="Personalized UCE '87 Certificate"
                                                 className="w-full h-auto block"
                                             />
                                         ) : (
@@ -1097,7 +1097,7 @@ export default function Profile() {
                                         onClick={() =>
                                             handleDownloadImage(
                                                 certDataUrl,
-                                                `UCE89_2026_${finalePlayer.displayName.replace(/\s+/g, '_')}_${certType}_Certificate.png`
+                                                `UCE87_2026_${finalePlayer.displayName.replace(/\s+/g, '_')}_${certType}_Certificate.png`
                                             )
                                         }
                                         className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600 hover:from-amber-300 hover:to-yellow-400 text-[#0b1528] font-serif font-black text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 transition-all cursor-pointer"
@@ -1128,7 +1128,7 @@ export default function Profile() {
                                         onClick={() =>
                                             handleDownloadImage(
                                                 wrappedDataUrl,
-                                                `UCE89_2026_${finalePlayer.displayName.replace(/\s+/g, '_')}_WhatsApp_Wrapped.png`
+                                                `UCE87_2026_${finalePlayer.displayName.replace(/\s+/g, '_')}_WhatsApp_Wrapped.png`
                                             )
                                         }
                                         className="w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-serif font-bold text-xs shadow-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer"

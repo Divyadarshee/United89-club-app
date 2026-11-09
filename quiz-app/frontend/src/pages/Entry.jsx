@@ -331,7 +331,7 @@ function Entry() {
             onFocus={handleInteraction}
         >
             <h1 className="text-4xl font-serif text-amber-50 mb-2 drop-shadow-lg">UCE</h1>
-            <h2 className="text-xl text-antique-gold mb-6 font-serif italic">The Ultimate Challenge</h2>
+            <h2 className="text-xl text-antique-gold mb-6 font-serif italic">The Ultimate Challenge Experience</h2>
 
             {/* Error Banner with Dynamic Fallback Action */}
             {error && (
@@ -461,7 +461,7 @@ function Entry() {
                                 />
                             </div>
                             <small className="text-amber-200/80 font-sans text-xs ml-1 mt-1">
-                                Enter your WhatsApp phone number registered with UCE89 Alumni
+                                Enter your WhatsApp phone number registered with UCE87 Alumni
                             </small>
                         </div>
 

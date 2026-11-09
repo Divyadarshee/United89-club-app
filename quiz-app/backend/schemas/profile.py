@@ -14,7 +14,7 @@ class ProfileResponse(BaseModel):
     phone: str
     email: Optional[str] = ""
     name: str
-    batch: Optional[str] = "1989"
+    batch: Optional[str] = "1987"
     city: Optional[str] = ""
     bio: Optional[str] = ""
     avatar: Optional[str] = "avatar-1"
