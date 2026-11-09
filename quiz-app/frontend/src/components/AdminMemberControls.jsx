@@ -315,7 +315,7 @@ export function AdminMemberPickerModal({
                     {/* Bottom Status Count */}
                     <div className="px-4 py-2 bg-black/60 border-t border-antique-gold/20 text-center text-xs text-gray-400 font-mono flex items-center justify-between">
                         <span>Showing {filteredList.length} of {players.length} alumni</span>
-                        <span className="text-antique-gold">UCE '89 Reunion</span>
+                        <span className="text-antique-gold">UCE '87 Reunion</span>
                     </div>
                 </motion.div>
             </div>

@@ -337,7 +337,7 @@ export default function PersonalStoryModal({
                                         transition={{ delay: 0.1, duration: 0.4 }}
                                         className="inline-block px-3 py-1 rounded-full bg-antique-gold/20 border border-antique-gold/40 text-[11px] font-mono tracking-widest text-antique-gold uppercase font-semibold"
                                     >
-                                        United-89 Quiz Club
+                                        United-87 Quiz Club
                                     </motion.div>
 
                                     {/* Animated Avatar Medallion with spinning halo and pulsing shadow */}
@@ -382,7 +382,7 @@ export default function PersonalStoryModal({
                                             {player.displayName}
                                         </h1>
                                         <p className="text-xs font-mono text-amber-300/80 mt-1">
-                                            Batch of 1989 • UCE Burla
+                                            Batch of 1987 • UCE Burla
                                         </p>
                                     </motion.div>
 
@@ -505,10 +505,10 @@ export default function PersonalStoryModal({
                                         {player.weeksPlayed >= 38
                                             ? "🏆 Ironclad Commitment! You were an unshakeable presence in the club, hardly missing a single Sunday battle!"
                                             : player.weeksPlayed >= 30
-                                            ? "⭐ Loyal Stalwart! 30+ weeks of Sunday quiz warfare makes you one of the true pillars of United-89."
+                                            ? "⭐ Loyal Stalwart! 30+ weeks of Sunday quiz warfare makes you one of the true pillars of United-87."
                                             : player.weeksPlayed >= 20
                                             ? "🔥 Dedicated Contender! Whenever you entered the arena, your presence made every round exciting."
-                                            : "✨ Spirited Alumnus! Every quiz you took brought warmth and energy to our 1989 batch community."}
+                                            : "✨ Spirited Alumnus! Every quiz you took brought warmth and energy to our 1987 batch community."}
                                     </motion.p>
                                 </motion.div>
                             )}
@@ -759,7 +759,7 @@ export default function PersonalStoryModal({
                                                     Club Superlative
                                                 </span>
                                                 <h4 className="text-base font-serif font-bold text-white mt-1">
-                                                    🎖️ Distinguished Veteran of United-89
+                                                    🎖️ Distinguished Veteran of United-87
                                                 </h4>
                                                 <p className="text-xs text-gray-300 font-sans mt-1 leading-relaxed">
                                                     In recognition of exceptional loyalty, camaraderie, and spirited participation in the 40-week 2026 UCE Quiz Season.

@@ -21,8 +21,8 @@ const STORY_SLIDES = [
     tag: 'SCENE 1 • THE 40-WEEK PHENOMENON',
     title: '40 Weeks. 1 Brotherhood.',
     subtitle: 'January 2026 — November 2026',
-    highlight: 'UCE ’89 Ultimate Challenge',
-    desc: 'What started in January 2026 as a weekly trivia game turned into a 10-month ritual across India, Singapore, and the USA—uniting the Batch of ’89 every single Monday morning.',
+    highlight: 'UCE ’87 Ultimate Challenge Experience',
+    desc: 'What started in January 2026 as a weekly trivia game turned into a 10-month ritual across India, Singapore, and the USA—uniting the Batch of ’87 every single Monday morning.',
     stats: [
       { label: 'Official Quizzes', value: '40 Weeks' },
       { label: 'Contenders', value: '49 Members' },
@@ -46,7 +46,7 @@ const STORY_SLIDES = [
     id: 'rituals',
     tag: 'SCENE 3 • SIGNATURE CLUB RITUALS',
     title: 'Early Birds, Night Owls & The Finisher',
-    subtitle: 'When Does UCE ’89 Play?',
+    subtitle: 'When Does UCE ’87 Play?',
     highlight: '26/40 Weeks Finished Last by Pm!',
     desc: 'Raghunath Mohapatra (RM) was the very first person in the club to submit in 6 different weeks! Rabindra Nath Dash led our Sunrise Scholars with 14 quizzes before 8 AM—while Priyadarshi Mohanty (Pm) pulled an MS Dhoni, waiting until the weekend to submit LAST in 26 of 40 weeks and winning 18 Golds!',
     stats: [
@@ -393,7 +393,7 @@ export default function SeasonRewind() {
             <Sparkles size={12} /> 40-Week Grand Finale • 2026
           </div>
           <h1 className="text-xl sm:text-3xl font-serif font-bold text-white tracking-wide mt-0.5">
-            UCE ’89 Season Rewind & Hall of Fame
+            UCE ’87 Season Rewind & Hall of Fame
           </h1>
         </div>
 
@@ -641,7 +641,7 @@ export default function SeasonRewind() {
                     onClick={() =>
                       triggerDownload(
                         certDataUrl,
-                        `UCE89_2026_${certType === 'award' ? 'Award' : 'Participation'}_Certificate_${selectedPlayer.realName.replace(/\s+/g, '_')}.png`
+                        `UCE87_2026_${certType === 'award' ? 'Award' : 'Participation'}_Certificate_${selectedPlayer.realName.replace(/\s+/g, '_')}.png`
                       )
                     }
                     disabled={!certDataUrl}
@@ -662,7 +662,7 @@ export default function SeasonRewind() {
                     📱 WhatsApp Story Share Card
                   </span>
                   <p className="text-xs text-gray-300 font-sans">
-                    All-in-one vertical summary card formatted for sharing in the UCE ’89 WhatsApp group!
+                    All-in-one vertical summary card formatted for sharing in the UCE ’87 WhatsApp group!
                   </p>
                 </div>
 
@@ -682,7 +682,7 @@ export default function SeasonRewind() {
                   onClick={() =>
                     triggerDownload(
                       wrappedDataUrl,
-                      `UCE89_2026_Wrapped_${selectedPlayer.realName.replace(/\s+/g, '_')}.png`
+                      `UCE87_2026_Wrapped_${selectedPlayer.realName.replace(/\s+/g, '_')}.png`
                     )
                   }
                   disabled={!wrappedDataUrl}

@@ -110,7 +110,7 @@ async def get_or_create_user(phone: str, name: Optional[str] = None, google_emai
         "name": name or "Club Member",
         "phone": phone,
         "email": clean_new_email,
-        "batch": "1989",
+        "batch": "1987",
         "city": "",
         "bio": "Alumni & Quiz Enthusiast",
         "avatar": "avatar-1",
@@ -133,7 +133,7 @@ async def get_user_profile(user_id: str) -> Dict[str, Any]:
             "phone": user_id,
             "email": "",
             "name": "Club Member",
-            "batch": "1989",
+            "batch": "1987",
             "city": "",
             "bio": "",
             "avatar": "avatar-1",
@@ -149,7 +149,7 @@ async def get_user_profile(user_id: str) -> Dict[str, Any]:
     data.setdefault("phone", doc.id)
     data.setdefault("email", "")
     data.setdefault("name", "Club Member")
-    data.setdefault("batch", "1989")
+    data.setdefault("batch", "1987")
     data.setdefault("city", "")
     data.setdefault("bio", "")
     data.setdefault("avatar", "avatar-1")

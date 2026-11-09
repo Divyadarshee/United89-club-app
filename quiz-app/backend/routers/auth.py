@@ -35,14 +35,14 @@ async def firebase_login(req: FirebaseLoginRequest):
             raise HTTPException(status_code=400, detail="Neither phone_number nor email found in Firebase token.")
             
         # Check whitelist (testers bypass)
-        # is_tester = await is_tester_phone(phone)
-        # if not is_tester:
-        #     whitelisted = await is_phone_whitelisted(phone)
-        #     if not whitelisted:
-        #         raise HTTPException(
-        #             status_code=403,
-        #             detail="This phone number is not on our guest list. Please use the WhatsApp number registered with UCE89 Alumni."
-        #         )
+        is_tester = await is_tester_phone(phone)
+        if not is_tester:
+            whitelisted = await is_phone_whitelisted(phone)
+            if not whitelisted:
+                raise HTTPException(
+                    status_code=403,
+                    detail="This phone number is not on our guest list. Please use the WhatsApp number registered with UCE87 Alumni."
+                )
                 
         user_data, has_submitted, week_id = await get_or_create_user(phone, req.name, google_email=token_email if token_email else None)
         user_profile = await get_user_profile(phone)
@@ -89,13 +89,13 @@ async def send_otp(req: SendOtpRequest):
     phone = req.phone.strip()
     is_tester = await is_tester_phone(phone)
     
-    # if not is_tester:
-    #     whitelisted = await is_phone_whitelisted(phone)
-    #     if not whitelisted:
-    #         raise HTTPException(
-    #             status_code=403,
-    #             detail="This phone number is not on our guest list. Please use the WhatsApp number registered with UCE89 Alumni."
-    #         )
+    if not is_tester:
+        whitelisted = await is_phone_whitelisted(phone)
+        if not whitelisted:
+            raise HTTPException(
+                status_code=403,
+                detail="This phone number is not on our guest list. Please use the WhatsApp number registered with UCE87 Alumni."
+            )
             
     code, is_tester, is_resend = await generate_and_save_otp(phone)
     sms_configured = is_sms_configured()
@@ -248,13 +248,13 @@ async def register_legacy(user: UserRegister):
     phone = user.phone.strip()
     is_tester = await is_tester_phone(phone)
     
-    # if not is_tester:
-    #     whitelisted = await is_phone_whitelisted(phone)
-    #     if not whitelisted:
-    #         raise HTTPException(
-    #             status_code=403, 
-    #             detail="This phone number is not on our guest list. Please use the WhatsApp number you registered with us."
-    #         )
+    if not is_tester:
+        whitelisted = await is_phone_whitelisted(phone)
+        if not whitelisted:
+            raise HTTPException(
+                status_code=403, 
+                detail="This phone number is not on our guest list. Please use the WhatsApp number you registered with us."
+            )
             
     user_data, has_submitted, week_id = await get_or_create_user(phone, user.name)
     
