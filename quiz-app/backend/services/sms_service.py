@@ -27,7 +27,7 @@ def send_sms_via_twilio(phone: str, code: str) -> bool:
         return False
 
     url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
-    message_body = f"Your UCE89 Club verification code is: {code}. Valid for 5 minutes. Do not share this code."
+    message_body = f"Your UCE87 Club verification code is: {code}. Valid for 5 minutes. Do not share this code."
     
     post_data = urllib.parse.urlencode({
         "To": phone,

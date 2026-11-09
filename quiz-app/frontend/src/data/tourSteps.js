@@ -78,7 +78,7 @@ export const PROFILE_STEPS = [
         targetId: 'tour-profile-avatar',
         title: 'Profile Photo & Club Icon',
         icon: '📸',
-        description: 'Upload your own alumni photo or pick from one of the official UCE89 club icons (Scholar, Lion, Quiz Master, Star).',
+        description: 'Upload your own alumni photo or pick from one of the official UCE87 club icons (Scholar, Lion, Quiz Master, Star).',
     },
     {
         targetId: 'tour-profile-tabs',

@@ -80,7 +80,7 @@ export const FINALE_DATA = {
           "icon": "Crown",
           "accent": "from-amber-400 via-yellow-500 to-amber-700",
           "statsBadge": "383 / 400 Pts • 9.58 Avg • 40/40 Weeks",
-          "citation": "For conquering the 40-week UCE '89 Ultimate Challenge with an extraordinary 383 out of 400 pure points, a 9.58 season average, 25 Perfect 10/10s, a 33-week streak of 9+ scores, and never once scoring below 8/10 across all 40 weeks.",
+          "citation": "For conquering the 40-week UCE '87 Ultimate Challenge Experience with an extraordinary 383 out of 400 pure points, a 9.58 season average, 25 Perfect 10/10s, a 33-week streak of 9+ scores, and never once scoring below 8/10 across all 40 weeks.",
           "aiPrompt": "Transform the person in the attached photo into a regal, celebratory 3D Pixar/illustrated royal portrait as 'The Grand Master Quiz Champion'. Keep their facial features, glasses/hair, and warm smile clearly recognizable. They are wearing a bespoke midnight-blue velvet blazer with gold embroidery, holding a grand golden Championship Cup engraved with '383/400', with the iconic Singapore Marina Bay skyline and a golden chess king piece glowing softly in the background. Rich royal blue and antique gold lighting."
         },
         {
@@ -91,12 +91,12 @@ export const FINALE_DATA = {
           "icon": "Globe",
           "accent": "from-emerald-400 to-teal-700",
           "statsBadge": "100% Attendance from Singapore • 88.1% Tough-Q Accuracy",
-          "citation": "For representing the international UCE '89 contingent from Singapore (+65) with 100% unbroken attendance across all 40 weeks and solving 88.1% of the season's hardest stumper questions.",
-          "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait representing Singapore and India with a golden globe trophy and 'UCE 89 GLOBAL CHAMPION' banner."
+          "citation": "For representing the international UCE '87 contingent from Singapore (+65) with 100% unbroken attendance across all 40 weeks and solving 88.1% of the season's hardest stumper questions.",
+          "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait representing Singapore and India with a golden globe trophy and 'UCE 87 GLOBAL CHAMPION' banner."
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In grateful recognition of an extraordinary 40-week marathon campaign in the 2026 UCE '89 Ultimate Challenge, scoring 383 pure points (9.57/10 average) with 38 elite 9+/10 performances.",
+      "participationCitation": "In grateful recognition of an extraordinary 40-week marathon campaign in the 2026 UCE '87 Ultimate Challenge Experience, scoring 383 pure points (9.57/10 average) with 38 elite 9+/10 performances.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -501,7 +501,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In grateful recognition of an extraordinary 40-week marathon campaign in the 2026 UCE '89 Ultimate Challenge, scoring 379 pure points (9.47/10 average) with 37 elite 9+/10 performances.",
+      "participationCitation": "In grateful recognition of an extraordinary 40-week marathon campaign in the 2026 UCE '87 Ultimate Challenge Experience, scoring 379 pure points (9.47/10 average) with 37 elite 9+/10 performances.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -895,7 +895,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In grateful recognition of an extraordinary 38-week marathon campaign in the 2026 UCE '89 Ultimate Challenge, scoring 357 pure points (9.39/10 average) with 33 elite 9+/10 performances.",
+      "participationCitation": "In grateful recognition of an extraordinary 38-week marathon campaign in the 2026 UCE '87 Ultimate Challenge Experience, scoring 357 pure points (9.39/10 average) with 33 elite 9+/10 performances.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -1289,7 +1289,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In grateful recognition of an extraordinary 36-week marathon campaign in the 2026 UCE '89 Ultimate Challenge, scoring 339 pure points (9.42/10 average) with 32 elite 9+/10 performances.",
+      "participationCitation": "In grateful recognition of an extraordinary 36-week marathon campaign in the 2026 UCE '87 Ultimate Challenge Experience, scoring 339 pure points (9.42/10 average) with 32 elite 9+/10 performances.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -3581,7 +3581,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In grateful recognition of an extraordinary 39-week marathon campaign in the 2026 UCE '89 Ultimate Challenge, scoring 271 pure points (6.95/10 average) with 8 elite 9+/10 performances.",
+      "participationCitation": "In grateful recognition of an extraordinary 39-week marathon campaign in the 2026 UCE '87 Ultimate Challenge Experience, scoring 271 pure points (6.95/10 average) with 8 elite 9+/10 performances.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -5677,7 +5677,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In grateful recognition of an extraordinary 36-week marathon campaign in the 2026 UCE '89 Ultimate Challenge, scoring 243 pure points (6.75/10 average) with 5 elite 9+/10 performances.",
+      "participationCitation": "In grateful recognition of an extraordinary 36-week marathon campaign in the 2026 UCE '87 Ultimate Challenge Experience, scoring 243 pure points (6.75/10 average) with 5 elite 9+/10 performances.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -7752,7 +7752,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In grateful recognition of an extraordinary 37-week marathon campaign in the 2026 UCE '89 Ultimate Challenge, scoring 240 pure points (6.49/10 average) with 5 elite 9+/10 performances.",
+      "participationCitation": "In grateful recognition of an extraordinary 37-week marathon campaign in the 2026 UCE '87 Ultimate Challenge Experience, scoring 240 pure points (6.49/10 average) with 5 elite 9+/10 performances.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -9788,11 +9788,11 @@ export const FINALE_DATA = {
           "accent": "from-amber-400 via-yellow-600 to-stone-800",
           "statsBadge": "#8 Pure Score (235 Pts) • 39 Official + Pilot • 5 Giant Slayers",
           "citation": "For exemplifying unwavering dedication—playing 39 of 40 official quizzes plus the Pilot Week, being the first person in the club to submit on 4 Monday mornings, solving 5 Giant-Slayer stumpers, and knocking on perfection's door with five 9/10 scores!",
-          "aiPrompt": "Transform the person in the attached photo into a powerful, celebratory 3D/illustrated portrait as 'The Unstoppable Ironman of UCE89'. Keep their facial features clearly recognizable. They are wearing a royal navy suit with a glowing golden emblem on the chest, holding a heavy solid-gold 'IRONMAN' shield trophy surrounded by laurels."
+          "aiPrompt": "Transform the person in the attached photo into a powerful, celebratory 3D/illustrated portrait as 'The Unstoppable Ironman of UCE87'. Keep their facial features clearly recognizable. They are wearing a royal navy suit with a glowing golden emblem on the chest, holding a heavy solid-gold 'IRONMAN' shield trophy surrounded by laurels."
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In grateful recognition of an extraordinary 39-week marathon campaign in the 2026 UCE '89 Ultimate Challenge, scoring 235 pure points (6.03/10 average) with 5 elite 9+/10 performances.",
+      "participationCitation": "In grateful recognition of an extraordinary 39-week marathon campaign in the 2026 UCE '87 Ultimate Challenge Experience, scoring 235 pure points (6.03/10 average) with 5 elite 9+/10 performances.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -11552,7 +11552,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 22-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 195 pure points (8.86/10 average) and a personal best of 10/10.",
+      "participationCitation": "In warm appreciation of your spirited 22-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 195 pure points (8.86/10 average) and a personal best of 10/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -13242,7 +13242,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 25-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 185 pure points (7.4/10 average) and a personal best of 10/10.",
+      "participationCitation": "In warm appreciation of your spirited 25-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 185 pure points (7.4/10 average) and a personal best of 10/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -14883,7 +14883,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 29-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 178 pure points (6.14/10 average) and a personal best of 10/10.",
+      "participationCitation": "In warm appreciation of your spirited 29-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 178 pure points (6.14/10 average) and a personal best of 10/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -16510,7 +16510,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 19-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 176 pure points (9.26/10 average) and a personal best of 10/10.",
+      "participationCitation": "In warm appreciation of your spirited 19-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 176 pure points (9.26/10 average) and a personal best of 10/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -18048,12 +18048,12 @@ export const FINALE_DATA = {
           "icon": "Calendar",
           "accent": "from-amber-400 via-yellow-500 to-orange-700",
           "statsBadge": "6 Weeks First Submitter • 68% Monday Submissions",
-          "citation": "For setting the pace for the entire UCE '89 batch—being the very first person in the club to submit the new quiz in 6 different weeks (including 4 straight weeks from W37 to W40) across 25 weeks played!",
+          "citation": "For setting the pace for the entire UCE '87 batch—being the very first person in the club to submit the new quiz in 6 different weeks (including 4 straight weeks from W37 to W40) across 25 weeks played!",
           "aiPrompt": "Transform the person in the attached photo into a cheerful 3D/illustrated portrait as 'The Monday Morning Bellwether'. Keep their facial features clearly recognizable. They are ringing a gleaming ceremonial golden bell with a banner reading 'FIRST ON THE DRAW', dressed in a royal blue and gold jacket at sunrise."
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 25-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 164 pure points (6.56/10 average) and a personal best of 9/10.",
+      "participationCitation": "In warm appreciation of your spirited 25-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 164 pure points (6.56/10 average) and a personal best of 9/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -19519,7 +19519,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 21-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 153 pure points (7.29/10 average) and a personal best of 10/10.",
+      "participationCitation": "In warm appreciation of your spirited 21-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 153 pure points (7.29/10 average) and a personal best of 10/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -20971,7 +20971,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 18-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 151 pure points (8.39/10 average) and a personal best of 10/10.",
+      "participationCitation": "In warm appreciation of your spirited 18-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 151 pure points (8.39/10 average) and a personal best of 10/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -22332,7 +22332,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 18-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 138 pure points (7.67/10 average) and a personal best of 10/10.",
+      "participationCitation": "In warm appreciation of your spirited 18-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 138 pure points (7.67/10 average) and a personal best of 10/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -23567,7 +23567,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 17-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 120 pure points (7.06/10 average) and a personal best of 10/10.",
+      "participationCitation": "In warm appreciation of your spirited 17-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 120 pure points (7.06/10 average) and a personal best of 10/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -24669,7 +24669,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your spirited 16-week campaign in the 2026 UCE '89 Ultimate Challenge, amassing 101 pure points (6.31/10 average) and a personal best of 9/10.",
+      "participationCitation": "In warm appreciation of your spirited 16-week campaign in the 2026 UCE '87 Ultimate Challenge Experience, amassing 101 pure points (6.31/10 average) and a personal best of 9/10.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -25554,7 +25554,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 9 quizzes, recording a high score of 10/10 and a fastest time of 154s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 9 quizzes, recording a high score of 10/10 and a fastest time of 154s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -26390,7 +26390,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 9 quizzes, recording a high score of 10/10 and a fastest time of 177s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 9 quizzes, recording a high score of 10/10 and a fastest time of 177s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -27184,7 +27184,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 9 quizzes, recording a high score of 10/10 and a fastest time of 101s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 9 quizzes, recording a high score of 10/10 and a fastest time of 101s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -27938,7 +27938,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 9 quizzes, recording a high score of 9/10 and a fastest time of 314s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 9 quizzes, recording a high score of 9/10 and a fastest time of 314s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -28685,7 +28685,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 7 quizzes, recording a high score of 10/10 and a fastest time of 251s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 7 quizzes, recording a high score of 10/10 and a fastest time of 251s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -29383,7 +29383,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 6 quizzes, recording a high score of 10/10 and a fastest time of 149s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 6 quizzes, recording a high score of 10/10 and a fastest time of 149s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -30081,7 +30081,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 6 quizzes, recording a high score of 10/10 and a fastest time of 146s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 6 quizzes, recording a high score of 10/10 and a fastest time of 146s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -30765,7 +30765,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 6 quizzes, recording a high score of 9/10 and a fastest time of 229s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 6 quizzes, recording a high score of 9/10 and a fastest time of 229s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -31351,7 +31351,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 4 quizzes, recording a high score of 9/10 and a fastest time of 173s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 4 quizzes, recording a high score of 9/10 and a fastest time of 173s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -31895,7 +31895,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 5 quizzes, recording a high score of 7/10 and a fastest time of 149s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 5 quizzes, recording a high score of 7/10 and a fastest time of 149s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -32451,7 +32451,7 @@ export const FINALE_DATA = {
         }
       ],
       "hasSpecialAward": true,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 3 quizzes, recording a high score of 10/10 and a fastest time of 153s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 3 quizzes, recording a high score of 10/10 and a fastest time of 153s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -32988,7 +32988,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 3 quizzes, recording a high score of 10/10 and a fastest time of 147s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 3 quizzes, recording a high score of 10/10 and a fastest time of 147s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -33497,7 +33497,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 3 quizzes, recording a high score of 8/10 and a fastest time of 236s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 3 quizzes, recording a high score of 8/10 and a fastest time of 236s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -33978,7 +33978,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 2 quizzes, recording a high score of 8/10 and a fastest time of 513s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 2 quizzes, recording a high score of 8/10 and a fastest time of 513s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -34445,7 +34445,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 2 quizzes, recording a high score of 9/10 and a fastest time of 287s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 2 quizzes, recording a high score of 9/10 and a fastest time of 287s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -34898,7 +34898,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 2 quizzes, recording a high score of 5/10 and a fastest time of 145s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 2 quizzes, recording a high score of 5/10 and a fastest time of 145s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -35344,7 +35344,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 2 quizzes, recording a high score of 5/10 and a fastest time of 196s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 2 quizzes, recording a high score of 5/10 and a fastest time of 196s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -35783,7 +35783,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 2 quizzes, recording a high score of 8/10 and a fastest time of 73s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 2 quizzes, recording a high score of 8/10 and a fastest time of 73s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -36222,7 +36222,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 1 quiz, recording a high score of 8/10 and a fastest time of 525s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 1 quiz, recording a high score of 8/10 and a fastest time of 525s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -36654,7 +36654,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 2 quizzes, recording a high score of 5/10 and a fastest time of 235s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 2 quizzes, recording a high score of 5/10 and a fastest time of 235s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -37079,7 +37079,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 1 quiz, recording a high score of 6/10 and a fastest time of 211s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 1 quiz, recording a high score of 6/10 and a fastest time of 211s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -37490,7 +37490,7 @@ export const FINALE_DATA = {
       ],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '89 Ultimate Challenge across 1 quiz, recording a high score of 4/10 and a fastest time of 305s.",
+      "participationCitation": "In warm appreciation of your enthusiastic participation in the 2026 UCE '87 Ultimate Challenge Experience across 1 quiz, recording a high score of 4/10 and a fastest time of 305s.",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -37866,7 +37866,7 @@ export const FINALE_DATA = {
       "giantSlayerSolves": [],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '89 Pilot Quiz Challenge (scoring 10/10 in 38s) and kicking off our 40-week journey!",
+      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '87 Pilot Quiz Challenge Experience (scoring 10/10 in 38s) and kicking off our 40-week journey!",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -38242,7 +38242,7 @@ export const FINALE_DATA = {
       "giantSlayerSolves": [],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '89 Pilot Quiz Challenge (scoring 10/10 in 59s) and kicking off our 40-week journey!",
+      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '87 Pilot Quiz Challenge Experience (scoring 10/10 in 59s) and kicking off our 40-week journey!",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -38618,7 +38618,7 @@ export const FINALE_DATA = {
       "giantSlayerSolves": [],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '89 Pilot Quiz Challenge (scoring 9/10 in 50s) and kicking off our 40-week journey!",
+      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '87 Pilot Quiz Challenge Experience (scoring 9/10 in 50s) and kicking off our 40-week journey!",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -38994,7 +38994,7 @@ export const FINALE_DATA = {
       "giantSlayerSolves": [],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '89 Pilot Quiz Challenge (scoring 9/10 in 50s) and kicking off our 40-week journey!",
+      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '87 Pilot Quiz Challenge Experience (scoring 9/10 in 50s) and kicking off our 40-week journey!",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -39370,7 +39370,7 @@ export const FINALE_DATA = {
       "giantSlayerSolves": [],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '89 Pilot Quiz Challenge (scoring 8/10 in 473s) and kicking off our 40-week journey!",
+      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '87 Pilot Quiz Challenge Experience (scoring 8/10 in 473s) and kicking off our 40-week journey!",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -39746,7 +39746,7 @@ export const FINALE_DATA = {
       "giantSlayerSolves": [],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '89 Pilot Quiz Challenge (scoring 8/10 in 141s) and kicking off our 40-week journey!",
+      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '87 Pilot Quiz Challenge Experience (scoring 8/10 in 141s) and kicking off our 40-week journey!",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -40122,7 +40122,7 @@ export const FINALE_DATA = {
       "giantSlayerSolves": [],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '89 Pilot Quiz Challenge (scoring 7/10 in 827s) and kicking off our 40-week journey!",
+      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '87 Pilot Quiz Challenge Experience (scoring 7/10 in 827s) and kicking off our 40-week journey!",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -40498,7 +40498,7 @@ export const FINALE_DATA = {
       "giantSlayerSolves": [],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '89 Pilot Quiz Challenge (scoring 7/10 in 276s) and kicking off our 40-week journey!",
+      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '87 Pilot Quiz Challenge Experience (scoring 7/10 in 276s) and kicking off our 40-week journey!",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -40874,7 +40874,7 @@ export const FINALE_DATA = {
       "giantSlayerSolves": [],
       "awards": [],
       "hasSpecialAward": false,
-      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '89 Pilot Quiz Challenge (scoring 2/10 in 116s) and kicking off our 40-week journey!",
+      "participationCitation": "In warm appreciation of being a Day-One Pioneer in the January 2026 UCE '87 Pilot Quiz Challenge Experience (scoring 2/10 in 116s) and kicking off our 40-week journey!",
       "weeklyJourney": [
         {
           "quizNum": 1,
@@ -41209,7 +41209,7 @@ export const FINALE_DATA = {
       "icon": "Crown",
       "accent": "from-amber-400 via-yellow-500 to-amber-700",
       "statsBadge": "383 / 400 Pts • 9.58 Avg • 40/40 Weeks",
-      "citation": "For conquering the 40-week UCE '89 Ultimate Challenge with an extraordinary 383 out of 400 pure points, a 9.58 season average, 25 Perfect 10/10s, a 33-week streak of 9+ scores, and never once scoring below 8/10 across all 40 weeks.",
+      "citation": "For conquering the 40-week UCE '87 Ultimate Challenge Experience with an extraordinary 383 out of 400 pure points, a 9.58 season average, 25 Perfect 10/10s, a 33-week streak of 9+ scores, and never once scoring below 8/10 across all 40 weeks.",
       "aiPrompt": "Transform the person in the attached photo into a regal, celebratory 3D Pixar/illustrated royal portrait as 'The Grand Master Quiz Champion'. Keep their facial features, glasses/hair, and warm smile clearly recognizable. They are wearing a bespoke midnight-blue velvet blazer with gold embroidery, holding a grand golden Championship Cup engraved with '383/400', with the iconic Singapore Marina Bay skyline and a golden chess king piece glowing softly in the background. Rich royal blue and antique gold lighting.",
       "normPhone": "6583335250",
       "winnerName": "Rashmi Ranjan Raj",
@@ -41228,8 +41228,8 @@ export const FINALE_DATA = {
       "icon": "Globe",
       "accent": "from-emerald-400 to-teal-700",
       "statsBadge": "100% Attendance from Singapore • 88.1% Tough-Q Accuracy",
-      "citation": "For representing the international UCE '89 contingent from Singapore (+65) with 100% unbroken attendance across all 40 weeks and solving 88.1% of the season's hardest stumper questions.",
-      "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait representing Singapore and India with a golden globe trophy and 'UCE 89 GLOBAL CHAMPION' banner.",
+      "citation": "For representing the international UCE '87 contingent from Singapore (+65) with 100% unbroken attendance across all 40 weeks and solving 88.1% of the season's hardest stumper questions.",
+      "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait representing Singapore and India with a golden globe trophy and 'UCE 87 GLOBAL CHAMPION' banner.",
       "normPhone": "6583335250",
       "winnerName": "Rashmi Ranjan Raj",
       "winnerDisplayName": "Rashmi Ranjan Raj",
@@ -41381,7 +41381,7 @@ export const FINALE_DATA = {
       "accent": "from-amber-400 via-yellow-600 to-stone-800",
       "statsBadge": "#8 Pure Score (235 Pts) • 39 Official + Pilot • 5 Giant Slayers",
       "citation": "For exemplifying unwavering dedication—playing 39 of 40 official quizzes plus the Pilot Week, being the first person in the club to submit on 4 Monday mornings, solving 5 Giant-Slayer stumpers, and knocking on perfection's door with five 9/10 scores!",
-      "aiPrompt": "Transform the person in the attached photo into a powerful, celebratory 3D/illustrated portrait as 'The Unstoppable Ironman of UCE89'. Keep their facial features clearly recognizable. They are wearing a royal navy suit with a glowing golden emblem on the chest, holding a heavy solid-gold 'IRONMAN' shield trophy surrounded by laurels.",
+      "aiPrompt": "Transform the person in the attached photo into a powerful, celebratory 3D/illustrated portrait as 'The Unstoppable Ironman of UCE87'. Keep their facial features clearly recognizable. They are wearing a royal navy suit with a glowing golden emblem on the chest, holding a heavy solid-gold 'IRONMAN' shield trophy surrounded by laurels.",
       "normPhone": "7683062137",
       "winnerName": "Bishnu Charan Behera",
       "winnerDisplayName": "Bishnu Charan Behera (Bishnu)",
@@ -41475,7 +41475,7 @@ export const FINALE_DATA = {
       "icon": "Calendar",
       "accent": "from-amber-400 via-yellow-500 to-orange-700",
       "statsBadge": "6 Weeks First Submitter • 68% Monday Submissions",
-      "citation": "For setting the pace for the entire UCE '89 batch—being the very first person in the club to submit the new quiz in 6 different weeks (including 4 straight weeks from W37 to W40) across 25 weeks played!",
+      "citation": "For setting the pace for the entire UCE '87 batch—being the very first person in the club to submit the new quiz in 6 different weeks (including 4 straight weeks from W37 to W40) across 25 weeks played!",
       "aiPrompt": "Transform the person in the attached photo into a cheerful 3D/illustrated portrait as 'The Monday Morning Bellwether'. Keep their facial features clearly recognizable. They are ringing a gleaming ceremonial golden bell with a banner reading 'FIRST ON THE DRAW', dressed in a royal blue and gold jacket at sunrise.",
       "normPhone": "9810226391",
       "winnerName": "Raghunath Mohapatra",
