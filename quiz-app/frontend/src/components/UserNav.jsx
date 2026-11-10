@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, LogOut, Trophy, Award, ChevronDown, Sparkles, Home, Edit3, ShieldCheck } from 'lucide-react';
+import { User, LogOut, Trophy, Award, ChevronDown, Sparkles, Home, Edit3, ShieldCheck, Camera } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { useSoundManager } from '../hooks/useSoundManager';
@@ -189,6 +189,14 @@ export default function UserNav() {
                                     <span>2026 Season Rewind</span>
                                 </button>
                             )}
+
+                            <button
+                                onClick={() => handleNavigate('/yaadein')}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-amber-100 hover:bg-white/10 hover:text-antique-gold rounded-lg transition-colors cursor-pointer"
+                            >
+                                <Camera size={15} className="text-antique-gold" />
+                                <span>Yaadein • यादें (Album)</span>
+                            </button>
 
                             <button
                                 onClick={() => handleNavigate('/leaderboard')}

@@ -6,7 +6,7 @@ from services.phone_service import normalize_phone, is_tester_phone, is_phone_wh
 from services.user_service import get_active_week_id, get_user_doc_ref
 
 # Import Routers
-from routers import auth, profile, quiz, leaderboard, config, admin
+from routers import auth, profile, quiz, leaderboard, config, admin, memories
 
 app = FastAPI(
     title="United89 Club & UCE Quiz API",
@@ -55,6 +55,7 @@ app.include_router(quiz.router)
 app.include_router(leaderboard.router)
 app.include_router(config.router)
 app.include_router(admin.router)
+app.include_router(memories.router)
 
 @app.get("/health", tags=["Health"])
 @app.get("/", tags=["Health"])

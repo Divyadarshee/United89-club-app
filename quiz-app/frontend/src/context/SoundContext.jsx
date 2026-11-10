@@ -34,6 +34,7 @@ export const SoundProvider = ({ children }) => {
     useEffect(() => {
         const isCurrentlyPlaying = !bgmRef.current.paused;
         bgmRef.current.pause();
+        bgmRef.current.preload = 'metadata';
         bgmRef.current.src = themeBgmMap[activeTheme] || bgmUrl;
         bgmRef.current.loop = true;
         bgmRef.current.volume = 0.4;
@@ -48,13 +49,17 @@ export const SoundProvider = ({ children }) => {
         isMutedRef.current = isMuted;
     }, [isMuted]);
 
-    // Initialize BGM loop
+    // Initialize BGM loop (use preload='metadata' so mobile browsers stream via HTTP Range instead of downloading 10MB upfront)
     useEffect(() => {
+        bgmRef.current.preload = 'metadata';
         bgmRef.current.loop = true;
         bgmRef.current.volume = 0.4; // Low volume for background
+        fanfareRef.current.preload = 'metadata';
         fanfareRef.current.volume = 0.3; // Low volume for background
+        clickRef.current.preload = 'auto';
         clickRef.current.volume = 0.2; // Reduced click volume per user request
 
+        tickingRef.current.preload = 'metadata';
         tickingRef.current.loop = true;
 
         // Cleanup on unmount
