@@ -11,7 +11,11 @@ import { useConfig } from '../context/ConfigContext';
 import { useSoundManager } from '../hooks/useSoundManager';
 import { AVATAR_OPTIONS, getAvatarBg, getAvatarEmoji } from '../components/UserNav';
 import { FINALE_DATA } from '../data/finaleData';
-import { renderCertificateToDataUrl, renderWrappedCardToDataUrl } from '../utils/certificateRenderer';
+import {
+    renderCertificateToDataUrl,
+    renderWrappedCardToDataUrl,
+    LOGO_STYLE_OPTIONS,
+} from '../utils/certificateRenderer';
 import { normalizePhone, isFinaleAdmin, isFinaleUnlocked } from '../utils/featureFlags';
 import PersonalStoryModal from '../components/PersonalStoryModal';
 import ImageLightboxModal from '../components/ImageLightboxModal';
@@ -169,6 +173,7 @@ export default function Profile() {
 
     const [certType, setCertType] = useState('award'); // 'award' | 'participation'
     const [selectedAwardIdx, setSelectedAwardIdx] = useState(0);
+    const [logoStyle, setLogoStyle] = useState('hybrid');
     const [memberPhotos, setMemberPhotos] = useState({});
     const [certDataUrl, setCertDataUrl] = useState(null);
     const [wrappedDataUrl, setWrappedDataUrl] = useState(null);
@@ -238,10 +243,12 @@ export default function Profile() {
                         certType: activeAward ? 'award' : 'participation',
                         award: activeAward,
                         photoDataUrl: currentPhoto,
+                        logoStyle,
                     }),
                     renderWrappedCardToDataUrl({
                         player: finalePlayer,
                         photoDataUrl: currentPhoto,
+                        logoStyle,
                     }),
                 ]);
                 if (!cancelled) {
@@ -258,7 +265,7 @@ export default function Profile() {
         return () => {
             cancelled = true;
         };
-    }, [finalePlayer, certType, selectedAwardIdx, currentPhoto]);
+    }, [finalePlayer, certType, selectedAwardIdx, currentPhoto, logoStyle]);
 
     const handlePhotoUpload = (e) => {
         const file = e.target.files?.[0];
@@ -296,6 +303,7 @@ export default function Profile() {
                 certType: activeAward ? 'award' : 'participation',
                 award: activeAward,
                 photoDataUrl: currentPhoto,
+                logoStyle,
             });
             setCertDataUrl(url);
         }
@@ -310,6 +318,7 @@ export default function Profile() {
             url = await renderWrappedCardToDataUrl({
                 player: finalePlayer,
                 photoDataUrl: currentPhoto,
+                logoStyle,
             });
             setWrappedDataUrl(url);
         }
@@ -1074,6 +1083,37 @@ export default function Profile() {
                                 >
                                     📜 40-Week Excellence &amp; Participation Certificate
                                 </button>
+                            </div>
+
+                            {/* UCE Logo Placement Style Switcher */}
+                            <div className="bg-[#09132c]/80 border border-antique-gold/30 rounded-xl p-3 space-y-2 text-left">
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="text-[11px] uppercase tracking-wider font-bold text-antique-gold">
+                                        🎨 UCE Logo Layout Option (Compare Live):
+                                    </span>
+                                    <span className="text-[11px] text-amber-200/80 font-sans">
+                                        {LOGO_STYLE_OPTIONS.find((o) => o.id === logoStyle)?.desc}
+                                    </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {LOGO_STYLE_OPTIONS.map((opt) => (
+                                        <button
+                                            key={opt.id}
+                                            type="button"
+                                            onClick={() => {
+                                                playSound('click');
+                                                setLogoStyle(opt.id);
+                                            }}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer border ${
+                                                logoStyle === opt.id
+                                                    ? 'bg-antique-gold text-[#0b1528] border-antique-gold shadow-md'
+                                                    : 'bg-black/40 text-amber-100/85 border-antique-gold/30 hover:border-antique-gold/70'
+                                            }`}
+                                        >
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             {/* Preview Grid: Certificate + WhatsApp Wrapped Card */}

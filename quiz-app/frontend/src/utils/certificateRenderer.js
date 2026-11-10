@@ -1,6 +1,43 @@
 // High-Resolution Canvas 2D Renderer for Certificates & WhatsApp Wrapped Cards
 // Zero external dependencies — works reliably on iOS Safari, Android Chrome, and Desktop
 
+import uceLogoAssetUrl from '../assets/images/uce-logo.jpg';
+
+export const LOGO_STYLE_OPTIONS = [
+  {
+    id: 'hybrid',
+    label: '✨ Option 1: Hybrid Royal (Recommended)',
+    shortLabel: 'Hybrid (Watermark + Seal)',
+    desc: 'Soft background watermark + full-color UCE logo in bottom official seal & default center crest.',
+  },
+  {
+    id: 'watermark',
+    label: '🌕 Option 2: Grand Background Watermark',
+    shortLabel: 'Background Watermark',
+    desc: 'Large circular gold-foil watermark behind the text with soft transparency so all text stays crisp.',
+  },
+  {
+    id: 'top-medallion',
+    label: '👑 Option 3: Top Header Medallion (Rearranged)',
+    shortLabel: 'Top Header Medallion',
+    desc: 'Full-color circular UCE logo medallion crowning the top header with a rearranged, balanced layout.',
+  },
+  {
+    id: 'corner-crest',
+    label: '🛡️ Option 4: Dual Upper-Corner Royal Crests',
+    shortLabel: 'Upper Corner Crests',
+    desc: 'Full-color UCE medallion in the upper-left balanced by a 40-Week Season Seal in the upper-right.',
+  },
+  {
+    id: 'centerpiece',
+    label: '🏅 Option 5: Main Centerpiece Emblem',
+    shortLabel: 'Centerpiece Emblem',
+    desc: 'Full-color UCE logo inside the main centerpiece ring (docks as a corner badge when a photo is added).',
+  },
+];
+
+let cachedLogoPromise = null;
+
 function loadImage(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -9,6 +46,212 @@ function loadImage(src) {
     img.onerror = (e) => reject(e);
     img.src = src;
   });
+}
+
+async function getUceLogoImage(customLogoSrc = null) {
+  if (customLogoSrc) {
+    try {
+      return await loadImage(customLogoSrc);
+    } catch {
+      // fall through
+    }
+  }
+  if (!cachedLogoPromise) {
+    cachedLogoPromise = loadImage(uceLogoAssetUrl || '/uce-logo.jpg').catch(() =>
+      loadImage('/uce-logo.jpg').catch(() => null)
+    );
+  }
+  return cachedLogoPromise;
+}
+
+/**
+ * Renders the rectangular UCE Saraswati logo onto an offscreen square canvas
+ * with an elliptical radial alpha feather so that:
+ * 1) Both Maa Saraswati's halo at the top and "Ultimate Challenge EXPERIENCE" at the bottom fit inside.
+ * 2) All 4 rectangular edges fade smoothly to 0 alpha before the image boundary (zero hard seams).
+ */
+function createFeatheredLogoCanvas(logoImg, diameter) {
+  const off = document.createElement('canvas');
+  off.width = diameter;
+  off.height = diameter;
+  const octx = off.getContext('2d');
+
+  const cx = diameter / 2;
+  const cy = diameter / 2;
+
+  // Fit full vertical height inside the circle so neither crown nor bottom ribbon is clipped
+  const drawH = diameter * 0.96;
+  const drawW = drawH * (logoImg.width / logoImg.height);
+  octx.drawImage(logoImg, cx - drawW / 2, cy - drawH / 2, drawW, drawH);
+
+  // Elliptical radial alpha mask that reaches 0 before drawW/2 and drawH/2
+  const rx = (drawW / 2) * 0.96;
+  const ry = (drawH / 2) * 0.97;
+  octx.save();
+  octx.globalCompositeOperation = 'destination-in';
+  octx.translate(cx, cy);
+  octx.scale(rx, ry);
+  const maskGrad = octx.createRadialGradient(0, 0, 0.52, 0, 0, 1.0);
+  maskGrad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+  maskGrad.addColorStop(0.72, 'rgba(0, 0, 0, 0.92)');
+  maskGrad.addColorStop(0.88, 'rgba(0, 0, 0, 0.45)');
+  maskGrad.addColorStop(1.0, 'rgba(0, 0, 0, 0)');
+  octx.fillStyle = maskGrad;
+  octx.beginPath();
+  octx.arc(0, 0, 1.05, 0, Math.PI * 2);
+  octx.fill();
+  octx.restore();
+
+  return off;
+}
+
+/**
+ * Draws a large, soft circular background watermark of the UCE logo.
+ * Uses 'screen' blend so the dark JPEG background disappears completely into
+ * the midnight-blue backdrop while the golden artwork glows like gold foil.
+ */
+function drawUceLogoWatermark(ctx, logoImg, cx, cy, radius, opacity = 0.20) {
+  if (!logoImg) return;
+  ctx.save();
+
+  // Subtle ambient warm golden glow behind the watermark
+  const glow = ctx.createRadialGradient(cx, cy, radius * 0.15, cx, cy, radius * 1.05);
+  glow.addColorStop(0, `rgba(197, 160, 89, ${opacity * 0.42})`);
+  glow.addColorStop(0.65, `rgba(197, 160, 89, ${opacity * 0.16})`);
+  glow.addColorStop(1, 'rgba(197, 160, 89, 0)');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 1.05, 0, Math.PI * 2);
+  ctx.fill();
+
+  const feathered = createFeatheredLogoCanvas(logoImg, Math.round(radius * 2));
+
+  // Pass 1: Soft source-over body
+  ctx.globalAlpha = opacity * 0.35;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(feathered, cx - radius, cy - radius, radius * 2, radius * 2);
+
+  // Pass 2: Screen blend so golden rays & Saraswati illuminate without darkening the blue canvas
+  ctx.globalAlpha = opacity;
+  ctx.globalCompositeOperation = 'screen';
+  ctx.drawImage(feathered, cx - radius, cy - radius, radius * 2, radius * 2);
+
+  // Delicate double circular watermark filigree ring
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.strokeStyle = `rgba(243, 216, 140, ${Math.min(opacity * 0.85, 0.22)})`;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.93, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.setLineDash([8, 10]);
+  ctx.strokeStyle = `rgba(197, 160, 89, ${Math.min(opacity * 0.65, 0.16)})`;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.97, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.restore();
+}
+
+/**
+ * Draws a crisp, full-color circular gold-rimmed medallion featuring the UCE Saraswati logo.
+ */
+function drawUceLogoMedallion(
+  ctx,
+  logoImg,
+  cx,
+  cy,
+  radius,
+  { showOuterRays = true, showDots = true, ribbonText = null } = {}
+) {
+  if (!logoImg) return;
+  ctx.save();
+
+  if (showOuterRays) {
+    const grad = ctx.createRadialGradient(cx, cy, radius * 0.6, cx, cy, radius * 1.32);
+    grad.addColorStop(0, 'rgba(243, 216, 140, 0.38)');
+    grad.addColorStop(1, 'rgba(197, 160, 89, 0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius * 1.32, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  if (showDots) {
+    const numDots = 28;
+    const dotOffset = Math.max(Math.round(radius * 0.13), 8);
+    for (let i = 0; i < numDots; i++) {
+      const angle = (i / numDots) * Math.PI * 2;
+      const dx = cx + Math.cos(angle) * (radius + dotOffset);
+      const dy = cy + Math.sin(angle) * (radius + dotOffset);
+      ctx.fillStyle = i % 2 === 0 ? '#f3d88c' : '#c5a059';
+      ctx.beginPath();
+      ctx.arc(dx, dy, i % 2 === 0 ? Math.max(radius * 0.036, 2.2) : Math.max(radius * 0.022, 1.5), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // Metallic gold outer bezel
+  const borderPad = Math.max(Math.round(radius * 0.065), 4);
+  const ringGrad = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
+  ringGrad.addColorStop(0, '#fff2b2');
+  ringGrad.addColorStop(0.5, '#c5a059');
+  ringGrad.addColorStop(1, '#7a581b');
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius + borderPad, 0, Math.PI * 2);
+  ctx.fillStyle = ringGrad;
+  ctx.fill();
+
+  // Warm dark-bronze circular interior matching the logo's native backdrop
+  const innerBg = ctx.createRadialGradient(cx, cy, radius * 0.1, cx, cy, radius);
+  innerBg.addColorStop(0, '#2b1704');
+  innerBg.addColorStop(0.65, '#120a02');
+  innerBg.addColorStop(1, '#070503');
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = innerBg;
+  ctx.fill();
+
+  // Clip to inner circle and draw feathered logo so entire height fits cleanly
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius - 1.5, 0, Math.PI * 2);
+  ctx.clip();
+  const feathered = createFeatheredLogoCanvas(logoImg, Math.round(radius * 2.04));
+  ctx.drawImage(feathered, cx - radius * 1.02, cy - radius * 1.02, radius * 2.04, radius * 2.04);
+  ctx.restore();
+
+  // Subtle inner gold rim highlight
+  ctx.strokeStyle = 'rgba(249, 228, 152, 0.55)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius - 3, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Optional bottom ribbon pill over the medallion edge
+  if (ribbonText) {
+    ctx.font = `bold ${Math.max(Math.round(radius * 0.2), 13)}px Arial, sans-serif`;
+    const rw = Math.max(ctx.measureText(ribbonText).width + 28, radius * 1.35);
+    const rh = Math.max(Math.round(radius * 0.32), 22);
+    const rx = cx - rw / 2;
+    const ry = cy + radius - rh * 0.55;
+    drawRoundedRect(ctx, rx, ry, rw, rh, rh / 2);
+    ctx.fillStyle = '#09132c';
+    ctx.fill();
+    ctx.strokeStyle = '#f3d88c';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#f3d88c';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ribbonText, cx, ry + rh / 2 + 1);
+  }
+
+  ctx.restore();
 }
 
 function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
@@ -77,7 +320,24 @@ function drawCornerOrnament(ctx, x, y, size, flipX = 1, flipY = 1) {
   ctx.restore();
 }
 
-function drawRoyalCrestOrPhoto(ctx, cx, cy, radius, photoImg, badgeLabel = 'UCE 87') {
+function drawRoyalCrestOrPhoto(
+  ctx,
+  cx,
+  cy,
+  radius,
+  photoImg,
+  badgeLabel = 'UCE 87',
+  { logoImg = null, useLogoWhenNoPhoto = false, showCornerLogoBadge = false } = {}
+) {
+  if (!photoImg && useLogoWhenNoPhoto && logoImg) {
+    drawUceLogoMedallion(ctx, logoImg, cx, cy, radius, {
+      showOuterRays: true,
+      showDots: true,
+      ribbonText: badgeLabel,
+    });
+    return;
+  }
+
   ctx.save();
   // Outer golden rays / laurel ring
   const grad = ctx.createRadialGradient(cx, cy, radius * 0.6, cx, cy, radius * 1.28);
@@ -129,6 +389,18 @@ function drawRoyalCrestOrPhoto(ctx, cx, cy, radius, photoImg, badgeLabel = 'UCE 
     const dh = ih * scale;
     ctx.drawImage(photoImg, cx - dw / 2, cy - dh / 2, dw, dh);
     ctx.restore();
+
+    if (showCornerLogoBadge && logoImg) {
+      const badgeR = Math.round(radius * 0.4);
+      drawUceLogoMedallion(
+        ctx,
+        logoImg,
+        cx + radius * 0.74,
+        cy + radius * 0.72,
+        badgeR,
+        { showOuterRays: false, showDots: false }
+      );
+    }
   } else {
     // Draw Royal Star & Trophy Emblem
     ctx.fillStyle = '#f3d88c';
@@ -144,11 +416,71 @@ function drawRoyalCrestOrPhoto(ctx, cx, cy, radius, photoImg, badgeLabel = 'UCE 
   ctx.restore();
 }
 
+function drawRoyalSecondarySeal(ctx, cx, cy, radius, topText, mainText, subText) {
+  ctx.save();
+  const grad = ctx.createRadialGradient(cx, cy, radius * 0.6, cx, cy, radius * 1.28);
+  grad.addColorStop(0, 'rgba(197, 160, 89, 0.3)');
+  grad.addColorStop(1, 'rgba(197, 160, 89, 0)');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 1.28, 0, Math.PI * 2);
+  ctx.fill();
+
+  const numDots = 28;
+  for (let i = 0; i < numDots; i++) {
+    const angle = (i / numDots) * Math.PI * 2;
+    const dx = cx + Math.cos(angle) * (radius + 11);
+    const dy = cy + Math.sin(angle) * (radius + 11);
+    ctx.fillStyle = i % 2 === 0 ? '#f3d88c' : '#c5a059';
+    ctx.beginPath();
+    ctx.arc(dx, dy, i % 2 === 0 ? 3 : 1.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  const ringGrad = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
+  ringGrad.addColorStop(0, '#f9e498');
+  ringGrad.addColorStop(0.5, '#c5a059');
+  ringGrad.addColorStop(1, '#8c6928');
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius + 5, 0, Math.PI * 2);
+  ctx.fillStyle = ringGrad;
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.fillStyle = '#09132c';
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(243, 216, 140, 0.45)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius - 8, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#c5a059';
+  ctx.font = `bold ${Math.round(radius * 0.18)}px Arial, sans-serif`;
+  ctx.fillText(topText, cx, cy - radius * 0.42);
+
+  ctx.fillStyle = '#f3d88c';
+  ctx.font = `bold ${Math.round(radius * 0.31)}px Georgia, serif`;
+  ctx.fillText(mainText, cx, cy - 2);
+
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = `bold ${Math.round(radius * 0.17)}px Arial, sans-serif`;
+  ctx.fillText(subText, cx, cy + radius * 0.4);
+  ctx.restore();
+}
+
 export async function renderCertificateToDataUrl({
   player,
   certType = 'award', // 'award' | 'participation'
   awardIndex = 0,
+  award = null,
   photoDataUrl = null,
+  logoStyle = 'hybrid', // 'hybrid' | 'watermark' | 'top-medallion' | 'corner-crest' | 'centerpiece' | 'none'
+  customLogoSrc = null,
 }) {
   const canvas = document.createElement('canvas');
   const W = 2000;
@@ -157,17 +489,15 @@ export async function renderCertificateToDataUrl({
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  let photoImg = null;
-  if (photoDataUrl) {
-    try {
-      photoImg = await loadImage(photoDataUrl);
-    } catch {
-      photoImg = null;
-    }
-  }
+  const [photoImg, logoImg] = await Promise.all([
+    photoDataUrl
+      ? loadImage(photoDataUrl).catch(() => null)
+      : Promise.resolve(null),
+    logoStyle !== 'none' ? getUceLogoImage(customLogoSrc) : Promise.resolve(null),
+  ]);
 
   const isAward = certType === 'award' && player?.awards?.length > 0;
-  const activeAward = isAward ? (player.awards[awardIndex] || player.awards[0]) : null;
+  const activeAward = isAward ? (award || player.awards[awardIndex] || player.awards[0]) : null;
 
   // 1. Deep Royal Midnight Blue Background
   const bgGrad = ctx.createRadialGradient(W / 2, H * 0.4, 100, W / 2, H / 2, W * 0.75);
@@ -186,6 +516,12 @@ export async function renderCertificateToDataUrl({
     ctx.stroke();
   }
 
+  // Watermark layer (for 'watermark' and 'hybrid' styles)
+  if (logoImg && (logoStyle === 'watermark' || logoStyle === 'hybrid')) {
+    const wmOpacity = logoStyle === 'watermark' ? 0.22 : 0.16;
+    drawUceLogoWatermark(ctx, logoImg, W / 2, H / 2 + 15, 490, wmOpacity);
+  }
+
   // 2. Ornate Gold Borders
   const pad = 48;
   ctx.strokeStyle = '#c5a059';
@@ -201,23 +537,89 @@ export async function renderCertificateToDataUrl({
   drawCornerOrnament(ctx, pad + 8, H - pad - 8, 90, 1, -1);
   drawCornerOrnament(ctx, W - pad - 8, H - pad - 8, 90, -1, -1);
 
+  // Layout vertical coordinates (adjusted when 'top-medallion' is active)
+  const isTopMedallion = logoStyle === 'top-medallion' && Boolean(logoImg);
+
+  const titleY = isTopMedallion ? 302 : 205;
+  const pillY = isTopMedallion ? 326 : 232;
+  const crestY = isTopMedallion ? 462 : 395;
+  const crestR = isTopMedallion ? 74 : 92;
+  const presentedY = isTopMedallion ? 582 : 540;
+  const nameY = isTopMedallion ? 648 : 615;
+  const nameLineY = isTopMedallion ? 668 : 640;
+  const plaqueY = isTopMedallion ? 690 : 670;
+  const plaqueH = isTopMedallion ? 78 : 82;
+  const citationY = isTopMedallion ? 816 : 810;
+
   // 3. Top Header
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#c5a059';
-  ctx.font = 'bold 22px Georgia, serif';
-  ctx.fillText('✦   U C E  ’ 8 7   A L U M N I   Q U I Z   C L U B   •   T H E   U L T I M A T E   C H A L L E N G E   E X P E R I E N C E   ✦', W / 2, 125);
+  if (isTopMedallion) {
+    // Top-Center Logo Medallion flanked by symmetric club wings
+    const medY = 156;
+    const medR = 76;
+
+    // Left & Right decorative wing lines + text
+    ctx.strokeStyle = 'rgba(197, 160, 89, 0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(150, medY - 22);
+    ctx.lineTo(860, medY - 22);
+    ctx.moveTo(150, medY + 22);
+    ctx.lineTo(860, medY + 22);
+    ctx.moveTo(1140, medY - 22);
+    ctx.lineTo(1850, medY - 22);
+    ctx.moveTo(1140, medY + 22);
+    ctx.lineTo(1850, medY + 22);
+    ctx.stroke();
+
+    ctx.fillStyle = '#c5a059';
+    ctx.font = 'bold 20px Georgia, serif';
+    ctx.fillText('✦   U C E  ’ 8 7   A L U M N I   Q U I Z   C L U B   ✦', 505, medY + 7);
+    ctx.fillText('✦   U L T I M A T E   C H A L L E N G E   E X P E R I E N C E   ✦', 1495, medY + 7);
+
+    drawUceLogoMedallion(ctx, logoImg, W / 2, medY, medR, {
+      showOuterRays: true,
+      showDots: true,
+    });
+  } else {
+    ctx.fillStyle = '#c5a059';
+    ctx.font = 'bold 22px Georgia, serif';
+    ctx.fillText(
+      '✦   U C E  ’ 8 7   A L U M N I   Q U I Z   C L U B   •   T H E   U L T I M A T E   C H A L L E N G E   E X P E R I E N C E   ✦',
+      W / 2,
+      125
+    );
+  }
+
+  // Upper-Corner Crests (for 'corner-crest' style)
+  if (logoImg && logoStyle === 'corner-crest') {
+    drawUceLogoMedallion(ctx, logoImg, 235, 365, 96, {
+      showOuterRays: true,
+      showDots: true,
+      ribbonText: 'UCE ’87 CLUB',
+    });
+    drawRoyalSecondarySeal(
+      ctx,
+      W - 235,
+      365,
+      96,
+      'GRAND FINALE',
+      player.rank ? `RANK #${player.rank}` : '40 WEEKS',
+      'BATCH OF 1987'
+    );
+  }
 
   // Main Certificate Title
-  const titleGrad = ctx.createLinearGradient(W * 0.25, 150, W * 0.75, 220);
+  const titleGrad = ctx.createLinearGradient(W * 0.25, titleY - 55, W * 0.75, titleY + 15);
   titleGrad.addColorStop(0, '#f3d88c');
   titleGrad.addColorStop(0.5, '#ffffff');
   titleGrad.addColorStop(1, '#f3d88c');
   ctx.fillStyle = titleGrad;
-  ctx.font = 'bold 62px Georgia, serif';
+  ctx.font = `bold ${isTopMedallion ? 58 : 62}px Georgia, serif`;
   ctx.fillText(
     isAward ? 'CERTIFICATE OF EXCELLENCE' : 'CERTIFICATE OF APPRECIATION',
     W / 2,
-    205
+    titleY
   );
 
   // Subtitle pill
@@ -226,7 +628,7 @@ export async function renderCertificateToDataUrl({
     : 'OFFICIAL CONTENDER & SEASON FINISHER  •  40-WEEK GRAND FINALE (2026)';
   ctx.font = 'bold 20px Arial, sans-serif';
   const pillW = Math.max(ctx.measureText(pillText).width + 70, 560);
-  drawRoundedRect(ctx, W / 2 - pillW / 2, 232, pillW, 42, 21);
+  drawRoundedRect(ctx, W / 2 - pillW / 2, pillY, pillW, 42, 21);
   ctx.fillStyle = 'rgba(197, 160, 89, 0.18)';
   ctx.fill();
   ctx.strokeStyle = '#c5a059';
@@ -234,36 +636,47 @@ export async function renderCertificateToDataUrl({
   ctx.stroke();
 
   ctx.fillStyle = '#f3d88c';
-  ctx.fillText(pillText, W / 2, 260);
+  ctx.fillText(pillText, W / 2, pillY + 28);
 
   // 4. Centerpiece Crest or Member Photo
-  drawRoyalCrestOrPhoto(ctx, W / 2, 395, 92, photoImg, isAward ? 'HONOREE' : 'UCE 87');
+  const useLogoInCenter = logoStyle === 'centerpiece' || logoStyle === 'hybrid';
+  drawRoyalCrestOrPhoto(
+    ctx,
+    W / 2,
+    crestY,
+    crestR,
+    photoImg,
+    isAward ? 'HONOREE' : 'UCE 87',
+    {
+      logoImg,
+      useLogoWhenNoPhoto: useLogoInCenter,
+      showCornerLogoBadge: logoStyle === 'centerpiece',
+    }
+  );
 
   // 5. "PROUDLY PRESENTED TO" & Member Name
   ctx.fillStyle = '#94a3b8';
   ctx.font = 'italic 24px Georgia, serif';
-  ctx.fillText('This certificate is proudly presented to', W / 2, 540);
+  ctx.fillText('This certificate is proudly presented to', W / 2, presentedY);
 
-  const nameGrad = ctx.createLinearGradient(W * 0.3, 560, W * 0.7, 630);
+  const nameGrad = ctx.createLinearGradient(W * 0.3, nameY - 55, W * 0.7, nameY + 15);
   nameGrad.addColorStop(0, '#f9e498');
   nameGrad.addColorStop(0.5, '#ffd700');
   nameGrad.addColorStop(1, '#d4af37');
   ctx.fillStyle = nameGrad;
   ctx.font = 'bold 68px Georgia, serif';
-  ctx.fillText(player.realName || player.displayName, W / 2, 615);
+  ctx.fillText(player.realName || player.displayName, W / 2, nameY);
 
   // Decorative underline beneath name
   ctx.strokeStyle = '#c5a059';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(W / 2 - 340, 640);
-  ctx.lineTo(W / 2 + 340, 640);
+  ctx.moveTo(W / 2 - 340, nameLineY);
+  ctx.lineTo(W / 2 + 340, nameLineY);
   ctx.stroke();
 
   // 6. Award Title Plaque OR Contender Title Plaque
-  const plaqueY = 670;
   const plaqueW = 1320;
-  const plaqueH = 82;
   drawRoundedRect(ctx, W / 2 - plaqueW / 2, plaqueY, plaqueW, plaqueH, 16);
   const plaqueGrad = ctx.createLinearGradient(W / 2 - plaqueW / 2, plaqueY, W / 2 + plaqueW / 2, plaqueY);
   plaqueGrad.addColorStop(0, 'rgba(197, 160, 89, 0.08)');
@@ -280,13 +693,13 @@ export async function renderCertificateToDataUrl({
   const mainAwardTitle = isAward
     ? `🏆  ${activeAward.title.toUpperCase()}`
     : `🎖️  DISTINGUISHED CONTENDER  •  ${player.persona.toUpperCase()}`;
-  ctx.fillText(mainAwardTitle, W / 2, plaqueY + 52);
+  ctx.fillText(mainAwardTitle, W / 2, plaqueY + 50);
 
   // 7. Citation Text
   ctx.fillStyle = '#e2e8f0';
   ctx.font = '27px Georgia, serif';
   const citationText = isAward ? activeAward.citation : player.participationCitation;
-  wrapText(ctx, citationText, W / 2, 810, 1460, 42);
+  wrapText(ctx, citationText, W / 2, citationY, 1460, 42);
 
   // 8. Verified Performance Stats Row (5 Stat Boxes)
   const statsY = 965;
@@ -324,7 +737,7 @@ export async function renderCertificateToDataUrl({
 
   statsItems.forEach((st) => {
     drawRoundedRect(ctx, startX, statsY, boxW, boxH, 14);
-    ctx.fillStyle = 'rgba(15, 28, 63, 0.85)';
+    ctx.fillStyle = 'rgba(15, 28, 63, 0.82)';
     ctx.fill();
     ctx.strokeStyle = 'rgba(197, 160, 89, 0.55)';
     ctx.lineWidth = 1.5;
@@ -359,24 +772,32 @@ export async function renderCertificateToDataUrl({
   ctx.font = '16px Arial, sans-serif';
   ctx.fillText('ORGANIZER • ORGANIZING COMMITTEE • UCE BURLA BATCH OF 1987', 430, footY + 32);
 
-  // Center Official Gold Seal
-  ctx.save();
-  ctx.beginPath();
-  ctx.arc(W / 2, footY - 15, 58, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.2)';
-  ctx.fill();
-  ctx.strokeStyle = '#f3d88c';
-  ctx.lineWidth = 3;
-  ctx.stroke();
+  // Center Official Gold Seal (Logo Medallion in 'hybrid' or when photo occupies 'centerpiece')
+  if (logoImg && (logoStyle === 'hybrid' || (logoStyle === 'centerpiece' && photoImg))) {
+    drawUceLogoMedallion(ctx, logoImg, W / 2, footY - 18, 72, {
+      showOuterRays: true,
+      showDots: true,
+      ribbonText: '40 WEEKS • 2026',
+    });
+  } else {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(W / 2, footY - 15, 58, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(197, 160, 89, 0.2)';
+    ctx.fill();
+    ctx.strokeStyle = '#f3d88c';
+    ctx.lineWidth = 3;
+    ctx.stroke();
 
-  ctx.fillStyle = '#f3d88c';
-  ctx.font = 'bold 18px Georgia, serif';
-  ctx.fillText('OFFICIAL SEAL', W / 2, footY - 26);
-  ctx.font = 'bold 22px Georgia, serif';
-  ctx.fillText('40 WEEKS', W / 2, footY - 2);
-  ctx.font = '15px Arial, sans-serif';
-  ctx.fillText('JAN – NOV 2026', W / 2, footY + 20);
-  ctx.restore();
+    ctx.fillStyle = '#f3d88c';
+    ctx.font = 'bold 18px Georgia, serif';
+    ctx.fillText('OFFICIAL SEAL', W / 2, footY - 26);
+    ctx.font = 'bold 22px Georgia, serif';
+    ctx.fillText('40 WEEKS', W / 2, footY - 2);
+    ctx.font = '15px Arial, sans-serif';
+    ctx.fillText('JAN – NOV 2026', W / 2, footY + 20);
+    ctx.restore();
+  }
 
   // Right date & verification
   ctx.strokeStyle = '#c5a059';
@@ -400,7 +821,12 @@ export async function renderCertificateToDataUrl({
   return canvas.toDataURL('image/png');
 }
 
-export async function renderWrappedCardToDataUrl({ player, photoDataUrl = null }) {
+export async function renderWrappedCardToDataUrl({
+  player,
+  photoDataUrl = null,
+  logoStyle = 'hybrid', // 'hybrid' | 'watermark' | 'top-medallion' | 'corner-crest' | 'centerpiece' | 'none'
+  customLogoSrc = null,
+}) {
   const canvas = document.createElement('canvas');
   const W = 1080;
   const H = 1620;
@@ -408,14 +834,12 @@ export async function renderWrappedCardToDataUrl({ player, photoDataUrl = null }
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  let photoImg = null;
-  if (photoDataUrl) {
-    try {
-      photoImg = await loadImage(photoDataUrl);
-    } catch {
-      photoImg = null;
-    }
-  }
+  const [photoImg, logoImg] = await Promise.all([
+    photoDataUrl
+      ? loadImage(photoDataUrl).catch(() => null)
+      : Promise.resolve(null),
+    logoStyle !== 'none' ? getUceLogoImage(customLogoSrc) : Promise.resolve(null),
+  ]);
 
   // Background
   const bg = ctx.createLinearGradient(0, 0, W, H);
@@ -425,35 +849,82 @@ export async function renderWrappedCardToDataUrl({ player, photoDataUrl = null }
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, W, H);
 
+  // Background Watermark for 'watermark' or 'hybrid'
+  if (logoImg && (logoStyle === 'watermark' || logoStyle === 'hybrid')) {
+    const wmOp = logoStyle === 'watermark' ? 0.24 : 0.18;
+    drawUceLogoWatermark(ctx, logoImg, W / 2, 910, 420, wmOp);
+  }
+
   // Border
   ctx.strokeStyle = '#c5a059';
   ctx.lineWidth = 4;
   ctx.strokeRect(32, 32, W - 64, H - 64);
 
+  const isTopMedallion = logoStyle === 'top-medallion' && Boolean(logoImg);
+
   // Header
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#f3d88c';
-  ctx.font = 'bold 26px Arial, sans-serif';
-  ctx.fillText('✨  U C E  ’ 8 7   Q U I Z   R E W I N D   2 0 2 6  ✨', W / 2, 100);
+  if (isTopMedallion) {
+    ctx.fillStyle = '#f3d88c';
+    ctx.font = 'bold 22px Arial, sans-serif';
+    ctx.fillText('✨  U C E  ’ 8 7', 235, 118);
+    ctx.fillText('R E W I N D   2 0 2 6  ✨', W - 235, 118);
+    drawUceLogoMedallion(ctx, logoImg, W / 2, 112, 54, {
+      showOuterRays: true,
+      showDots: false,
+    });
+  } else {
+    ctx.fillStyle = '#f3d88c';
+    ctx.font = 'bold 26px Arial, sans-serif';
+    ctx.fillText('✨  U C E  ’ 8 7   Q U I Z   R E W I N D   2 0 2 6  ✨', W / 2, 100);
+  }
+
+  // Corner crests option on Wrapped card
+  if (logoImg && logoStyle === 'corner-crest') {
+    drawUceLogoMedallion(ctx, logoImg, 165, 245, 62, {
+      showOuterRays: true,
+      showDots: false,
+      ribbonText: 'UCE ’87',
+    });
+    drawRoyalSecondarySeal(
+      ctx,
+      W - 165,
+      245,
+      62,
+      'FINALE',
+      player.rank ? `#${player.rank}` : '40 WKS',
+      '2026'
+    );
+  }
 
   // Crest or Photo
+  const crestY = isTopMedallion ? 276 : 245;
+  const crestR = isTopMedallion ? 84 : 95;
+  const useLogoInCenter = logoStyle === 'centerpiece' || logoStyle === 'hybrid';
   drawRoyalCrestOrPhoto(
     ctx,
     W / 2,
-    245,
-    95,
+    crestY,
+    crestR,
     photoImg,
-    player.rank ? `RANK #${player.rank}` : 'UCE 87'
+    player.rank ? `RANK #${player.rank}` : 'UCE 87',
+    {
+      logoImg,
+      useLogoWhenNoPhoto: useLogoInCenter,
+      showCornerLogoBadge: logoStyle === 'centerpiece' || logoStyle === 'hybrid',
+    }
   );
 
   // Name & Persona
+  const nameY = isTopMedallion ? 430 : 415;
+  const personaY = isTopMedallion ? 476 : 465;
   ctx.fillStyle = '#ffffff';
   ctx.font = 'bold 54px Georgia, serif';
-  ctx.fillText(player.realName || player.displayName, W / 2, 415);
+  ctx.fillText(player.realName || player.displayName, W / 2, nameY);
 
   ctx.fillStyle = '#f3d88c';
   ctx.font = 'bold 28px Georgia, serif';
-  ctx.fillText(player.persona, W / 2, 465);
+  ctx.fillText(player.persona, W / 2, personaY);
 
   // Special Award Banner if any
   const topAward = player.awards?.[0];
@@ -488,6 +959,7 @@ export async function renderWrappedCardToDataUrl({ player, photoDataUrl = null }
   const cardW = 445;
   const cardH = 165;
   const startY = 645;
+  const cardAlpha = logoStyle === 'watermark' || logoStyle === 'hybrid' ? 0.74 : 0.85;
   grid.forEach((g, idx) => {
     const col = idx % 2;
     const row = Math.floor(idx / 2);
@@ -495,7 +967,7 @@ export async function renderWrappedCardToDataUrl({ player, photoDataUrl = null }
     const y = startY + row * (cardH + 24);
 
     drawRoundedRect(ctx, x, y, cardW, cardH, 16);
-    ctx.fillStyle = 'rgba(9, 19, 44, 0.85)';
+    ctx.fillStyle = `rgba(9, 19, 44, ${cardAlpha})`;
     ctx.fill();
     ctx.strokeStyle = 'rgba(197, 160, 89, 0.45)';
     ctx.lineWidth = 1.5;
