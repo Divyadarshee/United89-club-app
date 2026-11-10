@@ -14,6 +14,7 @@ import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../context/ConfigContext';
 import { normalizePhone, isFinaleUnlocked, isFinaleAdmin } from '../utils/featureFlags';
 import { AdminMemberBar, AdminMemberPickerModal } from '../components/AdminMemberControls';
+import ImageLightboxModal from '../components/ImageLightboxModal';
 
 const STORY_SLIDES = [
   {
@@ -165,6 +166,7 @@ export default function SeasonRewind() {
   const [memberPhotos, setMemberPhotos] = useState({}); // normPhone -> dataUrl
   const [certDataUrl, setCertDataUrl] = useState(null);
   const [wrappedDataUrl, setWrappedDataUrl] = useState(null);
+  const [enlargedImage, setEnlargedImage] = useState(null);
   const [renderingCert, setRenderingCert] = useState(false);
   const [copiedPromptId, setCopiedPromptId] = useState(null);
   const fileInputRef = useRef(null);
@@ -614,7 +616,21 @@ export default function SeasonRewind() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
               {/* Left 2 Cols: Landscape Certificate Preview */}
               <div className="lg:col-span-2 space-y-3">
-                <div className="relative rounded-xl overflow-hidden border-2 border-antique-gold/60 shadow-2xl bg-[#060b19] aspect-[2000/1414] flex items-center justify-center">
+                <div
+                  onClick={() => {
+                    if (certDataUrl) {
+                      playSound?.('click');
+                      setEnlargedImage({
+                        src: certDataUrl,
+                        alt: `${selectedPlayer.displayName} Certificate`,
+                      });
+                    }
+                  }}
+                  title={certDataUrl ? "Click or touch to enlarge" : undefined}
+                  className={`relative rounded-xl overflow-hidden border-2 border-antique-gold/60 shadow-2xl bg-[#060b19] aspect-[2000/1414] flex items-center justify-center group ${
+                    certDataUrl ? 'cursor-zoom-in hover:border-antique-gold transition-colors' : ''
+                  }`}
+                >
                   {renderingCert && (
                     <div className="absolute inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-10">
                       <span className="text-xs text-antique-gold font-serif animate-pulse">
@@ -623,11 +639,16 @@ export default function SeasonRewind() {
                     </div>
                   )}
                   {certDataUrl ? (
-                    <img
-                      src={certDataUrl}
-                      alt={`${selectedPlayer.displayName} Certificate`}
-                      className="w-full h-full object-contain"
-                    />
+                    <>
+                      <img
+                        src={certDataUrl}
+                        alt={`${selectedPlayer.displayName} Certificate`}
+                        className="w-full h-full object-contain"
+                      />
+                      <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-md bg-black/75 border border-antique-gold/50 text-[10px] font-sans text-amber-200 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md">
+                        🔍 Click to enlarge
+                      </div>
+                    </>
                   ) : (
                     <div className="text-xs text-gray-400">Preparing Certificate...</div>
                   )}
@@ -666,13 +687,32 @@ export default function SeasonRewind() {
                   </p>
                 </div>
 
-                <div className="rounded-lg overflow-hidden border border-antique-gold/50 bg-[#060b19] max-h-[360px] flex items-center justify-center mx-auto">
+                <div
+                  onClick={() => {
+                    if (wrappedDataUrl) {
+                      playSound?.('click');
+                      setEnlargedImage({
+                        src: wrappedDataUrl,
+                        alt: 'WhatsApp Wrapped Card',
+                      });
+                    }
+                  }}
+                  title={wrappedDataUrl ? "Click or touch to enlarge" : undefined}
+                  className={`relative rounded-lg overflow-hidden border border-antique-gold/50 bg-[#060b19] max-h-[360px] flex items-center justify-center mx-auto group ${
+                    wrappedDataUrl ? 'cursor-zoom-in hover:border-antique-gold transition-colors' : ''
+                  }`}
+                >
                   {wrappedDataUrl ? (
-                    <img
-                      src={wrappedDataUrl}
-                      alt="WhatsApp Wrapped Card"
-                      className="max-h-[350px] w-auto object-contain"
-                    />
+                    <>
+                      <img
+                        src={wrappedDataUrl}
+                        alt="WhatsApp Wrapped Card"
+                        className="max-h-[350px] w-auto object-contain"
+                      />
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/75 border border-antique-gold/50 text-[10px] font-sans text-amber-200 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md">
+                        🔍 Enlarge
+                      </div>
+                    </>
                   ) : (
                     <div className="py-16 text-xs text-gray-400">Preparing Wrapped Card...</div>
                   )}
@@ -1351,6 +1391,16 @@ export default function SeasonRewind() {
           </div>
         </motion.div>
       )}
+
+      {/* Enlarged Certificate / WhatsApp Wrapped Lightbox Modal */}
+      <ImageLightboxModal
+        src={enlargedImage?.src}
+        alt={enlargedImage?.alt}
+        onClose={() => {
+          playSound?.('click');
+          setEnlargedImage(null);
+        }}
+      />
 
       {/* Admin Scroll-Locked Member Picker Modal */}
       {isAdmin && (
