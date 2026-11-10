@@ -11,7 +11,6 @@ import { FINALE_DATA } from '../data/finaleData';
 import {
   renderCertificateToDataUrl,
   renderWrappedCardToDataUrl,
-  LOGO_STYLE_OPTIONS,
 } from '../utils/certificateRenderer';
 import { useSoundManager } from '../hooks/useSoundManager';
 import { useAuth } from '../context/AuthContext';
@@ -167,7 +166,6 @@ export default function SeasonRewind() {
   // Certificate state
   const [certType, setCertType] = useState('award'); // 'award' | 'participation'
   const [selectedAwardIdx, setSelectedAwardIdx] = useState(0);
-  const [logoStyle, setLogoStyle] = useState('hybrid');
   const [memberPhotos, setMemberPhotos] = useState({}); // normPhone -> dataUrl
   const [certDataUrl, setCertDataUrl] = useState(null);
   const [wrappedDataUrl, setWrappedDataUrl] = useState(null);
@@ -209,12 +207,13 @@ export default function SeasonRewind() {
         certType,
         awardIndex: selectedAwardIdx,
         photoDataUrl: photoUrl,
-        logoStyle,
+        logoStyle: 'v1-side-portrait',
+        signatureStyle: 'sig-udaya-full',
       }),
       renderWrappedCardToDataUrl({
         player: selectedPlayer,
         photoDataUrl: photoUrl,
-        logoStyle,
+        logoStyle: 'v1-side-portrait',
       }),
     ])
       .then(([cUrl, wUrl]) => {
@@ -230,7 +229,7 @@ export default function SeasonRewind() {
     return () => {
       active = false;
     };
-  }, [selectedPlayer, certType, selectedAwardIdx, memberPhotos, logoStyle]);
+  }, [selectedPlayer, certType, selectedAwardIdx, memberPhotos]);
 
   // Story Mode auto-advance with moving golden line
   useEffect(() => {
@@ -616,37 +615,6 @@ export default function SeasonRewind() {
                   <Edit3 size={14} />
                   <span>Edit Profile Photo</span>
                 </button>
-              </div>
-            </div>
-
-            {/* UCE Logo Placement Style Switcher */}
-            <div className="bg-midnight-blue/70 border border-antique-gold/30 rounded-xl p-3 space-y-2 text-left">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-[11px] uppercase tracking-wider font-bold text-antique-gold">
-                  🎨 UCE Logo Layout Option (Compare Live):
-                </span>
-                <span className="text-[11px] text-amber-200/80 font-sans">
-                  {LOGO_STYLE_OPTIONS.find((o) => o.id === logoStyle)?.desc}
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {LOGO_STYLE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => {
-                      playSound?.('click');
-                      setLogoStyle(opt.id);
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-serif font-bold transition-all cursor-pointer border ${
-                      logoStyle === opt.id
-                        ? 'bg-antique-gold text-midnight-blue border-antique-gold shadow-md'
-                        : 'bg-black/40 text-amber-100/85 border-antique-gold/30 hover:border-antique-gold/70'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
               </div>
             </div>
 
