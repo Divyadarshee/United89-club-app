@@ -419,10 +419,17 @@ const resolveMemoryUrl = (item) => {
     if (!item) return item;
     const url = item.image_url || '';
     const highResUrl = item.high_res_url || url;
+    const videoUrl = item.video_url || '';
     return {
         ...item,
+        media_type: item.media_type || (videoUrl ? 'video' : 'photo'),
         image_url: url.startsWith('/api/memories/') ? `${API_URL}${url}` : url,
         high_res_url: highResUrl.startsWith('/api/memories/') ? `${API_URL}${highResUrl}` : highResUrl,
+        video_url: videoUrl
+            ? videoUrl.startsWith('/api/memories/')
+                ? `${API_URL}${videoUrl}`
+                : videoUrl
+            : null,
     };
 };
 
@@ -474,26 +481,32 @@ export const getMemories = async ({ userPhone = '', isAdmin = false } = {}) => {
 };
 
 export const uploadMemory = async ({
+    mediaType = 'photo',
     caption,
     imageDataUrl,
+    videoDataUrl,
     thumbDataUrl,
     uploaderName,
     uploaderPhone,
     width,
     height,
     sizeBytes,
+    durationSeconds,
     isAdmin = false,
 }) => {
     try {
         const response = await apiClient.post('/api/memories', {
+            media_type: mediaType,
             caption,
-            image_data_url: imageDataUrl,
+            image_data_url: mediaType === 'video' ? '' : imageDataUrl,
+            video_data_url: mediaType === 'video' ? videoDataUrl || imageDataUrl : undefined,
             thumb_data_url: thumbDataUrl,
             uploader_name: uploaderName,
             uploader_phone: uploaderPhone,
             width,
             height,
             size_bytes: sizeBytes,
+            duration_seconds: durationSeconds,
         });
         return {
             ...response.data,
@@ -501,11 +514,15 @@ export const uploadMemory = async ({
         };
     } catch (err) {
         if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            const isVideo = mediaType === 'video';
             const newMemory = {
                 id: `local-${Date.now()}`,
+                media_type: mediaType,
                 caption: (caption || '').trim(),
                 image_url: thumbDataUrl || imageDataUrl,
-                high_res_url: imageDataUrl,
+                high_res_url: isVideo ? videoDataUrl || imageDataUrl : imageDataUrl,
+                video_url: isVideo ? videoDataUrl || imageDataUrl : null,
+                duration_seconds: durationSeconds || null,
                 uploader_name: (uploaderName || 'Club Member').trim(),
                 uploader_phone: uploaderPhone || '',
                 status: isAdmin ? 'approved' : 'pending',

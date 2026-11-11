@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import hashlib
+import re
 from datetime import datetime, timezone
 from typing import Optional, Tuple
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
@@ -13,7 +14,9 @@ from services.phone_service import normalize_phone
 router = APIRouter(prefix="/api/memories", tags=["Yaadein Memories"])
 
 ADMIN_PHONE = "9437555900"
-MAX_DATA_URL_LENGTH = 2_500_000  # Supports up to ~1.8 MB payload (1920px Full-HD WebP is ~350-550 KB)
+MAX_PHOTO_DATA_URL_LENGTH = 2_500_000    # ~1.8 MB max for photos (1920px Full-HD WebP is ~350-550 KB)
+MAX_VIDEO_DATA_URL_LENGTH = 28_500_000   # ~20 MB binary video (~27 MB Base64 payload, under Cloud Run 32 MB limit)
+VIDEO_CHUNK_SIZE_BYTES = 750_000         # Firestore fallback chunk size for videos if Cloud Storage is offline
 IMMUTABLE_CACHE_HEADER = "public, max-age=31536000, s-maxage=31536000, immutable"
 
 
@@ -29,17 +32,17 @@ def _is_admin_user(current_user: Optional[dict], query_phone: Optional[str] = No
     return False
 
 
-def _decode_data_url(data_url: str) -> Tuple[bytes, str]:
-    """Decodes a `data:image/...;base64,...` string into `(raw_bytes, mime_type)`."""
+def _decode_data_url(data_url: str, default_mime: str = "image/webp") -> Tuple[bytes, str]:
+    """Decodes a `data:...;base64,...` string into `(raw_bytes, mime_type)`."""
     header, b64_payload = data_url.split(",", 1)
-    mime_type = header.split(";")[0].replace("data:", "") or "image/webp"
+    mime_type = header.split(";")[0].replace("data:", "") or default_mime
     return base64.b64decode(b64_payload), mime_type
 
 
 def _upload_to_cloud_storage(blob_path: str, binary_bytes: bytes, mime_type: str) -> Optional[str]:
     """
-    Uploads binary image bytes to Firebase Cloud Storage (Object Storage) with immutable CDN headers.
-    Returns the storage path on success, or None if the bucket is unavailable.
+    Uploads binary media bytes (photo or video) to Firebase Cloud Storage (Object Storage)
+    with immutable CDN headers. Returns the storage path on success, or None if unavailable.
     """
     if not storage_bucket:
         return None
@@ -49,7 +52,7 @@ def _upload_to_cloud_storage(blob_path: str, binary_bytes: bytes, mime_type: str
         blob.upload_from_string(binary_bytes, content_type=mime_type)
         return blob_path
     except Exception as exc:
-        print(f"[Yaadein Storage] Cloud Storage upload skipped/fallback to Firestore Blob: {exc}")
+        print(f"[Yaadein Storage] Cloud Storage upload skipped/fallback to Firestore: {exc}")
         return None
 
 
@@ -77,8 +80,10 @@ def _delete_from_cloud_storage(blob_path: Optional[str]) -> None:
 def _serialize_memory_doc(doc_id: str, data: dict) -> dict:
     """
     Serializes a Firestore memory document into a lightweight metadata record.
-    - `image_url`: Fast 640px Grid Thumbnail URL (`/api/memories/{doc_id}/thumb`) for smooth gallery scrolling & instant Lightbox blur-up.
-    - `high_res_url`: Crisp 1920px Full-HD URL (`/api/memories/{doc_id}/image`) for enlarged Lightbox & Download.
+    - `media_type`: 'photo' | 'video'
+    - `image_url`: Fast 640px Grid Thumbnail / Video Poster URL (`/api/memories/{doc_id}/thumb`)
+    - `high_res_url`: Crisp 1920px Full-HD Photo URL (`/api/memories/{doc_id}/image`)
+    - `video_url`: HTTP Byte-Range Streaming Video URL (`/api/memories/{doc_id}/video`) when `media_type == 'video'`
     """
     created_at = data.get("created_at")
     if hasattr(created_at, "isoformat"):
@@ -86,25 +91,35 @@ def _serialize_memory_doc(doc_id: str, data: dict) -> dict:
     elif not isinstance(created_at, str):
         created_at = datetime.now(timezone.utc).isoformat()
 
+    media_type = data.get("media_type") or "photo"
     raw_image = data.get("image_data_url") or ""
-    has_binary_or_storage = bool(
-        data.get("storage_full_path")
-        or data.get("image_blob")
-        or raw_image.startswith("data:image/")
-    )
 
-    if has_binary_or_storage:
-        high_res_url = f"/api/memories/{doc_id}/image"
+    if media_type == "video":
         image_url = f"/api/memories/{doc_id}/thumb"
+        video_url = f"/api/memories/{doc_id}/video"
+        high_res_url = video_url
     else:
-        high_res_url = raw_image
-        image_url = raw_image
+        has_binary_or_storage = bool(
+            data.get("storage_full_path")
+            or data.get("image_blob")
+            or raw_image.startswith("data:image/")
+        )
+        if has_binary_or_storage:
+            high_res_url = f"/api/memories/{doc_id}/image"
+            image_url = f"/api/memories/{doc_id}/thumb"
+        else:
+            high_res_url = raw_image
+            image_url = raw_image
+        video_url = None
 
     return {
         "id": doc_id,
+        "media_type": media_type,
         "caption": data.get("caption", ""),
         "image_url": image_url,
         "high_res_url": high_res_url,
+        "video_url": video_url,
+        "duration_seconds": data.get("duration_seconds"),
         "storage_engine": data.get("storage_engine", "firestore_blob"),
         "uploader_name": data.get("uploader_name", "Club Member"),
         "uploader_phone": data.get("uploader_phone", ""),
@@ -124,7 +139,7 @@ async def list_memories(
     current_user: Optional[dict] = Depends(get_optional_current_user),
 ):
     """
-    Returns Yaadein memories metadata list.
+    Returns Yaadein memories metadata list (both photos and videos).
     - Admins see all approved and pending memories.
     - Regular members see all approved memories plus their own pending uploads.
     """
@@ -168,7 +183,7 @@ async def list_memories(
 @router.get("/{memory_id}/thumb")
 async def get_memory_thumbnail(memory_id: str, request: Request):
     """
-    Serves the fast ~60 KB 640px Grid Thumbnail with 1-year immutable CDN Cache-Control.
+    Serves the fast ~60 KB 640px Grid Thumbnail / Video Poster Frame with 1-year immutable CDN Cache-Control.
     Reads from Firebase Cloud Storage (Object Storage) or native Firestore binary blob.
     """
     if not db:
@@ -276,26 +291,102 @@ async def get_memory_image(memory_id: str, request: Request):
     )
 
 
+@router.get("/{memory_id}/video")
+async def get_memory_video(memory_id: str, request: Request):
+    """
+    Streams a Yaadein video memory with full HTTP Byte-Range (`206 Partial Content`) support.
+    - Required by iOS Safari and mobile Chrome for instant `<video>` playback and timeline scrubbing.
+    - Reads from Firebase Cloud Storage (`yaadein/uploads/{doc_id}/video.mp4`) or Firestore fallback.
+    """
+    if not db:
+        raise HTTPException(status_code=503, detail="Database unavailable")
+
+    doc_ref = db.collection("memories").document(memory_id)
+    doc = await doc_ref.get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail="Video memory not found")
+
+    data = doc.to_dict() or {}
+    mime_type = data.get("video_mime_type") or data.get("mime_type") or "video/mp4"
+    video_bytes: Optional[bytes] = None
+
+    # 1. Read from Firebase Cloud Storage (Object Storage) first
+    storage_video_path = data.get("storage_video_path") or data.get("storage_full_path")
+    if storage_video_path:
+        video_bytes = await asyncio.to_thread(_download_from_cloud_storage, storage_video_path)
+
+    # 2. Fallback: read from Firestore video_blob or video_chunks if Cloud Storage was unavailable
+    if not video_bytes:
+        if data.get("video_blob"):
+            video_bytes = bytes(data["video_blob"])
+        elif data.get("is_video_chunked"):
+            chunk_docs = doc_ref.collection("video_chunks").order_by("index").stream()
+            parts = []
+            async for cdoc in chunk_docs:
+                cdata = cdoc.to_dict() or {}
+                if cdata.get("data"):
+                    parts.append(bytes(cdata["data"]))
+            video_bytes = b"".join(parts)
+
+    if not video_bytes:
+        raise HTTPException(status_code=404, detail="Video stream unavailable")
+
+    total_size = len(video_bytes)
+    range_header = request.headers.get("range")
+
+    if range_header:
+        match = re.match(r"bytes=(\d+)-(\d*)", range_header)
+        if match:
+            start = int(match.group(1))
+            end = int(match.group(2)) if match.group(2) else total_size - 1
+            end = min(end, total_size - 1)
+            if start >= total_size or start > end:
+                return Response(
+                    status_code=416,
+                    headers={"Content-Range": f"bytes */{total_size}"},
+                )
+            chunk = video_bytes[start : end + 1]
+            return Response(
+                content=chunk,
+                status_code=206,
+                media_type=mime_type,
+                headers={
+                    "Content-Range": f"bytes {start}-{end}/{total_size}",
+                    "Accept-Ranges": "bytes",
+                    "Content-Length": str(len(chunk)),
+                    "Cache-Control": IMMUTABLE_CACHE_HEADER,
+                },
+            )
+
+    return Response(
+        content=video_bytes,
+        status_code=200,
+        media_type=mime_type,
+        headers={
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(total_size),
+            "Cache-Control": IMMUTABLE_CACHE_HEADER,
+        },
+    )
+
+
 @router.post("")
 async def create_memory(
     payload: MemoryCreateRequest,
     current_user: Optional[dict] = Depends(get_optional_current_user),
 ):
     """
-    Uploads a new photo memory to Yaadein using Instagram-style Dual-Tier sizing:
-    - 1920px Full-HD Display Master (~350–550 KB WebP)
-    - 640px Grid Thumbnail (~50–90 KB WebP)
-    Stores the binary files in Firebase Cloud Storage (Object Storage) when available,
-    with seamless fallback to compact native binary blobs in a single Firestore document.
+    Uploads a new photo or video memory to Yaadein:
+    - Photos: 1920px Full-HD Display Master (~350–550 KB WebP) + 640px Grid Thumbnail (~60 KB WebP)
+    - Videos: Up to 20 MB `.mp4`/`.webm`/`.mov` + auto-extracted 640px `.webp` Poster Thumbnail + duration
+    Stores binary files in Firebase Cloud Storage (`yaadein/uploads/{doc_id}/...`) so that migrating to
+    Option 2 (Signed URLs for 100 MB+ videos) later uses the exact same bucket structure with zero migration.
     """
     if not db:
         raise HTTPException(status_code=503, detail="Database unavailable")
 
-    if len(payload.image_data_url) > MAX_DATA_URL_LENGTH:
-        raise HTTPException(
-            status_code=413,
-            detail="Image payload too large. Please select a standard photo.",
-        )
+    is_video = (payload.media_type or "photo").lower() == "video" or bool(payload.video_data_url)
+    media_type = "video" if is_video else "photo"
 
     uploader_phone = normalize_phone(
         str((current_user or {}).get("sub") or payload.uploader_phone or "")
@@ -308,50 +399,110 @@ async def create_memory(
     doc_id = doc_ref.id
 
     storage_full_path = None
+    storage_video_path = None
     storage_thumb_path = None
     image_blob = None
+    video_blob = None
     thumb_blob = None
-    mime_type = "image/webp"
+    is_video_chunked = False
+    video_bytes_for_chunks: Optional[bytes] = None
+    mime_type = "video/mp4" if is_video else "image/webp"
     thumb_mime_type = "image/webp"
 
-    if payload.image_data_url.startswith("data:image/"):
-        full_bytes, mime_type = _decode_data_url(payload.image_data_url)
-        ext = "webp" if "webp" in mime_type else "jpg"
+    if is_video:
+        raw_video_url = payload.video_data_url or payload.image_data_url or ""
+        if not raw_video_url.startswith("data:video/"):
+            raise HTTPException(status_code=400, detail="Valid video file is required.")
+        if len(raw_video_url) > MAX_VIDEO_DATA_URL_LENGTH:
+            raise HTTPException(
+                status_code=413,
+                detail="Video exceeds the 20 MB direct upload limit. Please trim or compress the video.",
+            )
+
+        v_bytes, mime_type = _decode_data_url(raw_video_url, default_mime="video/mp4")
+        v_ext = "webm" if "webm" in mime_type else ("mov" if "quicktime" in mime_type else "mp4")
 
         if payload.thumb_data_url and payload.thumb_data_url.startswith("data:image/"):
-            t_bytes, thumb_mime_type = _decode_data_url(payload.thumb_data_url)
+            t_bytes, thumb_mime_type = _decode_data_url(payload.thumb_data_url, default_mime="image/webp")
         else:
-            t_bytes, thumb_mime_type = full_bytes, mime_type
+            t_bytes = b""
 
-        # Attempt Firebase Cloud Storage (Object Storage) upload first
-        storage_full_path = await asyncio.to_thread(
+        # Upload video & poster thumbnail to Firebase Cloud Storage (Object Storage)
+        storage_video_path = await asyncio.to_thread(
             _upload_to_cloud_storage,
-            f"yaadein/uploads/{doc_id}/full.{ext}",
-            full_bytes,
+            f"yaadein/uploads/{doc_id}/video.{v_ext}",
+            v_bytes,
             mime_type,
         )
-        if storage_full_path:
+        if storage_video_path and t_bytes:
             storage_thumb_path = await asyncio.to_thread(
                 _upload_to_cloud_storage,
-                f"yaadein/uploads/{doc_id}/thumb.{ext}",
+                f"yaadein/uploads/{doc_id}/thumb.webp",
                 t_bytes,
                 thumb_mime_type,
             )
         else:
-            # Store compact binary bytes directly (saves 33% Base64 overhead, fits in 1 doc!)
-            image_blob = full_bytes
-            thumb_blob = t_bytes
+            # Local dev fallback when Cloud Storage bucket permissions aren't active
+            thumb_blob = t_bytes if t_bytes else None
+            if len(v_bytes) <= 650_000:
+                video_blob = v_bytes
+            else:
+                is_video_chunked = True
+                video_bytes_for_chunks = v_bytes
+    else:
+        raw_photo_url = payload.image_data_url or ""
+        if len(raw_photo_url) > MAX_PHOTO_DATA_URL_LENGTH:
+            raise HTTPException(
+                status_code=413,
+                detail="Image payload too large. Please select a standard photo.",
+            )
+
+        if raw_photo_url.startswith("data:image/"):
+            full_bytes, mime_type = _decode_data_url(raw_photo_url)
+            ext = "webp" if "webp" in mime_type else "jpg"
+
+            if payload.thumb_data_url and payload.thumb_data_url.startswith("data:image/"):
+                t_bytes, thumb_mime_type = _decode_data_url(payload.thumb_data_url)
+            else:
+                t_bytes, thumb_mime_type = full_bytes, mime_type
+
+            storage_full_path = await asyncio.to_thread(
+                _upload_to_cloud_storage,
+                f"yaadein/uploads/{doc_id}/full.{ext}",
+                full_bytes,
+                mime_type,
+            )
+            if storage_full_path:
+                storage_thumb_path = await asyncio.to_thread(
+                    _upload_to_cloud_storage,
+                    f"yaadein/uploads/{doc_id}/thumb.{ext}",
+                    t_bytes,
+                    thumb_mime_type,
+                )
+            else:
+                image_blob = full_bytes
+                thumb_blob = t_bytes
 
     doc_data = {
+        "media_type": media_type,
         "caption": (payload.caption or "").strip(),
-        "storage_engine": "firebase_storage" if storage_full_path else "firestore_blob",
+        "storage_engine": (
+            "firebase_storage"
+            if (storage_full_path or storage_video_path)
+            else "firestore_blob"
+        ),
         "storage_full_path": storage_full_path,
+        "storage_video_path": storage_video_path,
         "storage_thumb_path": storage_thumb_path,
         "image_blob": image_blob,
+        "video_blob": video_blob,
         "thumb_blob": thumb_blob,
-        "image_data_url": "" if (storage_full_path or image_blob) else payload.image_data_url,
+        "is_video_chunked": is_video_chunked,
+        "image_data_url": "" if (storage_full_path or image_blob or is_video) else (payload.image_data_url or ""),
         "mime_type": mime_type,
+        "video_mime_type": mime_type if is_video else None,
         "thumb_mime_type": thumb_mime_type,
+        "duration_seconds": payload.duration_seconds if is_video else None,
         "uploader_name": (payload.uploader_name or "Club Member").strip() or "Club Member",
         "uploader_phone": uploader_phone,
         "status": initial_status,
@@ -365,9 +516,20 @@ async def create_memory(
 
     await doc_ref.set(doc_data)
 
+    if is_video_chunked and video_bytes_for_chunks:
+        for idx, offset in enumerate(range(0, len(video_bytes_for_chunks), VIDEO_CHUNK_SIZE_BYTES)):
+            chunk_slice = video_bytes_for_chunks[offset : offset + VIDEO_CHUNK_SIZE_BYTES]
+            await doc_ref.collection("video_chunks").document(f"chunk_{idx:03d}").set(
+                {"index": idx, "data": chunk_slice}
+            )
+
     return {
         "status": "success",
-        "message": "Memory published!" if initial_status == "approved" else "Memory submitted for admin approval!",
+        "message": (
+            "Memory published!"
+            if initial_status == "approved"
+            else "Memory submitted for admin approval!"
+        ),
         "memory": _serialize_memory_doc(doc_id, doc_data),
     }
 
@@ -424,7 +586,7 @@ async def delete_memory(
     current_user: Optional[dict] = Depends(get_optional_current_user),
 ):
     """
-    Admin-ONLY endpoint to delete a memory (and its Cloud Storage objects if present).
+    Admin-ONLY endpoint to delete a memory (and its Cloud Storage photo/video objects if present).
     """
     if not db:
         raise HTTPException(status_code=503, detail="Database unavailable")
@@ -450,8 +612,15 @@ async def delete_memory(
     data = doc.to_dict() or {}
     if data.get("storage_full_path"):
         await asyncio.to_thread(_delete_from_cloud_storage, data.get("storage_full_path"))
+    if data.get("storage_video_path"):
+        await asyncio.to_thread(_delete_from_cloud_storage, data.get("storage_video_path"))
     if data.get("storage_thumb_path"):
         await asyncio.to_thread(_delete_from_cloud_storage, data.get("storage_thumb_path"))
+
+    if data.get("is_video_chunked"):
+        chunk_docs = doc_ref.collection("video_chunks").stream()
+        async for cdoc in chunk_docs:
+            await cdoc.reference.delete()
 
     await doc_ref.delete()
     return {"status": "success", "deleted_id": memory_id}
