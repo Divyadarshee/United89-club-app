@@ -80,7 +80,7 @@ export const FINALE_DATA = {
           "icon": "Crown",
           "accent": "from-amber-400 via-yellow-500 to-amber-700",
           "statsBadge": "383 / 400 Pts • 9.58 Avg • 40/40 Weeks",
-          "citation": "For conquering the 40-week UCE '87 Ultimate Challenge Experience with an extraordinary 383 out of 400 pure points, a 9.58 season average, 25 Perfect 10/10s, a 33-week streak of 9+ scores, and never once scoring below 8/10 across all 40 weeks.",
+          "citation": "Awarded with highest distinction for peerless mastery, extraordinary consistency, and finishing as the undisputed Season Champion of the 40-Week UCE ’87 Ultimate Challenge.",
           "aiPrompt": "Transform the person in the attached photo into a regal, celebratory 3D Pixar/illustrated royal portrait as 'The Grand Master Quiz Champion'. Keep their facial features, glasses/hair, and warm smile clearly recognizable. They are wearing a bespoke midnight-blue velvet blazer with gold embroidery, holding a grand golden Championship Cup engraved with '383/400', with the iconic Singapore Marina Bay skyline and a golden chess king piece glowing softly in the background. Rich royal blue and antique gold lighting."
         },
         {
@@ -91,7 +91,7 @@ export const FINALE_DATA = {
           "icon": "Globe",
           "accent": "from-emerald-400 to-teal-700",
           "statsBadge": "100% Attendance from Singapore • 88.1% Tough-Q Accuracy",
-          "citation": "For representing the international UCE '87 contingent from Singapore (+65) with 100% unbroken attendance across all 40 weeks and solving 88.1% of the season's hardest stumper questions.",
+          "citation": "In distinguished honor of representing the international UCE ’87 fraternity from Singapore with flawless 40-week attendance and solving the season’s most formidable stumpers.",
           "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait representing Singapore and India with a golden globe trophy and 'UCE 87 GLOBAL CHAMPION' banner."
         }
       ],
@@ -485,7 +485,7 @@ export const FINALE_DATA = {
           "icon": "Zap",
           "accent": "from-yellow-300 via-amber-500 to-orange-600",
           "statsBadge": "379 Pts • 18 Weekly Golds • 30 Podiums • 145s Avg",
-          "citation": "For an electrifying 379-point campaign featuring 18 Weekly #1 Gold Medals (45% of the entire season!), 30 Weekly Podium finishes, 24 Perfect 10/10s, and #1 overall speed-to-point efficiency (15.2 seconds per correct answer).",
+          "citation": "In extraordinary recognition of dominating the season with 18 Weekly Gold Medals, 30 podium finishes, and peerless speed-to-point mastery across 40 weeks.",
           "aiPrompt": "Transform the person in the attached photo into a dynamic, celebratory 3D/illustrated portrait as 'The Apex Sprinter & Weekend Finisher'. Keep their facial features clearly recognizable. They are wearing a sharp royal blue & gold jacket, holding 18 gleaming gold medals in one hand and a golden cricket bat (MS Dhoni finisher style) in the other, with a glowing golden stopwatch showing '145s' and stadium floodlights in the background."
         },
         {
@@ -496,7 +496,7 @@ export const FINALE_DATA = {
           "icon": "Flame",
           "accent": "from-amber-500 to-red-600",
           "statsBadge": "Last to Submit in 26 of 40 Weeks • 54s Finale 10/10",
-          "citation": "For mastering the art of the weekend finish—stepping into the arena on Saturday or Sunday as the very last person in the club to submit in 26 out of 40 weeks and walking away with the #1 trophy!",
+          "citation": "Awarded for legendary clutch brilliance—stepping into the arena as the weekend's final contender in 26 weeks and triumphantly walking away with Gold.",
           "aiPrompt": "Transform the person in the attached photo into a cool, smiling finisher in a midnight-blue & gold blazer hitting a last-ball sixer out of a floodlit trivia stadium."
         }
       ],
@@ -890,7 +890,7 @@ export const FINALE_DATA = {
           "icon": "Shield",
           "accent": "from-amber-300 via-amber-500 to-yellow-700",
           "statsBadge": "357 Pts • 20 Weekly Podiums • Never Below 8/10",
-          "citation": "For securing 3rd Place Overall with 357 pure points, 20 Weekly Podium finishes (5 Golds, 12 Silvers, 3 Bronzes), 20 Perfect 10/10s, a 27-week consecutive 9+ streak, and never once scoring below 8/10 in 38 weeks played.",
+          "citation": "In high honor of securing 3rd Place Overall with 20 Weekly Podiums, a 27-week streak of 9+ scores, and never once scoring below 8/10 across the season.",
           "aiPrompt": "Transform the person in the attached photo into a distinguished, celebratory 3D/illustrated portrait as 'The Pillar of Excellence'. Keep their facial features clearly recognizable. They are dressed in an elegant midnight-blue suit with a gold lapel pin, standing beside a classical marble and gold pillar topped with a glowing trophy and 20 podium stars, radiating wisdom and unshakeable consistency."
         }
       ],
@@ -1284,7 +1284,7 @@ export const FINALE_DATA = {
           "icon": "Award",
           "accent": "from-yellow-400 via-amber-500 to-amber-800",
           "statsBadge": "27 Perfect 10/10s (75% Rate!) • 8-Week 10/10 Streak",
-          "citation": "For setting the all-time club record with 27 Perfect 10/10 scores in 36 weeks played (an astonishing 75.0% perfection rate!) and forging the longest unbroken streak of Perfect 10s in club history (8 consecutive weeks!).",
+          "citation": "Awarded for setting the all-time club record with an astonishing 27 Perfect 10/10 scores and an unprecedented 8-week consecutive perfection streak.",
           "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'Mr. Perfect 10'. Keep their facial features clearly recognizable. They are wearing a royal blue blazer, holding a glowing golden shield emblazoned with a giant diamond-encrusted '10/10' emblem, surrounded by 27 floating golden stars and celebratory confetti."
         }
       ],
@@ -3576,7 +3576,7 @@ export const FINALE_DATA = {
           "icon": "Award",
           "accent": "from-amber-400 via-orange-500 to-red-700",
           "statsBadge": "#5 Pure Score (271 Pts) • 39/40 Weeks • 6 Giant-Slayer Solves",
-          "citation": "For finishing #5 Overall in Pure Score (271 pts across 39 weeks), leading the entire club as the #1 Sunrise Scholar (14 quizzes before 8 AM), and ranking #1 in Stumper Solves (cracking 6 tough questions that stumped most contenders, plus +1.04 second-half improvement!).",
+          "citation": "In high honor of rising as the club’s #1 Sunrise Scholar before 8 AM, conquering the season’s toughest stumper questions, and securing Top 5 Overall.",
           "aiPrompt": "Transform the person in the attached photo into a heroic 3D/illustrated portrait as 'The Sunrise Scholar & Giant Slayer'. Keep their facial features clearly recognizable. They are smiling warmly in a royal blue jacket, holding a golden cup of morning tea in one hand and a ceremonial golden trivia sword in the other, with a glorious golden sunrise in the background."
         }
       ],
@@ -5672,7 +5672,7 @@ export const FINALE_DATA = {
           "icon": "Clock",
           "accent": "from-teal-400 via-cyan-600 to-blue-800",
           "statsBadge": "#6 Pure Score (243 Pts) • ±26.8s StdDev • Q39 & Q40 10/10s!",
-          "citation": "For finishing #6 Overall in Pure Score (243 pts across 36 weeks) with the most consistent internal clock in the club (170s ± 26.8s), and delivering a storybook ending by scoring his first-ever Perfect 10/10 to win Gold in Quiz 39 and backing it up with another 10/10 in Quiz 40!",
+          "citation": "In honor of metronomic consistency across 36 weeks and delivering an unforgettable climax with back-to-back Perfect 10 Gold victories in Quiz 39 and Quiz 40.",
           "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'The Human Metronome'. Keep their facial features clearly recognizable. They are wearing a classic navy-and-gold blazer, holding a gleaming golden mechanical metronome and two shining '10/10' gold medallions representing his back-to-back finale triumph."
         }
       ],
@@ -7747,7 +7747,7 @@ export const FINALE_DATA = {
           "icon": "Sparkles",
           "accent": "from-indigo-400 via-blue-600 to-slate-800",
           "statsBadge": "#7 Pure Score (240 Pts) • 37 Weeks • 5 Giant-Slayer Solves",
-          "citation": "For finishing #7 Overall in Pure Score (240 pts across 37 weeks), deliberately taking one extra minute per quiz in the second half to boost his average score by a massive +1.22 points/quiz (5.83 → 7.06), and solving 5 Giant-Slayer questions!",
+          "citation": "In recognition of brilliant tactical mastery—taking deliberate time to surge by +1.22 points per quiz in the second half, cracking 5 Giant-Slayers, and finishing Top 7.",
           "aiPrompt": "Transform the person in the attached photo into a thoughtful, celebratory 3D/illustrated portrait as 'The Master Strategist'. Keep their facial features clearly recognizable. They are wearing a royal blue blazer, holding a golden magnifying glass and an ornate golden hourglass beside a chessboard, warm regal lighting."
         }
       ],
@@ -9787,7 +9787,7 @@ export const FINALE_DATA = {
           "icon": "Shield",
           "accent": "from-amber-400 via-yellow-600 to-stone-800",
           "statsBadge": "#8 Pure Score (235 Pts) • 39 Official + Pilot • 5 Giant Slayers",
-          "citation": "For exemplifying unwavering dedication—playing 39 of 40 official quizzes plus the Pilot Week, being the first person in the club to submit on 4 Monday mornings, solving 5 Giant-Slayer stumpers, and knocking on perfection's door with five 9/10 scores!",
+          "citation": "In honor of unwavering dedication—battling through 39 official quizzes plus the Pilot Week, being first to submit on 4 Mondays, and cracking 5 Giant-Slayer stumpers.",
           "aiPrompt": "Transform the person in the attached photo into a powerful, celebratory 3D/illustrated portrait as 'The Unstoppable Ironman of UCE87'. Keep their facial features clearly recognizable. They are wearing a royal navy suit with a glowing golden emblem on the chest, holding a heavy solid-gold 'IRONMAN' shield trophy surrounded by laurels."
         }
       ],
@@ -11547,7 +11547,7 @@ export const FINALE_DATA = {
           "icon": "Star",
           "accent": "from-purple-400 via-indigo-600 to-purple-900",
           "statsBadge": "195 Pure Pts • 8.86 Avg • 10x 10/10s • 8 Podiums",
-          "citation": "For dominating the Wildcard division with 195 pure points across 22 quizzes (8.86 average), 10 Perfect 10/10 scores, a 5-week consecutive 10/10 streak, 8 Weekly Podium finishes (3 Golds), and 5 Giant-Slayer solves.",
+          "citation": "Awarded for commanding the Wildcard division with 10 Perfect 10/10s, a 5-week perfection streak, 8 podium finishes, and 5 Giant-Slayer solves.",
           "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'The Wildcard MVP'. Keep their facial features clearly recognizable. They are dressed in a regal navy-and-gold suit, holding a glowing golden Ace/Wildcard trophy surrounded by 10 shining gold stars in a grand hall of fame."
         }
       ],
@@ -13237,7 +13237,7 @@ export const FINALE_DATA = {
           "icon": "Flame",
           "accent": "from-orange-400 via-red-500 to-rose-800",
           "statsBadge": "25/25 Consecutive Weeks • Quiz 36 Gold Medalist (140s)",
-          "citation": "For joining the challenge in Week 20 and playing all 25 remaining consecutive weeks without missing a single quiz (185 pure points), highlighted by winning Weekly #1 Gold in Quiz 36 with a 140-second Perfect 10/10!",
+          "citation": "In recognition of entering in Week 20 and playing 25 consecutive weeks without missing a single challenge, crowned by a 140-second Perfect 10 Gold victory.",
           "aiPrompt": "Transform the person in the attached photo into an energetic 3D/illustrated portrait as 'The Unbroken Streak Machine'. Keep their facial features clearly recognizable. They are wearing a midnight-blue blazer, holding a golden torch with a glowing flame and a '25 WEEKS UNBROKEN' gold medal."
         }
       ],
@@ -14878,7 +14878,7 @@ export const FINALE_DATA = {
           "icon": "TrendingUp",
           "accent": "from-emerald-400 via-green-600 to-teal-800",
           "statsBadge": "+1.43 Pts/Quiz Jump • 29 Weeks Played • 8 Night Quizzes",
-          "citation": "For achieving the biggest mid-season transformation in the club across 29 quizzes—leaping by +1.43 points per quiz in his second half (from 5.50 to 6.93) and solving 4 Giant-Slayer questions!",
+          "citation": "Awarded for the greatest mid-season transformation in club history—surging by +1.43 points per quiz in the second half and conquering 4 Giant-Slayer stumpers.",
           "aiPrompt": "Transform the person in the attached photo into an inspiring 3D/illustrated portrait as 'Most Improved Player of the Year'. Keep their facial features clearly recognizable. They are wearing a midnight-blue blazer, holding a golden trophy shaped like a soaring upward arrow chart with glowing gold sparks rising behind them."
         }
       ],
@@ -16505,7 +16505,7 @@ export const FINALE_DATA = {
           "icon": "Zap",
           "accent": "from-cyan-400 via-blue-500 to-indigo-700",
           "statsBadge": "41s Fastest Quiz • 43s Fastest 10/10 • 6 Weekly Golds",
-          "citation": "For shattering the club sound barrier with the fastest quiz completion in history (41 seconds in Quiz 33) and the fastest Perfect 10/10 ever recorded (43 seconds in the Quiz 40 Finale!), alongside 6 Weekly #1 Gold Medals and a 9.26 average.",
+          "citation": "In recognition of shattering all speed records with a historic 41-second quiz and a 43-second Perfect 10 in the Finale, alongside 6 Weekly Gold Medals.",
           "aiPrompt": "Transform the person in the attached photo into a high-energy 3D/illustrated portrait as 'The Sonic Boom Speed Champion'. Keep their facial features clearly recognizable. They are smiling confidently in a sleek navy-and-gold jacket, holding a blazing golden stopwatch showing '43 SECONDS' with golden lightning bolts and sonic boom rings radiating behind them."
         }
       ],
@@ -18048,7 +18048,7 @@ export const FINALE_DATA = {
           "icon": "Calendar",
           "accent": "from-amber-400 via-yellow-500 to-orange-700",
           "statsBadge": "6 Weeks First Submitter • 68% Monday Submissions",
-          "citation": "For setting the pace for the entire UCE '87 batch—being the very first person in the club to submit the new quiz in 6 different weeks (including 4 straight weeks from W37 to W40) across 25 weeks played!",
+          "citation": "In honor of setting the pace for the entire Batch of ’87 as the very first contender to submit the weekly quiz in 6 separate weeks.",
           "aiPrompt": "Transform the person in the attached photo into a cheerful 3D/illustrated portrait as 'The Monday Morning Bellwether'. Keep their facial features clearly recognizable. They are ringing a gleaming ceremonial golden bell with a banner reading 'FIRST ON THE DRAW', dressed in a royal blue and gold jacket at sunrise."
         }
       ],
@@ -19514,7 +19514,7 @@ export const FINALE_DATA = {
           "icon": "TrendingUp",
           "accent": "from-rose-400 via-pink-600 to-purple-800",
           "statsBadge": "153 Pure Pts in 21 Wks • +1.20 Surge • 2x Silver Medalist",
-          "citation": "For surging by +1.20 points/quiz in the second half of his 21-week campaign (rising from 6.60 to 7.80), earning 3 Perfect 10/10s, and winning 2 Weekly Silver Medals (including the 12-second photo-finish in Quiz 10!).",
+          "citation": "In recognition of an electric second-half surge (+1.20 pts/quiz), earning 3 Perfect 10s, and winning 2 Weekly Silver Medals including the 12-second photo-finish.",
           "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'The Second-Half Rocket'. Keep their facial features clearly recognizable. They are wearing a navy-and-gold blazer, holding two silver-and-gold medals with a sleek golden rocket ascending in the background."
         }
       ],
@@ -20966,7 +20966,7 @@ export const FINALE_DATA = {
           "icon": "Check",
           "accent": "from-emerald-400 via-teal-600 to-cyan-800",
           "statsBadge": "151 Pure Pts in 18 Wks • 8.39 Avg • 9x 9+/10 Scores",
-          "citation": "For remarkable poise and accuracy across 18 weeks played—maintaining an elite 8.39/10 season average, scoring 9/10 or 10/10 in half of all his quizzes, and winning Weekly Silver in Quiz 14.",
+          "citation": "In honor of remarkable poise and rock-solid consistency—achieving 9/10 or 10/10 in half of all appearances and winning Weekly Silver in Quiz 14.",
           "aiPrompt": "Transform the person in the attached photo into a poised, celebratory 3D/illustrated portrait as 'Mr. Reliable'. Keep their facial features clearly recognizable. They are wearing a classic midnight-blue blazer, standing beside a golden bullseye target with every arrow in the center gold ring."
         }
       ],
@@ -22327,7 +22327,7 @@ export const FINALE_DATA = {
           "icon": "Zap",
           "accent": "from-blue-400 via-indigo-500 to-violet-800",
           "statsBadge": "182s Avg Time • ±32.6s Clock • 8.00 2nd-Half Avg",
-          "citation": "For combining rapid-fire speed (182s season average, 4th fastest in the club, with a metronomic ±32.6s variance) and surging to an elite 8.00/10 average in the second half of his 18-week campaign.",
+          "citation": "In recognition of blazing speed and tactical precision, surging to an elite 8.00 average in the second half of an electric 18-week campaign.",
           "aiPrompt": "Transform the person in the attached photo into a cool, celebratory 3D/illustrated portrait as 'Mr. X — The High-Velocity Contender'. Keep their facial features clearly recognizable. They are wearing a sharp tuxedo-style navy jacket with a golden 'X' lapel pin, holding a glowing golden lightning trophy."
         }
       ],
@@ -23562,7 +23562,7 @@ export const FINALE_DATA = {
           "icon": "Clock",
           "accent": "from-sky-400 via-blue-600 to-indigo-800",
           "statsBadge": "134.8s Season Avg Time • +1.07 2nd-Half Surge",
-          "citation": "For clocking the fastest full-season average completion time in the entire club at 134.8 seconds (2m 15s) across 17 quizzes, while simultaneously boosting his accuracy by +1.07 points/quiz in the second half.",
+          "citation": "In recognition of clocking the fastest full-season average completion time in the club at 134.8 seconds while boosting second-half accuracy by +1.07 points.",
           "aiPrompt": "Transform the person in the attached photo into a stylish 3D/illustrated portrait as 'The Velocity King'. Keep their facial features clearly recognizable. They are wearing a royal blue racing-inspired blazer with gold trim, holding a winged golden speedometer trophy showing '135s AVG', with golden light trails in the background."
         }
       ],
@@ -24664,7 +24664,7 @@ export const FINALE_DATA = {
           "icon": "Zap",
           "accent": "from-sky-400 via-cyan-600 to-teal-800",
           "statsBadge": "16 Weeks Played • 191.5s Avg Time • +0.88 Improvement",
-          "citation": "For bringing brisk, decisive energy to 16 quizzes with a 191.5-second average completion time (6th fastest in the club), being first to submit twice, and climbing +0.88 points/quiz in his second half.",
+          "citation": "In honor of brisk, decisive play with a 191-second average time, being first to submit twice, and climbing +0.88 points per quiz in the second half.",
           "aiPrompt": "Transform the person in the attached photo into a dynamic 3D/illustrated portrait as 'The Quick-Fire Contender'. Keep their facial features clearly recognizable. They are dressed in a royal blue jacket, holding a golden rapid-fire quiz buzzer with glowing gold sparks."
         }
       ],
@@ -25549,7 +25549,7 @@ export const FINALE_DATA = {
           "icon": "Globe",
           "accent": "from-blue-400 via-indigo-600 to-red-700",
           "statsBadge": "Quiz 1 Gold Medalist (10/10) • 7.78 Avg across 9 Quizzes",
-          "citation": "For making club history from the USA (+1) as the very first Official Weekly #1 Gold Medalist in Quiz 1 (2026-W05) with a 10/10, and maintaining an impressive 7.78/10 average across 9 appearances!",
+          "citation": "In honor of making club history from the USA as the very first Official Weekly Gold Medalist in Quiz 1 with a flawless 10/10 performance.",
           "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'The Global Club Ambassador & Quiz 1 Champion'. Keep their facial features clearly recognizable. They are wearing a midnight-blue blazer, holding a golden globe trophy connecting India and the USA with a 'QUIZ 1 CHAMPION' gold ribbon."
         }
       ],
@@ -26385,7 +26385,7 @@ export const FINALE_DATA = {
           "icon": "Target",
           "accent": "from-amber-400 via-red-500 to-rose-900",
           "statsBadge": "3x Perfect 10/10s in 9 Quizzes • 5 Giant-Slayer Solves",
-          "citation": "For extraordinary big-game marksmanship—winning Weekly #1 Gold in Quiz 22, scoring 3 Perfect 10/10s in just 9 appearances, and cracking 5 Giant-Slayer questions (including both the Brahmaputra Tunnel and CWG Shooting stumpers!).",
+          "citation": "In honor of extraordinary big-game marksmanship—winning Weekly Gold in Quiz 22, scoring 3 Perfect 10s, and cracking 5 Giant-Slayer stumpers.",
           "aiPrompt": "Transform the person in the attached photo into a sharp, celebratory 3D/illustrated portrait as 'The Big-Game Sniper'. Keep their facial features clearly recognizable. They are wearing a regal navy blazer, holding a golden bow and arrow aimed at a glowing '10/10' star target."
         }
       ],
@@ -27179,7 +27179,7 @@ export const FINALE_DATA = {
           "icon": "Clock",
           "accent": "from-indigo-400 via-purple-600 to-slate-900",
           "statsBadge": "10/10 in 574s (9m 34s) • 6 Late-Night Quizzes",
-          "citation": "For mastering late-night deliberation—playing 6 quizzes after 10 PM and savored every moment of the clock to clinch a 574-second (9m 34s) Perfect 10/10 in Quiz 32!",
+          "citation": "In recognition of mastering late-night deliberation and savored every moment of the clock to clinch a dramatic 574-second Perfect 10 in Quiz 32.",
           "aiPrompt": "Transform the person in the attached photo into a distinguished 3D/illustrated portrait as 'The Midnight Scholar & Deep Thinker' in a royal navy blazer beside a glowing golden hourglass and a '10/10' trophy under a starry night sky."
         }
       ],
@@ -32446,7 +32446,7 @@ export const FINALE_DATA = {
           "icon": "Clock",
           "accent": "from-amber-500 via-orange-600 to-yellow-800",
           "statsBadge": "10/10 in 593s (7 Seconds Left!) • 7.67 Avg Score",
-          "citation": "For delivering the ultimate 'Paisa Vasool' buzzer-beater in club history—calmly using 593 of the 600 allowed seconds (9 minutes, 53 seconds) to clinch a Perfect 10/10 and Weekly Bronze in Quiz 1 with just 7 seconds left on the clock!",
+          "citation": "In honor of the ultimate buzzer-beater in club history—calmly utilizing 593 of 600 allowed seconds to clinch a Perfect 10 Bronze with just 7 seconds remaining.",
           "aiPrompt": "Transform the person in the attached photo into a relaxed, smiling 3D/illustrated portrait as 'The Paisa Vasool Buzzer-Beater King'. Keep their facial features clearly recognizable. They are calmly sipping royal tea in a navy-and-gold blazer while pressing a golden submit button with a giant clock behind them showing '09:53 / 10:00' and confetti exploding."
         }
       ],
@@ -41209,7 +41209,7 @@ export const FINALE_DATA = {
       "icon": "Crown",
       "accent": "from-amber-400 via-yellow-500 to-amber-700",
       "statsBadge": "383 / 400 Pts • 9.58 Avg • 40/40 Weeks",
-      "citation": "For conquering the 40-week UCE '87 Ultimate Challenge Experience with an extraordinary 383 out of 400 pure points, a 9.58 season average, 25 Perfect 10/10s, a 33-week streak of 9+ scores, and never once scoring below 8/10 across all 40 weeks.",
+      "citation": "Awarded with highest distinction for peerless mastery, extraordinary consistency, and finishing as the undisputed Season Champion of the 40-Week UCE ’87 Ultimate Challenge.",
       "aiPrompt": "Transform the person in the attached photo into a regal, celebratory 3D Pixar/illustrated royal portrait as 'The Grand Master Quiz Champion'. Keep their facial features, glasses/hair, and warm smile clearly recognizable. They are wearing a bespoke midnight-blue velvet blazer with gold embroidery, holding a grand golden Championship Cup engraved with '383/400', with the iconic Singapore Marina Bay skyline and a golden chess king piece glowing softly in the background. Rich royal blue and antique gold lighting.",
       "normPhone": "6583335250",
       "winnerName": "Rashmi Ranjan Raj",
@@ -41228,7 +41228,7 @@ export const FINALE_DATA = {
       "icon": "Globe",
       "accent": "from-emerald-400 to-teal-700",
       "statsBadge": "100% Attendance from Singapore • 88.1% Tough-Q Accuracy",
-      "citation": "For representing the international UCE '87 contingent from Singapore (+65) with 100% unbroken attendance across all 40 weeks and solving 88.1% of the season's hardest stumper questions.",
+      "citation": "In distinguished honor of representing the international UCE ’87 fraternity from Singapore with flawless 40-week attendance and solving the season’s most formidable stumpers.",
       "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait representing Singapore and India with a golden globe trophy and 'UCE 87 GLOBAL CHAMPION' banner.",
       "normPhone": "6583335250",
       "winnerName": "Rashmi Ranjan Raj",
@@ -41247,7 +41247,7 @@ export const FINALE_DATA = {
       "icon": "Zap",
       "accent": "from-yellow-300 via-amber-500 to-orange-600",
       "statsBadge": "379 Pts • 18 Weekly Golds • 30 Podiums • 145s Avg",
-      "citation": "For an electrifying 379-point campaign featuring 18 Weekly #1 Gold Medals (45% of the entire season!), 30 Weekly Podium finishes, 24 Perfect 10/10s, and #1 overall speed-to-point efficiency (15.2 seconds per correct answer).",
+      "citation": "In extraordinary recognition of dominating the season with 18 Weekly Gold Medals, 30 podium finishes, and peerless speed-to-point mastery across 40 weeks.",
       "aiPrompt": "Transform the person in the attached photo into a dynamic, celebratory 3D/illustrated portrait as 'The Apex Sprinter & Weekend Finisher'. Keep their facial features clearly recognizable. They are wearing a sharp royal blue & gold jacket, holding 18 gleaming gold medals in one hand and a golden cricket bat (MS Dhoni finisher style) in the other, with a glowing golden stopwatch showing '145s' and stadium floodlights in the background.",
       "normPhone": "9437966690",
       "winnerName": "Priyadarshi Mohanty",
@@ -41266,7 +41266,7 @@ export const FINALE_DATA = {
       "icon": "Flame",
       "accent": "from-amber-500 to-red-600",
       "statsBadge": "Last to Submit in 26 of 40 Weeks • 54s Finale 10/10",
-      "citation": "For mastering the art of the weekend finish—stepping into the arena on Saturday or Sunday as the very last person in the club to submit in 26 out of 40 weeks and walking away with the #1 trophy!",
+      "citation": "Awarded for legendary clutch brilliance—stepping into the arena as the weekend's final contender in 26 weeks and triumphantly walking away with Gold.",
       "aiPrompt": "Transform the person in the attached photo into a cool, smiling finisher in a midnight-blue & gold blazer hitting a last-ball sixer out of a floodlit trivia stadium.",
       "normPhone": "9437966690",
       "winnerName": "Priyadarshi Mohanty",
@@ -41285,7 +41285,7 @@ export const FINALE_DATA = {
       "icon": "Shield",
       "accent": "from-amber-300 via-amber-500 to-yellow-700",
       "statsBadge": "357 Pts • 20 Weekly Podiums • Never Below 8/10",
-      "citation": "For securing 3rd Place Overall with 357 pure points, 20 Weekly Podium finishes (5 Golds, 12 Silvers, 3 Bronzes), 20 Perfect 10/10s, a 27-week consecutive 9+ streak, and never once scoring below 8/10 in 38 weeks played.",
+      "citation": "In high honor of securing 3rd Place Overall with 20 Weekly Podiums, a 27-week streak of 9+ scores, and never once scoring below 8/10 across the season.",
       "aiPrompt": "Transform the person in the attached photo into a distinguished, celebratory 3D/illustrated portrait as 'The Pillar of Excellence'. Keep their facial features clearly recognizable. They are dressed in an elegant midnight-blue suit with a gold lapel pin, standing beside a classical marble and gold pillar topped with a glowing trophy and 20 podium stars, radiating wisdom and unshakeable consistency.",
       "normPhone": "9437065187",
       "winnerName": "Dr B K Das",
@@ -41304,7 +41304,7 @@ export const FINALE_DATA = {
       "icon": "Award",
       "accent": "from-yellow-400 via-amber-500 to-amber-800",
       "statsBadge": "27 Perfect 10/10s (75% Rate!) • 8-Week 10/10 Streak",
-      "citation": "For setting the all-time club record with 27 Perfect 10/10 scores in 36 weeks played (an astonishing 75.0% perfection rate!) and forging the longest unbroken streak of Perfect 10s in club history (8 consecutive weeks!).",
+      "citation": "Awarded for setting the all-time club record with an astonishing 27 Perfect 10/10 scores and an unprecedented 8-week consecutive perfection streak.",
       "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'Mr. Perfect 10'. Keep their facial features clearly recognizable. They are wearing a royal blue blazer, holding a glowing golden shield emblazoned with a giant diamond-encrusted '10/10' emblem, surrounded by 27 floating golden stars and celebratory confetti.",
       "normPhone": "9650994689",
       "winnerName": "Dilip K Dubey",
@@ -41323,7 +41323,7 @@ export const FINALE_DATA = {
       "icon": "Award",
       "accent": "from-amber-400 via-orange-500 to-red-700",
       "statsBadge": "#5 Pure Score (271 Pts) • 39/40 Weeks • 6 Giant-Slayer Solves",
-      "citation": "For finishing #5 Overall in Pure Score (271 pts across 39 weeks), leading the entire club as the #1 Sunrise Scholar (14 quizzes before 8 AM), and ranking #1 in Stumper Solves (cracking 6 tough questions that stumped most contenders, plus +1.04 second-half improvement!).",
+      "citation": "In high honor of rising as the club’s #1 Sunrise Scholar before 8 AM, conquering the season’s toughest stumper questions, and securing Top 5 Overall.",
       "aiPrompt": "Transform the person in the attached photo into a heroic 3D/illustrated portrait as 'The Sunrise Scholar & Giant Slayer'. Keep their facial features clearly recognizable. They are smiling warmly in a royal blue jacket, holding a golden cup of morning tea in one hand and a ceremonial golden trivia sword in the other, with a glorious golden sunrise in the background.",
       "normPhone": "9769497207",
       "winnerName": "Rabindra Nath Dash",
@@ -41342,7 +41342,7 @@ export const FINALE_DATA = {
       "icon": "Clock",
       "accent": "from-teal-400 via-cyan-600 to-blue-800",
       "statsBadge": "#6 Pure Score (243 Pts) • ±26.8s StdDev • Q39 & Q40 10/10s!",
-      "citation": "For finishing #6 Overall in Pure Score (243 pts across 36 weeks) with the most consistent internal clock in the club (170s ± 26.8s), and delivering a storybook ending by scoring his first-ever Perfect 10/10 to win Gold in Quiz 39 and backing it up with another 10/10 in Quiz 40!",
+      "citation": "In honor of metronomic consistency across 36 weeks and delivering an unforgettable climax with back-to-back Perfect 10 Gold victories in Quiz 39 and Quiz 40.",
       "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'The Human Metronome'. Keep their facial features clearly recognizable. They are wearing a classic navy-and-gold blazer, holding a gleaming golden mechanical metronome and two shining '10/10' gold medallions representing his back-to-back finale triumph.",
       "normPhone": "9821512341",
       "winnerName": "Subrat Mishra",
@@ -41361,7 +41361,7 @@ export const FINALE_DATA = {
       "icon": "Sparkles",
       "accent": "from-indigo-400 via-blue-600 to-slate-800",
       "statsBadge": "#7 Pure Score (240 Pts) • 37 Weeks • 5 Giant-Slayer Solves",
-      "citation": "For finishing #7 Overall in Pure Score (240 pts across 37 weeks), deliberately taking one extra minute per quiz in the second half to boost his average score by a massive +1.22 points/quiz (5.83 → 7.06), and solving 5 Giant-Slayer questions!",
+      "citation": "In recognition of brilliant tactical mastery—taking deliberate time to surge by +1.22 points per quiz in the second half, cracking 5 Giant-Slayers, and finishing Top 7.",
       "aiPrompt": "Transform the person in the attached photo into a thoughtful, celebratory 3D/illustrated portrait as 'The Master Strategist'. Keep their facial features clearly recognizable. They are wearing a royal blue blazer, holding a golden magnifying glass and an ornate golden hourglass beside a chessboard, warm regal lighting.",
       "normPhone": "8249335271",
       "winnerName": "Suman Kumar Mohanty",
@@ -41380,7 +41380,7 @@ export const FINALE_DATA = {
       "icon": "Shield",
       "accent": "from-amber-400 via-yellow-600 to-stone-800",
       "statsBadge": "#8 Pure Score (235 Pts) • 39 Official + Pilot • 5 Giant Slayers",
-      "citation": "For exemplifying unwavering dedication—playing 39 of 40 official quizzes plus the Pilot Week, being the first person in the club to submit on 4 Monday mornings, solving 5 Giant-Slayer stumpers, and knocking on perfection's door with five 9/10 scores!",
+      "citation": "In honor of unwavering dedication—battling through 39 official quizzes plus the Pilot Week, being first to submit on 4 Mondays, and cracking 5 Giant-Slayer stumpers.",
       "aiPrompt": "Transform the person in the attached photo into a powerful, celebratory 3D/illustrated portrait as 'The Unstoppable Ironman of UCE87'. Keep their facial features clearly recognizable. They are wearing a royal navy suit with a glowing golden emblem on the chest, holding a heavy solid-gold 'IRONMAN' shield trophy surrounded by laurels.",
       "normPhone": "7683062137",
       "winnerName": "Bishnu Charan Behera",
@@ -41399,7 +41399,7 @@ export const FINALE_DATA = {
       "icon": "Star",
       "accent": "from-purple-400 via-indigo-600 to-purple-900",
       "statsBadge": "195 Pure Pts • 8.86 Avg • 10x 10/10s • 8 Podiums",
-      "citation": "For dominating the Wildcard division with 195 pure points across 22 quizzes (8.86 average), 10 Perfect 10/10 scores, a 5-week consecutive 10/10 streak, 8 Weekly Podium finishes (3 Golds), and 5 Giant-Slayer solves.",
+      "citation": "Awarded for commanding the Wildcard division with 10 Perfect 10/10s, a 5-week perfection streak, 8 podium finishes, and 5 Giant-Slayer solves.",
       "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'The Wildcard MVP'. Keep their facial features clearly recognizable. They are dressed in a regal navy-and-gold suit, holding a glowing golden Ace/Wildcard trophy surrounded by 10 shining gold stars in a grand hall of fame.",
       "normPhone": "9867704595",
       "winnerName": "Subrat Kumar Mohapatra",
@@ -41418,7 +41418,7 @@ export const FINALE_DATA = {
       "icon": "Flame",
       "accent": "from-orange-400 via-red-500 to-rose-800",
       "statsBadge": "25/25 Consecutive Weeks • Quiz 36 Gold Medalist (140s)",
-      "citation": "For joining the challenge in Week 20 and playing all 25 remaining consecutive weeks without missing a single quiz (185 pure points), highlighted by winning Weekly #1 Gold in Quiz 36 with a 140-second Perfect 10/10!",
+      "citation": "In recognition of entering in Week 20 and playing 25 consecutive weeks without missing a single challenge, crowned by a 140-second Perfect 10 Gold victory.",
       "aiPrompt": "Transform the person in the attached photo into an energetic 3D/illustrated portrait as 'The Unbroken Streak Machine'. Keep their facial features clearly recognizable. They are wearing a midnight-blue blazer, holding a golden torch with a glowing flame and a '25 WEEKS UNBROKEN' gold medal.",
       "normPhone": "9999978455",
       "winnerName": "T C Sreenath",
@@ -41437,7 +41437,7 @@ export const FINALE_DATA = {
       "icon": "TrendingUp",
       "accent": "from-emerald-400 via-green-600 to-teal-800",
       "statsBadge": "+1.43 Pts/Quiz Jump • 29 Weeks Played • 8 Night Quizzes",
-      "citation": "For achieving the biggest mid-season transformation in the club across 29 quizzes—leaping by +1.43 points per quiz in his second half (from 5.50 to 6.93) and solving 4 Giant-Slayer questions!",
+      "citation": "Awarded for the greatest mid-season transformation in club history—surging by +1.43 points per quiz in the second half and conquering 4 Giant-Slayer stumpers.",
       "aiPrompt": "Transform the person in the attached photo into an inspiring 3D/illustrated portrait as 'Most Improved Player of the Year'. Keep their facial features clearly recognizable. They are wearing a midnight-blue blazer, holding a golden trophy shaped like a soaring upward arrow chart with glowing gold sparks rising behind them.",
       "normPhone": "9437040643",
       "winnerName": "Bhakta Nayak",
@@ -41456,7 +41456,7 @@ export const FINALE_DATA = {
       "icon": "Zap",
       "accent": "from-cyan-400 via-blue-500 to-indigo-700",
       "statsBadge": "41s Fastest Quiz • 43s Fastest 10/10 • 6 Weekly Golds",
-      "citation": "For shattering the club sound barrier with the fastest quiz completion in history (41 seconds in Quiz 33) and the fastest Perfect 10/10 ever recorded (43 seconds in the Quiz 40 Finale!), alongside 6 Weekly #1 Gold Medals and a 9.26 average.",
+      "citation": "In recognition of shattering all speed records with a historic 41-second quiz and a 43-second Perfect 10 in the Finale, alongside 6 Weekly Gold Medals.",
       "aiPrompt": "Transform the person in the attached photo into a high-energy 3D/illustrated portrait as 'The Sonic Boom Speed Champion'. Keep their facial features clearly recognizable. They are smiling confidently in a sleek navy-and-gold jacket, holding a blazing golden stopwatch showing '43 SECONDS' with golden lightning bolts and sonic boom rings radiating behind them.",
       "normPhone": "9437197562",
       "winnerName": "Prabhat Ranjan Barik",
@@ -41475,7 +41475,7 @@ export const FINALE_DATA = {
       "icon": "Calendar",
       "accent": "from-amber-400 via-yellow-500 to-orange-700",
       "statsBadge": "6 Weeks First Submitter • 68% Monday Submissions",
-      "citation": "For setting the pace for the entire UCE '87 batch—being the very first person in the club to submit the new quiz in 6 different weeks (including 4 straight weeks from W37 to W40) across 25 weeks played!",
+      "citation": "In honor of setting the pace for the entire Batch of ’87 as the very first contender to submit the weekly quiz in 6 separate weeks.",
       "aiPrompt": "Transform the person in the attached photo into a cheerful 3D/illustrated portrait as 'The Monday Morning Bellwether'. Keep their facial features clearly recognizable. They are ringing a gleaming ceremonial golden bell with a banner reading 'FIRST ON THE DRAW', dressed in a royal blue and gold jacket at sunrise.",
       "normPhone": "9810226391",
       "winnerName": "Raghunath Mohapatra",
@@ -41494,7 +41494,7 @@ export const FINALE_DATA = {
       "icon": "TrendingUp",
       "accent": "from-rose-400 via-pink-600 to-purple-800",
       "statsBadge": "153 Pure Pts in 21 Wks • +1.20 Surge • 2x Silver Medalist",
-      "citation": "For surging by +1.20 points/quiz in the second half of his 21-week campaign (rising from 6.60 to 7.80), earning 3 Perfect 10/10s, and winning 2 Weekly Silver Medals (including the 12-second photo-finish in Quiz 10!).",
+      "citation": "In recognition of an electric second-half surge (+1.20 pts/quiz), earning 3 Perfect 10s, and winning 2 Weekly Silver Medals including the 12-second photo-finish.",
       "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'The Second-Half Rocket'. Keep their facial features clearly recognizable. They are wearing a navy-and-gold blazer, holding two silver-and-gold medals with a sleek golden rocket ascending in the background.",
       "normPhone": "9437585264",
       "winnerName": "M.S. Rahman",
@@ -41513,7 +41513,7 @@ export const FINALE_DATA = {
       "icon": "Check",
       "accent": "from-emerald-400 via-teal-600 to-cyan-800",
       "statsBadge": "151 Pure Pts in 18 Wks • 8.39 Avg • 9x 9+/10 Scores",
-      "citation": "For remarkable poise and accuracy across 18 weeks played—maintaining an elite 8.39/10 season average, scoring 9/10 or 10/10 in half of all his quizzes, and winning Weekly Silver in Quiz 14.",
+      "citation": "In honor of remarkable poise and rock-solid consistency—achieving 9/10 or 10/10 in half of all appearances and winning Weekly Silver in Quiz 14.",
       "aiPrompt": "Transform the person in the attached photo into a poised, celebratory 3D/illustrated portrait as 'Mr. Reliable'. Keep their facial features clearly recognizable. They are wearing a classic midnight-blue blazer, standing beside a golden bullseye target with every arrow in the center gold ring.",
       "normPhone": "9425602892",
       "winnerName": "Bijaya Kumar Pathy",
@@ -41532,7 +41532,7 @@ export const FINALE_DATA = {
       "icon": "Zap",
       "accent": "from-blue-400 via-indigo-500 to-violet-800",
       "statsBadge": "182s Avg Time • ±32.6s Clock • 8.00 2nd-Half Avg",
-      "citation": "For combining rapid-fire speed (182s season average, 4th fastest in the club, with a metronomic ±32.6s variance) and surging to an elite 8.00/10 average in the second half of his 18-week campaign.",
+      "citation": "In recognition of blazing speed and tactical precision, surging to an elite 8.00 average in the second half of an electric 18-week campaign.",
       "aiPrompt": "Transform the person in the attached photo into a cool, celebratory 3D/illustrated portrait as 'Mr. X — The High-Velocity Contender'. Keep their facial features clearly recognizable. They are wearing a sharp tuxedo-style navy jacket with a golden 'X' lapel pin, holding a glowing golden lightning trophy.",
       "normPhone": "9440061101",
       "winnerName": "Subhransu Sekhar Mishra",
@@ -41551,7 +41551,7 @@ export const FINALE_DATA = {
       "icon": "Clock",
       "accent": "from-sky-400 via-blue-600 to-indigo-800",
       "statsBadge": "134.8s Season Avg Time • +1.07 2nd-Half Surge",
-      "citation": "For clocking the fastest full-season average completion time in the entire club at 134.8 seconds (2m 15s) across 17 quizzes, while simultaneously boosting his accuracy by +1.07 points/quiz in the second half.",
+      "citation": "In recognition of clocking the fastest full-season average completion time in the club at 134.8 seconds while boosting second-half accuracy by +1.07 points.",
       "aiPrompt": "Transform the person in the attached photo into a stylish 3D/illustrated portrait as 'The Velocity King'. Keep their facial features clearly recognizable. They are wearing a royal blue racing-inspired blazer with gold trim, holding a winged golden speedometer trophy showing '135s AVG', with golden light trails in the background.",
       "normPhone": "9437172226",
       "winnerName": "Rabinarayan Prusty",
@@ -41570,7 +41570,7 @@ export const FINALE_DATA = {
       "icon": "Zap",
       "accent": "from-sky-400 via-cyan-600 to-teal-800",
       "statsBadge": "16 Weeks Played • 191.5s Avg Time • +0.88 Improvement",
-      "citation": "For bringing brisk, decisive energy to 16 quizzes with a 191.5-second average completion time (6th fastest in the club), being first to submit twice, and climbing +0.88 points/quiz in his second half.",
+      "citation": "In honor of brisk, decisive play with a 191-second average time, being first to submit twice, and climbing +0.88 points per quiz in the second half.",
       "aiPrompt": "Transform the person in the attached photo into a dynamic 3D/illustrated portrait as 'The Quick-Fire Contender'. Keep their facial features clearly recognizable. They are dressed in a royal blue jacket, holding a golden rapid-fire quiz buzzer with glowing gold sparks.",
       "normPhone": "9993926551",
       "winnerName": "Tara Shankar Behera",
@@ -41589,7 +41589,7 @@ export const FINALE_DATA = {
       "icon": "Globe",
       "accent": "from-blue-400 via-indigo-600 to-red-700",
       "statsBadge": "Quiz 1 Gold Medalist (10/10) • 7.78 Avg across 9 Quizzes",
-      "citation": "For making club history from the USA (+1) as the very first Official Weekly #1 Gold Medalist in Quiz 1 (2026-W05) with a 10/10, and maintaining an impressive 7.78/10 average across 9 appearances!",
+      "citation": "In honor of making club history from the USA as the very first Official Weekly Gold Medalist in Quiz 1 with a flawless 10/10 performance.",
       "aiPrompt": "Transform the person in the attached photo into a celebratory 3D/illustrated portrait as 'The Global Club Ambassador & Quiz 1 Champion'. Keep their facial features clearly recognizable. They are wearing a midnight-blue blazer, holding a golden globe trophy connecting India and the USA with a 'QUIZ 1 CHAMPION' gold ribbon.",
       "normPhone": "13152625472",
       "winnerName": "Santosh Mahapatra",
@@ -41608,7 +41608,7 @@ export const FINALE_DATA = {
       "icon": "Target",
       "accent": "from-amber-400 via-red-500 to-rose-900",
       "statsBadge": "3x Perfect 10/10s in 9 Quizzes • 5 Giant-Slayer Solves",
-      "citation": "For extraordinary big-game marksmanship—winning Weekly #1 Gold in Quiz 22, scoring 3 Perfect 10/10s in just 9 appearances, and cracking 5 Giant-Slayer questions (including both the Brahmaputra Tunnel and CWG Shooting stumpers!).",
+      "citation": "In honor of extraordinary big-game marksmanship—winning Weekly Gold in Quiz 22, scoring 3 Perfect 10s, and cracking 5 Giant-Slayer stumpers.",
       "aiPrompt": "Transform the person in the attached photo into a sharp, celebratory 3D/illustrated portrait as 'The Big-Game Sniper'. Keep their facial features clearly recognizable. They are wearing a regal navy blazer, holding a golden bow and arrow aimed at a glowing '10/10' star target.",
       "normPhone": "9650991990",
       "winnerName": "Praween K Singh",
@@ -41627,7 +41627,7 @@ export const FINALE_DATA = {
       "icon": "Clock",
       "accent": "from-indigo-400 via-purple-600 to-slate-900",
       "statsBadge": "10/10 in 574s (9m 34s) • 6 Late-Night Quizzes",
-      "citation": "For mastering late-night deliberation—playing 6 quizzes after 10 PM and savored every moment of the clock to clinch a 574-second (9m 34s) Perfect 10/10 in Quiz 32!",
+      "citation": "In recognition of mastering late-night deliberation and savored every moment of the clock to clinch a dramatic 574-second Perfect 10 in Quiz 32.",
       "aiPrompt": "Transform the person in the attached photo into a distinguished 3D/illustrated portrait as 'The Midnight Scholar & Deep Thinker' in a royal navy blazer beside a glowing golden hourglass and a '10/10' trophy under a starry night sky.",
       "normPhone": "9437575643",
       "winnerName": "Prasant Kumar Panda",
@@ -41646,7 +41646,7 @@ export const FINALE_DATA = {
       "icon": "Clock",
       "accent": "from-amber-500 via-orange-600 to-yellow-800",
       "statsBadge": "10/10 in 593s (7 Seconds Left!) • 7.67 Avg Score",
-      "citation": "For delivering the ultimate 'Paisa Vasool' buzzer-beater in club history—calmly using 593 of the 600 allowed seconds (9 minutes, 53 seconds) to clinch a Perfect 10/10 and Weekly Bronze in Quiz 1 with just 7 seconds left on the clock!",
+      "citation": "In honor of the ultimate buzzer-beater in club history—calmly utilizing 593 of 600 allowed seconds to clinch a Perfect 10 Bronze with just 7 seconds remaining.",
       "aiPrompt": "Transform the person in the attached photo into a relaxed, smiling 3D/illustrated portrait as 'The Paisa Vasool Buzzer-Beater King'. Keep their facial features clearly recognizable. They are calmly sipping royal tea in a navy-and-gold blazer while pressing a golden submit button with a giant clock behind them showing '09:53 / 10:00' and confetti exploding.",
       "normPhone": "9437002903",
       "winnerName": "Sagar Mohanty",

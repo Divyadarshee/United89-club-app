@@ -512,15 +512,11 @@ function drawOrganizerSignature(ctx, cx, footY, sigStyle = 'sig-udaya-full') {
   }
   ctx.restore();
 
-  // 3. Formal Printed Name & Organizer Title Below the Signature Line
+  // 3. Organizer Title Below the Signature Line
   ctx.textAlign = 'center';
   ctx.fillStyle = '#f3d88c';
-  ctx.font = 'bold 17px Georgia, serif';
-  ctx.fillText('U D A Y A   N A R A Y A N   D A S   ( U .  N .  D A S )', cx, footY + 26);
-
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '15px Arial, sans-serif';
-  ctx.fillText('ORGANIZER • ORGANIZING COMMITTEE • UCE BURLA BATCH OF 1987', cx, footY + 50);
+  ctx.font = 'bold 18px Georgia, serif';
+  ctx.fillText('ORGANIZER, UCE ’87 QUIZ CLUB', cx, footY + 28);
 
   ctx.restore();
 }
@@ -799,23 +795,6 @@ export async function renderCertificateToDataUrl({
     titleY
   );
 
-  // Subtitle pill
-  const pillY = 224;
-  const pillText = isAward
-    ? `${activeAward.tier.toUpperCase()}  •  40-WEEK GRAND FINALE (2026)`
-    : 'OFFICIAL CONTENDER & SEASON FINISHER  •  40-WEEK GRAND FINALE (2026)';
-  ctx.font = 'bold 20px Arial, sans-serif';
-  const pillW = Math.max(ctx.measureText(pillText).width + 70, 560);
-  drawRoundedRect(ctx, W / 2 - pillW / 2, pillY, pillW, 40, 20);
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.18)';
-  ctx.fill();
-  ctx.strokeStyle = '#c5a059';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  ctx.fillStyle = '#f3d88c';
-  ctx.fillText(pillText, W / 2, pillY + 27);
-
   // 4. Member Photo or Dummy Person Silhouette Circle
   drawRoyalCrestOrPhoto(
     ctx,
@@ -874,10 +853,10 @@ export async function renderCertificateToDataUrl({
   const citationText = isAward ? activeAward.citation : player.participationCitation;
   wrapText(ctx, citationText, W / 2, citationY, 1460, 42);
 
-  // 8. Verified Performance Stats Row (5 Translucent Glass Stat Boxes)
-  const boxW = 265;
+  // 8. Verified Performance Stats Row (4 Translucent Glass Stat Boxes in a Sleek Single Row)
+  const boxW = 330;
   const boxH = 114;
-  const gap = 24;
+  const gap = 30;
   const statsItems = [
     {
       label: 'PURE QUIZ SCORE',
@@ -890,10 +869,6 @@ export async function renderCertificateToDataUrl({
     {
       label: 'SEASON AVERAGE',
       value: player.weeksPlayed > 0 ? `${player.avgScore} / 10` : `${player.pilotScore || 0} / 10`,
-    },
-    {
-      label: 'AVERAGE SPEED',
-      value: player.weeksPlayed > 0 ? `${player.avgTime}s` : `${player.pilotTime || 0}s`,
     },
     {
       label: isAward && player.count10 > 0 ? 'PERFECT 10/10s' : 'BEST PERFORMANCE',
@@ -920,7 +895,7 @@ export async function renderCertificateToDataUrl({
     ctx.fillText(st.label, startX + boxW / 2, statsY + 36);
 
     ctx.fillStyle = '#f3d88c';
-    ctx.font = 'bold 34px Georgia, serif';
+    ctx.font = 'bold 36px Georgia, serif';
     ctx.fillText(st.value, startX + boxW / 2, statsY + 84);
 
     startX += boxW + gap;
@@ -959,7 +934,7 @@ export async function renderCertificateToDataUrl({
     ctx.restore();
   }
 
-  // Right date & verification (balanced two-line caption matching left signature block)
+  // Right date of conferment (clean, balanced with left organizer signature)
   ctx.textAlign = 'center';
   ctx.strokeStyle = '#c5a059';
   ctx.lineWidth = 1.5;
@@ -969,20 +944,12 @@ export async function renderCertificateToDataUrl({
   ctx.stroke();
 
   ctx.fillStyle = '#f3d88c';
-  ctx.font = 'bold 26px Georgia, serif';
-  ctx.fillText('November 2026 • Quiz 40 Finale', W - 430, footY - 22);
+  ctx.font = 'bold 28px Georgia, serif';
+  ctx.fillText('November 2026', W - 430, footY - 20);
 
   ctx.fillStyle = '#f3d88c';
-  ctx.font = 'bold 17px Georgia, serif';
-  ctx.fillText(
-    player.rank ? `OFFICIAL SEASON RANK #${player.rank}` : 'OFFICIAL PIONEER RECORD',
-    W - 430,
-    footY + 26
-  );
-
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '15px Arial, sans-serif';
-  ctx.fillText('VERIFIED PURE SCORE • UCE-QUIZ.WEB.APP', W - 430, footY + 50);
+  ctx.font = 'bold 18px Georgia, serif';
+  ctx.fillText('DATE OF CONFERMENT', W - 430, footY + 28);
 
   return canvas.toDataURL('image/png');
 }
