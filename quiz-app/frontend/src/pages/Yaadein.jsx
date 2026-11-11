@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -23,20 +23,24 @@ import {
     MAX_VIDEO_UPLOAD_BYTES,
 } from '../utils/imageCompressor';
 import { useAuth } from '../context/AuthContext';
+import { useConfig } from '../context/ConfigContext';
 import { useSoundManager } from '../hooks/useSoundManager';
-import { isFinaleAdmin, normalizePhone } from '../utils/featureFlags';
+import { isFinaleAdmin, isFinaleUnlocked, normalizePhone } from '../utils/featureFlags';
 
 const LIKED_STORAGE_KEY = 'yaadein_liked_ids_v2';
 const SEED_OVERRIDES_STORAGE_KEY = 'yaadein_seed_overrides_v2';
 
 export default function Yaadein() {
+    const navigate = useNavigate();
     const { user } = useAuth();
+    const { config, isLoading: configLoading } = useConfig();
     const { playSound, stopSound } = useSoundManager();
     const [searchParams, setSearchParams] = useSearchParams();
 
     const userPhone = user?.phone || user?.user_id || localStorage.getItem('user_id') || '';
     const normUserPhone = normalizePhone(userPhone);
     const isAdmin = isFinaleAdmin(user) || localStorage.getItem('admin_auth') === 'true';
+    const finaleUnlocked = isFinaleUnlocked(user, config);
 
     // Dynamic memories from Firestore / Backend + Local fallback
     const [dynamicItems, setDynamicItems] = useState([]);
@@ -465,6 +469,32 @@ export default function Yaadein() {
         link.click();
         document.body.removeChild(link);
     };
+
+    if (!configLoading && !finaleUnlocked) {
+        return (
+            <div className="w-full max-w-2xl mx-auto py-16 px-4 text-center">
+                <div className="card-vintage p-8 space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-purple-500/20 border border-purple-400/50 flex items-center justify-center text-3xl mx-auto">
+                        🔒
+                    </div>
+                    <h2 className="text-2xl font-serif font-bold text-white">
+                        Yaadein • यादें Preview
+                    </h2>
+                    <p className="text-sm text-gray-300 font-sans max-w-md mx-auto leading-relaxed">
+                        The Yaadein Batch Memories Album, Finale Showcase &amp; Certificates are currently in private preview for club testers. The grand reveal will unlock for all members shortly!
+                    </p>
+                    <div className="pt-2">
+                        <button
+                            onClick={() => navigate('/welcome')}
+                            className="btn-vintage px-6 py-2 text-sm cursor-pointer"
+                        >
+                            Back to Lounge
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="relative w-full max-w-6xl mx-auto px-3 sm:px-6 pt-16 sm:pt-12 pb-24 text-left z-10">

@@ -181,22 +181,24 @@ export default function UserNav() {
                             </button>
 
                             {finaleUnlocked && (
-                                <button
-                                    onClick={() => handleNavigate('/rewind?tab=highlights')}
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-amber-100 hover:bg-white/10 hover:text-antique-gold rounded-lg transition-colors cursor-pointer"
-                                >
-                                    <Trophy size={15} className="text-antique-gold" />
-                                    <span>2026 Season Rewind</span>
-                                </button>
-                            )}
+                                <>
+                                    <button
+                                        onClick={() => handleNavigate('/rewind?tab=highlights')}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-amber-100 hover:bg-white/10 hover:text-antique-gold rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        <Trophy size={15} className="text-antique-gold" />
+                                        <span>2026 Season Rewind</span>
+                                    </button>
 
-                            <button
-                                onClick={() => handleNavigate('/yaadein')}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-amber-100 hover:bg-white/10 hover:text-antique-gold rounded-lg transition-colors cursor-pointer"
-                            >
-                                <Camera size={15} className="text-antique-gold" />
-                                <span>Yaadein • यादें (Album)</span>
-                            </button>
+                                    <button
+                                        onClick={() => handleNavigate('/yaadein')}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-amber-100 hover:bg-white/10 hover:text-antique-gold rounded-lg transition-colors cursor-pointer"
+                                    >
+                                        <Camera size={15} className="text-antique-gold" />
+                                        <span>Yaadein • यादें (Album)</span>
+                                    </button>
+                                </>
+                            )}
 
                             <button
                                 onClick={() => handleNavigate('/leaderboard')}

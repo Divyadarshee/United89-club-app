@@ -546,7 +546,19 @@ const RAW_YAADEIN_SEED_ITEMS = [
     },
 ];
 
-export const YAADEIN_SEED_ITEMS = RAW_YAADEIN_SEED_ITEMS.map((item) => ({
+const REMOVED_SEED_IDS = new Set([
+    'seed-02',
+    'seed-04',
+    'seed-05',
+    'seed-06',
+    'seed-07',
+    'seed-08',
+    'seed-09',
+]);
+
+export const YAADEIN_SEED_ITEMS = RAW_YAADEIN_SEED_ITEMS.filter(
+    (item) => !REMOVED_SEED_IDS.has(item.id)
+).map((item) => ({
     ...item,
     likes: 0,
     high_res_url: item.image_url,
