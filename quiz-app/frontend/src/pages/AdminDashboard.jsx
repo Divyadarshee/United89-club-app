@@ -998,10 +998,10 @@ function AdminDashboard() {
                             <div className="mb-6 p-4 bg-amber-950/40 rounded border border-amber-500/40">
                                 <label className="block font-sans text-amber-200 mb-2 font-bold flex items-center gap-2">
                                     <Sparkles size={18} className="text-amber-400" />
-                                    <span>🏆 2026 Grand Finale Release Mode</span>
+                                    <span>🏆 2026 Grand Finale &amp; Yaadein Release Mode</span>
                                 </label>
                                 <p className="text-xs text-gray-300 mb-3">
-                                    Control who can access the 40-Week Season Rewind, Certificates &amp; Hall of Fame.
+                                    Control who can access the 40-Week Season Rewind, Certificates, Hall of Fame &amp; Yaadein (यादें) Album.
                                 </p>
                                 <div className="flex flex-wrap gap-4">
                                     <label className="flex items-center gap-2 text-sm text-gray-200 cursor-pointer">

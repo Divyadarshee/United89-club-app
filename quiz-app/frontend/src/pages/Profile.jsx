@@ -11,9 +11,13 @@ import { useConfig } from '../context/ConfigContext';
 import { useSoundManager } from '../hooks/useSoundManager';
 import { AVATAR_OPTIONS, getAvatarBg, getAvatarEmoji } from '../components/UserNav';
 import { FINALE_DATA } from '../data/finaleData';
-import { renderCertificateToDataUrl, renderWrappedCardToDataUrl } from '../utils/certificateRenderer';
+import {
+    renderCertificateToDataUrl,
+    renderWrappedCardToDataUrl,
+} from '../utils/certificateRenderer';
 import { normalizePhone, isFinaleAdmin, isFinaleUnlocked } from '../utils/featureFlags';
 import PersonalStoryModal from '../components/PersonalStoryModal';
+import ImageLightboxModal from '../components/ImageLightboxModal';
 import { AdminMemberBar, AdminMemberPickerModal } from '../components/AdminMemberControls';
 
 export default function Profile() {
@@ -171,6 +175,7 @@ export default function Profile() {
     const [memberPhotos, setMemberPhotos] = useState({});
     const [certDataUrl, setCertDataUrl] = useState(null);
     const [wrappedDataUrl, setWrappedDataUrl] = useState(null);
+    const [enlargedImage, setEnlargedImage] = useState(null);
     const [renderingCert, setRenderingCert] = useState(false);
     const [copiedPromptId, setCopiedPromptId] = useState(null);
     const photoInputRef = useRef(null);
@@ -236,10 +241,13 @@ export default function Profile() {
                         certType: activeAward ? 'award' : 'participation',
                         award: activeAward,
                         photoDataUrl: currentPhoto,
+                        logoStyle: 'v1-side-portrait',
+                        signatureStyle: 'sig-udaya-full',
                     }),
                     renderWrappedCardToDataUrl({
                         player: finalePlayer,
                         photoDataUrl: currentPhoto,
+                        logoStyle: 'v1-side-portrait',
                     }),
                 ]);
                 if (!cancelled) {
@@ -294,6 +302,8 @@ export default function Profile() {
                 certType: activeAward ? 'award' : 'participation',
                 award: activeAward,
                 photoDataUrl: currentPhoto,
+                logoStyle: 'v1-side-portrait',
+                signatureStyle: 'sig-udaya-full',
             });
             setCertDataUrl(url);
         }
@@ -308,6 +318,7 @@ export default function Profile() {
             url = await renderWrappedCardToDataUrl({
                 player: finalePlayer,
                 photoDataUrl: currentPhoto,
+                logoStyle: 'v1-side-portrait',
             });
             setWrappedDataUrl(url);
         }
@@ -1078,13 +1089,32 @@ export default function Profile() {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
                                 {/* Certificate Preview (2 cols) */}
                                 <div className="md:col-span-2 space-y-2">
-                                    <div className="rounded-xl overflow-hidden border-2 border-antique-gold/50 bg-[#070e1c] shadow-xl relative">
+                                    <div
+                                        onClick={() => {
+                                            if (certDataUrl) {
+                                                playSound('click');
+                                                setEnlargedImage({
+                                                    src: certDataUrl,
+                                                    alt: "Personalized UCE '87 Certificate",
+                                                });
+                                            }
+                                        }}
+                                        title={certDataUrl ? "Click or touch to enlarge" : undefined}
+                                        className={`rounded-xl overflow-hidden border-2 border-antique-gold/50 bg-[#070e1c] shadow-xl relative group ${
+                                            certDataUrl ? 'cursor-zoom-in hover:border-antique-gold transition-colors' : ''
+                                        }`}
+                                    >
                                         {certDataUrl ? (
-                                            <img
-                                                src={certDataUrl}
-                                                alt="Personalized UCE '87 Certificate"
-                                                className="w-full h-auto block"
-                                            />
+                                            <>
+                                                <img
+                                                    src={certDataUrl}
+                                                    alt="Personalized UCE '87 Certificate"
+                                                    className="w-full h-auto block"
+                                                />
+                                                <div className="absolute top-2.5 right-2.5 px-2.5 py-1 rounded-md bg-black/75 border border-antique-gold/50 text-[10px] font-sans text-amber-200 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md">
+                                                    🔍 Click to enlarge
+                                                </div>
+                                            </>
                                         ) : (
                                             <div className="h-56 flex items-center justify-center text-xs text-gray-400">
                                                 Rendering High-Res Certificate...
@@ -1109,13 +1139,32 @@ export default function Profile() {
 
                                 {/* WhatsApp 2026 Wrapped Card Preview (1 col) */}
                                 <div className="space-y-2">
-                                    <div className="rounded-xl overflow-hidden border-2 border-antique-gold/40 bg-[#070e1c] shadow-xl max-w-[220px] mx-auto">
+                                    <div
+                                        onClick={() => {
+                                            if (wrappedDataUrl) {
+                                                playSound('click');
+                                                setEnlargedImage({
+                                                    src: wrappedDataUrl,
+                                                    alt: '2026 WhatsApp Wrapped Card',
+                                                });
+                                            }
+                                        }}
+                                        title={wrappedDataUrl ? "Click or touch to enlarge" : undefined}
+                                        className={`rounded-xl overflow-hidden border-2 border-antique-gold/40 bg-[#070e1c] shadow-xl max-w-[220px] mx-auto relative group ${
+                                            wrappedDataUrl ? 'cursor-zoom-in hover:border-antique-gold transition-colors' : ''
+                                        }`}
+                                    >
                                         {wrappedDataUrl ? (
-                                            <img
-                                                src={wrappedDataUrl}
-                                                alt="2026 WhatsApp Wrapped Card"
-                                                className="w-full h-auto block"
-                                            />
+                                            <>
+                                                <img
+                                                    src={wrappedDataUrl}
+                                                    alt="2026 WhatsApp Wrapped Card"
+                                                    className="w-full h-auto block"
+                                                />
+                                                <div className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-black/75 border border-antique-gold/50 text-[10px] font-sans text-amber-200 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-md">
+                                                    🔍 Enlarge
+                                                </div>
+                                            </>
                                         ) : (
                                             <div className="h-56 flex items-center justify-center text-xs text-gray-400">
                                                 Rendering Wrapped Card...
@@ -1381,6 +1430,16 @@ export default function Profile() {
                 onSelectMember={setSelectedMemberNorm}
                 onPrevMember={handlePrevMember}
                 onNextMember={handleNextMember}
+            />
+
+            {/* Enlarged Certificate / WhatsApp Wrapped Lightbox Modal */}
+            <ImageLightboxModal
+                src={enlargedImage?.src}
+                alt={enlargedImage?.alt}
+                onClose={() => {
+                    playSound('click');
+                    setEnlargedImage(null);
+                }}
             />
 
             {/* Admin Scroll-Locked Member Picker Modal */}

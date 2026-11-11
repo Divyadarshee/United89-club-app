@@ -10,6 +10,7 @@ import { useSoundManager } from '../hooks/useSoundManager';
 import { getAvatarBg, getAvatarEmoji } from './UserNav';
 import { FINALE_DATA } from '../data/finaleData';
 import { AdminMemberBar, AdminMemberPickerModal } from './AdminMemberControls';
+import uceLogoAssetUrl from '../assets/images/uce-logo.jpg';
 
 const SLIDE_DURATION_MS = 6500; // 6.5 seconds per slide for relaxed reading
 
@@ -210,6 +211,23 @@ export default function PersonalStoryModal({
                     transition={{ type: 'spring', damping: 24, stiffness: 280 }}
                     className="relative w-full max-w-[430px] h-[90vh] max-h-[800px] bg-gradient-to-b from-[#0a1428] via-[#091122] to-[#140a24] rounded-3xl border-2 border-antique-gold/60 shadow-[0_0_60px_rgba(251,191,36,0.35)] overflow-hidden flex flex-col justify-between select-none z-10 text-white"
                 >
+                    {/* Soft Circular UCE Saraswati Watermark in Story Reel Background */}
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center z-0 overflow-hidden">
+                        <div
+                            className="w-[340px] h-[340px] rounded-full opacity-[0.16] mix-blend-screen flex items-center justify-center"
+                            style={{
+                                WebkitMaskImage: 'radial-gradient(circle, rgba(0,0,0,1) 45%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0) 98%)',
+                                maskImage: 'radial-gradient(circle, rgba(0,0,0,1) 45%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0) 98%)',
+                            }}
+                        >
+                            <img
+                                src={uceLogoAssetUrl}
+                                alt=""
+                                className="w-full h-full object-contain scale-95"
+                            />
+                        </div>
+                    </div>
+
                     {/* Top Segmented Story Progress Bar */}
                     <div className="relative z-40 pt-4 px-4 pb-2 bg-gradient-to-b from-black/60 to-transparent">
                         <div className="flex gap-1.5 mb-3">
@@ -246,6 +264,9 @@ export default function PersonalStoryModal({
                         {/* Top Story Header: User Tag, Play/Pause, Close */}
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-full border border-antique-gold overflow-hidden bg-black flex-shrink-0 shadow">
+                                    <img src={uceLogoAssetUrl} alt="UCE" className="w-full h-full object-cover" />
+                                </div>
                                 <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-[10px] font-mono text-amber-300 uppercase tracking-widest font-bold">
                                     2026 Wrapped • {currentSlide + 1}/{totalSlides}
                                 </span>

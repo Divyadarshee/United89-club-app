@@ -11,6 +11,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import Leaderboard from './pages/Leaderboard';
 import Profile from './pages/Profile';
 import SeasonRewind from './pages/SeasonRewind';
+import Yaadein from './pages/Yaadein';
 import PageTransition from './components/PageTransition';
 import BackgroundSlideshow from './components/BackgroundSlideshow';
 import UserNav from './components/UserNav';
@@ -57,6 +58,10 @@ const AnimatedRoutes = () => {
 
         {/* 2026 Season Finale: Rewind, Hall of Fame & Certificates */}
         <Route path="/rewind" element={<PageTransition><SeasonRewind /></PageTransition>} />
+
+        {/* Yaadein (Club Memories Album) */}
+        <Route path="/yaadein" element={<PageTransition><Yaadein /></PageTransition>} />
+        <Route path="/memories" element={<PageTransition><Yaadein /></PageTransition>} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<PageTransition><AdminLogin /></PageTransition>} />

@@ -408,3 +408,207 @@ export const grantWildcard = async (phone, bonusPoints, bonusWeeks, reason) => {
     });
     return response.data;
 };
+
+// ============================================
+// YAADEIN (MEMORIES ALBUM) ENDPOINTS
+// ============================================
+
+const YAADEIN_STORAGE_KEY = 'yaadein_local_memories';
+
+const resolveMemoryUrl = (item) => {
+    if (!item) return item;
+    const url = item.image_url || '';
+    const highResUrl = item.high_res_url || url;
+    const videoUrl = item.video_url || '';
+    return {
+        ...item,
+        media_type: item.media_type || (videoUrl ? 'video' : 'photo'),
+        image_url: url.startsWith('/api/memories/') ? `${API_URL}${url}` : url,
+        high_res_url: highResUrl.startsWith('/api/memories/') ? `${API_URL}${highResUrl}` : highResUrl,
+        video_url: videoUrl
+            ? videoUrl.startsWith('/api/memories/')
+                ? `${API_URL}${videoUrl}`
+                : videoUrl
+            : null,
+    };
+};
+
+const getLocalMemories = () => {
+    try {
+        const raw = localStorage.getItem(YAADEIN_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : [];
+    } catch {
+        return [];
+    }
+};
+
+const saveLocalMemories = (items) => {
+    try {
+        localStorage.setItem(YAADEIN_STORAGE_KEY, JSON.stringify(items));
+    } catch (e) {
+        console.warn('[Yaadein] Failed to persist local fallback memories:', e);
+    }
+};
+
+export const getMemories = async ({ userPhone = '', isAdmin = false } = {}) => {
+    try {
+        const response = await apiClient.get('/api/memories', {
+            params: {
+                user_phone: userPhone || undefined,
+                admin: isAdmin || undefined,
+            },
+        });
+        const items = (response.data?.items || []).map(resolveMemoryUrl);
+        return {
+            items,
+            seed_overrides: response.data?.seed_overrides || {},
+            is_admin: !!response.data?.is_admin,
+        };
+    } catch (err) {
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            const localItems = getLocalMemories();
+            const cleanPhone = String(userPhone || '').replace(/\D/g, '').slice(-10);
+            const filtered = localItems.filter((item) => {
+                if (item.status === 'rejected') return false;
+                if (isAdmin || item.status === 'approved') return true;
+                const itemPhone = String(item.uploader_phone || '').replace(/\D/g, '').slice(-10);
+                return cleanPhone && itemPhone === cleanPhone;
+            });
+            return { items: filtered, seed_overrides: {}, is_admin: isAdmin };
+        }
+        throw err;
+    }
+};
+
+export const uploadMemory = async ({
+    mediaType = 'photo',
+    caption,
+    imageDataUrl,
+    videoDataUrl,
+    thumbDataUrl,
+    uploaderName,
+    uploaderPhone,
+    width,
+    height,
+    sizeBytes,
+    durationSeconds,
+    isAdmin = false,
+}) => {
+    try {
+        const response = await apiClient.post('/api/memories', {
+            media_type: mediaType,
+            caption,
+            image_data_url: mediaType === 'video' ? '' : imageDataUrl,
+            video_data_url: mediaType === 'video' ? videoDataUrl || imageDataUrl : undefined,
+            thumb_data_url: thumbDataUrl,
+            uploader_name: uploaderName,
+            uploader_phone: uploaderPhone,
+            width,
+            height,
+            size_bytes: sizeBytes,
+            duration_seconds: durationSeconds,
+        });
+        return {
+            ...response.data,
+            memory: resolveMemoryUrl(response.data?.memory),
+        };
+    } catch (err) {
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            const isVideo = mediaType === 'video';
+            const newMemory = {
+                id: `local-${Date.now()}`,
+                media_type: mediaType,
+                caption: (caption || '').trim(),
+                image_url: thumbDataUrl || imageDataUrl,
+                high_res_url: isVideo ? videoDataUrl || imageDataUrl : imageDataUrl,
+                video_url: isVideo ? videoDataUrl || imageDataUrl : null,
+                duration_seconds: durationSeconds || null,
+                uploader_name: (uploaderName || 'Club Member').trim(),
+                uploader_phone: uploaderPhone || '',
+                status: isAdmin ? 'approved' : 'pending',
+                likes: 0,
+                width,
+                height,
+                size_bytes: sizeBytes,
+                created_at: new Date().toISOString(),
+            };
+            const existing = getLocalMemories();
+            saveLocalMemories([newMemory, ...existing]);
+            return {
+                status: 'success',
+                message: isAdmin ? 'Memory published!' : 'Memory submitted for admin approval!',
+                memory: newMemory,
+            };
+        }
+        throw err;
+    }
+};
+
+export const moderateMemory = async (memoryId, { status, caption }, adminPhone = '') => {
+    try {
+        const response = await apiClient.patch(
+            `/api/memories/${memoryId}`,
+            { status, caption },
+            { params: { admin_phone: adminPhone || undefined } }
+        );
+        return {
+            ...response.data,
+            memory: resolveMemoryUrl(response.data?.memory),
+        };
+    } catch (err) {
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            const existing = getLocalMemories();
+            const updated = existing.map((m) =>
+                m.id === memoryId
+                    ? {
+                          ...m,
+                          ...(status ? { status } : {}),
+                          ...(caption !== undefined && caption !== null ? { caption } : {}),
+                      }
+                    : m
+            );
+            saveLocalMemories(updated);
+            return {
+                status: 'success',
+                memory: updated.find((m) => m.id === memoryId),
+            };
+        }
+        throw err;
+    }
+};
+
+export const deleteMemory = async (memoryId, userPhone = '') => {
+    try {
+        const response = await apiClient.delete(`/api/memories/${memoryId}`, {
+            params: { user_phone: userPhone || undefined },
+        });
+        return response.data;
+    } catch (err) {
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            const existing = getLocalMemories().filter((m) => m.id !== memoryId);
+            saveLocalMemories(existing);
+            return { status: 'success', deleted_id: memoryId };
+        }
+        throw err;
+    }
+};
+
+export const likeMemory = async (memoryId, { unlike = false } = {}) => {
+    try {
+        const response = await apiClient.post(`/api/memories/${memoryId}/like`, null, {
+            params: { unlike: unlike || undefined },
+        });
+        return response.data;
+    } catch (err) {
+        if (err.response?.status === 404 || err.code === 'ERR_NETWORK') {
+            const delta = unlike ? -1 : 1;
+            const existing = getLocalMemories();
+            const updated = existing.map((m) =>
+                m.id === memoryId ? { ...m, likes: Math.max(0, (m.likes || 0) + delta) } : m
+            );
+            saveLocalMemories(updated);
+            return { status: 'success', id: memoryId };
+        }
+        throw err;
+    }
+};

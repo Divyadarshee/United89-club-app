@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSoundManager } from '../hooks/useSoundManager';
 import { getConfig } from '../services/api';
-import { X, Lock, Trophy, User, Sparkles, Award } from 'lucide-react';
+import { X, Lock, Trophy, User, Sparkles, Award, Camera, Upload } from 'lucide-react';
 import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { JagannathEyes, AshokChakra } from '../components/ThemedIcons';
@@ -254,6 +254,78 @@ function Welcome() {
                             >
                                 <Award size={14} className="text-antique-gold" />
                                 <span>🏛️ Hall of Fame &amp; Awards</span>
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* YAADEIN (यादें) CLUB MEMORIES ALBUM CARD (Visible only when Finale toggle is unlocked) */}
+                {isFinaleUnlocked(user, config) && (
+                    <div
+                        id="tour-yaadein-album"
+                        className="mt-6 mb-10 max-w-lg mx-auto p-5 rounded-2xl bg-gradient-to-br from-[#161f38]/95 via-[#0b1528]/95 to-[#1f1608]/95 border-2 border-antique-gold/55 shadow-2xl"
+                    >
+                        <div className="flex items-center justify-center gap-2 text-amber-300 font-serif text-xs uppercase tracking-[0.2em] mb-1">
+                            <Camera size={14} />
+                            <span>Batch Nostalgia Gallery</span>
+                        </div>
+                        <h3 className="text-xl sm:text-2xl font-serif font-bold text-white mb-1.5">
+                            Yaadein <span className="text-antique-gold font-normal">• यादें</span>
+                        </h3>
+                        <p className="text-xs sm:text-sm text-gray-300 font-sans mb-3.5">
+                            Walk down memory lane through our batch celebrations, photos &amp; videos — or upload your own favourite moments right from your phone or desktop!
+                        </p>
+
+                        {/* Miniature 3-Photo Preview Strip */}
+                        <div
+                            onClick={() => {
+                                playSound('click');
+                                navigate('/yaadein');
+                            }}
+                            className="grid grid-cols-3 gap-2 mb-4 cursor-pointer group"
+                        >
+                            {[
+                                '/yaadein/thumbs/yaadein-01.jpg',
+                                '/yaadein/thumbs/yaadein-21.jpg',
+                                '/yaadein/thumbs/yaadein-02.jpg',
+                            ].map((src, i) => (
+                                <div
+                                    key={i}
+                                    className="h-20 sm:h-24 rounded-lg overflow-hidden border border-antique-gold/40 group-hover:border-antique-gold transition-all bg-black/50"
+                                >
+                                    <img
+                                        src={src}
+                                        alt="Yaadein preview"
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                    />
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row gap-2.5 justify-center">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    playSound('click');
+                                    navigate('/yaadein');
+                                }}
+                                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:from-amber-200 hover:to-yellow-300 text-[#0b1528] font-serif font-black text-xs sm:text-sm shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                <Camera size={15} />
+                                <span>🖼️ Open Yaadein Album</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    playSound('click');
+                                    navigate('/yaadein?upload=true');
+                                }}
+                                className="py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/20 text-amber-200 border border-antique-gold/40 font-serif font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                            >
+                                <Upload size={14} className="text-antique-gold" />
+                                <span>+ Share Photo / Video</span>
                             </button>
                         </div>
                     </div>
